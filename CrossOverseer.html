@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CrossOverseer — Enterprise Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+
+<!-- ============================ NAV ============================ -->
+<header class="nav" id="nav">
+  <a class="brand" href="#top" aria-label="CrossOverseer home">
+    <svg class="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <rect x="3" y="3" width="17" height="17" rx="3" stroke="currentColor" stroke-width="2" style="color:var(--muted)"/>
+      <rect x="12" y="12" width="17" height="17" rx="3" stroke="currentColor" stroke-width="2" style="color:var(--accent)"/>
+    </svg>
+    <span class="brand-name">Cross<b>Overseer</b></span>
+  </a>
+
+  <nav class="nav-links" aria-label="Primary">
+    <a href="#overview">Overview</a>
+    <a href="#features">Features</a>
+    <a href="#dispatches">Dispatches</a>
+    <a href="#editions">Editions</a>
+  </nav>
+
+  <div class="nav-right">
+    <span class="region">NA · EN</span>
+    <a class="btn btn-primary btn-sm" href="#play">Play Now</a>
+    <button class="burger" aria-label="Toggle menu"><span></span></button>
+  </div>
+</header>
+
+<!-- ============================ HERO ============================ -->
+<main id="top">
+<section class="hero" data-screen-label="Hero">
+  <div class="scene" aria-hidden="true">
+    <div class="scene-photo"></div>
+    <div class="scene-img"></div>
+    <div class="scene-grid"></div>
+    <div class="scene-horizon"></div>
+    <div class="feed">
+      <span>// NODE_SYD ▸ throughput 98.2% ▸ morale 0.41</span>
+      <span>// ledger sync ▸ +2,140,556 cr</span>
+      <span>// agent #7731 ▸ status: DISSENTING</span>
+      <span>// region LAGOS ▸ shift +3 deployed</span>
+    </div>
+    <div class="scene-scan"></div>
+    <div class="scene-grain"></div>
+    <div class="scene-vignette"></div>
+  </div>
+  <div class="hero-cursor" aria-hidden="true"></div>
+
+  <div class="hero-top">
+    <span class="eyebrow">Global Operations Simulator</span>
+    <span class="rec mono"><span class="dot"></span>LIVE BUILD v2.0.99</span>
+  </div>
+
+  <div class="hero-inner">
+    <p class="hero-tagline">Stay ahead of the game. <b>Be borderless.</b></p>
+    <h1>Cross<span class="accent">Overseer</span>: Enterprise Management System</h1>
+    <p class="hero-sub">The world is your workplace. Run a synthetic empire across every timezone — and answer for every decision.</p>
+
+    <!-- CTA box (bottom-left) -->
+    <div class="hero-actions">
+      <div class="row">
+        <a class="cta-play" href="#play">
+          <span>Play Now</span>
+          <span class="meta">free to enlist</span>
+          <span class="arrow" aria-hidden="true">→</span>
+        </a>
+        <button class="cta-trailer" data-open-trailer aria-haspopup="dialog">
+          <span class="play-ico"><svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M2 1l8 5-8 5z"/></svg></span>
+          <span>
+            <span class="t-label" style="display:block">Watch Trailer</span>
+            <span class="t-meta">Cinematic · 2:14</span>
+          </span>
+        </button>
+      </div>
+      <div class="hero-avail"><b>Out now</b> — PC · Cloud · Console</div>
+    </div>
+  </div>
+
+  <div class="scroll-hint"><span>Scroll to brief</span><span class="bar"></span></div>
+</section>
+
+<!-- ============================ FEATURES ============================ -->
+<section class="section features" id="features">
+  <div class="wrap">
+    <div class="section-head" id="overview">
+      <div>
+        <span class="idx" data-reveal>[ 01 — THE DIRECTIVE ]</span>
+        <h2 data-reveal data-delay="1">You don't play a character. You <em style="font-style:normal;color:var(--accent)">are</em> the system.</h2>
+      </div>
+      <p class="mono" data-reveal data-delay="2" style="max-width:30ch;color:var(--muted)">// Two pillars define every run of CrossOverseer.</p>
+    </div>
+
+    <article class="feature">
+      <div class="feat-text" data-reveal>
+        <span class="feat-no">FEATURE 01</span>
+        <h3>Run a borderless empire</h3>
+        <p>Command operations on a living map of the planet. Hire, deploy and surveil a synthetic workforce that never sleeps — because neither does the market. Open a node in Lagos at dawn, restructure Sydney by dusk.</p>
+        <div class="chips">
+          <span class="chip">190+ regions</span>
+          <span class="chip">Real-time world clock</span>
+          <span class="chip">Persistent economy</span>
+        </div>
+      </div>
+      <div class="feat-media" data-reveal data-delay="1">
+        <div class="ph">
+          <image-slot id="feat-1" fit="cover" radius="6" placeholder="Drop World-Ops Map art"></image-slot>
+          <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+          <span class="ph-tag">World-Ops Map ▸ gameplay</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="feature">
+      <div class="feat-text" data-reveal>
+        <span class="feat-no">FEATURE 02</span>
+        <h3>Every decision compounds</h3>
+        <p>There is no pause. Margins, morale and the law pull in different directions, and the System remembers everything. Optimize ruthlessly or build somewhere people actually want to work — the board is watching either way.</p>
+        <div class="chips">
+          <span class="chip">Branching outcomes</span>
+          <span class="chip">Reactive AI agents</span>
+          <span class="chip">No two runs alike</span>
+        </div>
+      </div>
+      <div class="feat-media" data-reveal data-delay="1">
+        <div class="ph">
+          <image-slot id="feat-2" fit="cover" radius="6" placeholder="Drop Consequence Engine art"></image-slot>
+          <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+          <span class="ph-tag">Consequence Engine ▸ gameplay</span>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============================ NEWS / DISPATCHES ============================ -->
+<section class="section" id="dispatches">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="idx" data-reveal>[ 02 — FIELD DISPATCHES ]</span>
+        <h2 data-reveal data-delay="1">Latest from the grid</h2>
+      </div>
+      <a class="link-more" href="#" data-reveal data-delay="2">View all dispatches <span aria-hidden="true">→</span></a>
+    </div>
+
+    <div class="news-grid">
+      <article class="post" data-reveal>
+        <div class="post-media"><image-slot id="post-1" fit="cover" radius="0" placeholder="Drop key art"></image-slot><span class="post-tag">Patch 2.0.99</span></div>
+        <div class="post-body">
+          <span class="post-date">Jun 01, 2099</span>
+          <h3>The Restructuring Update is live</h3>
+          <p>Two new continental markets, a rewritten morale model, and 40+ fixes to the consequence engine.</p>
+          <a class="read" href="#">Read more <span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
+      <article class="post" data-reveal data-delay="1">
+        <div class="post-media"><image-slot id="post-2" fit="cover" radius="0" placeholder="Drop key art"></image-slot><span class="post-tag">Dev Log</span></div>
+        <div class="post-body">
+          <span class="post-date">May 24, 2099</span>
+          <h3>Designing a workforce that resents you</h3>
+          <p>How CrossOverseer's agents form grudges, alliances and the occasional union — and why that's the point.</p>
+          <a class="read" href="#">Read more <span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+
+      <article class="post" data-reveal data-delay="2">
+        <div class="post-media"><image-slot id="post-3" fit="cover" radius="0" placeholder="Drop key art"></image-slot><span class="post-tag">Event</span></div>
+        <div class="post-body">
+          <span class="post-date">May 12, 2099</span>
+          <h3>Season 02 — Hostile Takeover begins</h3>
+          <p>Six weeks of leaderboard warfare for control of the Pacific grid. New mandates drop weekly.</p>
+          <a class="read" href="#">Read more <span aria-hidden="true">→</span></a>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ BIG CTA ============================ -->
+<section class="cta-band" id="play">
+  <div class="scene-grid" aria-hidden="true"></div>
+  <div class="scene-horizon" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="cta-inner">
+      <span class="eyebrow" data-reveal>Take the chair</span>
+      <h2 data-reveal data-delay="1">The world won't <span class="accent">manage itself.</span></h2>
+      <p data-reveal data-delay="2">Enlist free, claim a region, and become the CrossOverseer. The board convenes at midnight.</p>
+      <div class="cta-actions" data-reveal data-delay="2" id="editions">
+        <a class="btn btn-primary" href="#">Play Now — Free</a>
+        <button class="btn btn-ghost" data-open-trailer>Watch Trailer</button>
+      </div>
+      <div class="cta-platforms" data-reveal data-delay="3">
+        <span>PC</span><span>Cloud</span><span>Console</span><span>Rating Pending</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ FOOTER ============================ -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <a class="brand" href="#top">
+          <svg class="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <rect x="3" y="3" width="17" height="17" rx="3" stroke="currentColor" stroke-width="2" style="color:var(--muted)"/>
+            <rect x="12" y="12" width="17" height="17" rx="3" stroke="currentColor" stroke-width="2" style="color:var(--accent)"/>
+          </svg>
+          <span class="brand-name">Cross<b>Overseer</b></span>
+        </a>
+        <p>A borderless management sim. Run the world. Answer for it.</p>
+        <form class="news-form" novalidate>
+          <input type="email" placeholder="operator@domain.net" aria-label="Email for dispatches" />
+          <button type="submit">Subscribe</button>
+        </form>
+        <p class="news-note" aria-live="polite"></p>
+      </div>
+
+      <div class="foot-col">
+        <h4>Game</h4>
+        <a href="#overview">Overview</a>
+        <a href="#features">Features</a>
+        <a href="#editions">Editions</a>
+        <a href="#">Roadmap</a>
+      </div>
+      <div class="foot-col">
+        <h4>Community</h4>
+        <a href="#dispatches">Dispatches</a>
+        <a href="#">Discord</a>
+        <a href="#">Forums</a>
+        <a href="#">Creators</a>
+      </div>
+      <div class="foot-col">
+        <h4>Company</h4>
+        <a href="#">About</a>
+        <a href="#">Careers</a>
+        <a href="#">Press Kit</a>
+      </div>
+      <div class="foot-col">
+        <h4>Support</h4>
+        <a href="#">Help Center</a>
+        <a href="#">System Reqs</a>
+        <a href="#">Refunds</a>
+      </div>
+    </div>
+
+    <div class="foot-bottom">
+      <div class="foot-meta">
+        <span class="rating">Rating Pending</span>
+        <span class="copy">© <span id="year">2099</span> CrossOverseer Industries. <b>Not a real company. No actual borders were crossed.</b></span>
+      </div>
+      <div class="socials">
+        <a href="#" aria-label="X">X</a>
+        <a href="#" aria-label="Discord">DC</a>
+        <a href="#" aria-label="YouTube">YT</a>
+        <a href="#" aria-label="Reddit">RD</a>
+      </div>
+    </div>
+  </div>
+</footer>
+</main>
+
+<!-- ============================ TRAILER MODAL ============================ -->
+<div class="modal" id="trailer" role="dialog" aria-modal="true" aria-label="CrossOverseer trailer">
+  <div class="modal-bg"></div>
+  <div class="modal-card">
+    <div class="modal-bar">
+      <span class="t">CrossOverseer ▸ Cinematic Trailer</span>
+      <button class="modal-close" aria-label="Close trailer">✕</button>
+    </div>
+    <div class="modal-video">
+      <span class="big-play"><svg viewBox="0 0 22 22" fill="currentColor" aria-hidden="true"><path d="M4 2l16 9-16 9z"/></svg></span>
+      <span class="vmeta">▸ trailer_2099.mp4 — drop your video here · 2:14</span>
+    </div>
+  </div>
+</div>
+
+<script src="image-slot.js"></script>
+<script src="assets/app.js"></script>
+
+<!-- Tweaks panel (React island over the vanilla page) -->
+<div id="tweaks-root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="assets/tweaks.jsx"></script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TechSolve IT Solutions PH — Technology That Drives Business Growth</title>
+<meta name="description" content="Reliable IT support, digital transformation, and innovative solutions for businesses across the Philippines." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+/* ============ Design tokens ============
+   Font: Inter only. Sizes: 16 / 24 / 40 (3 sizes).
+   Neutral palette + one accent (#1D4ED8) on CTA buttons only.
+   8px spacing grid. No shadows, gradients, or animations. */
+:root{
+  --ink:#111827;
+  --body:#4B5563;
+  --line:#E5E7EB;
+  --bg:#FFFFFF;
+  --bg-alt:#F9FAFB;
+  --accent:#1D4ED8;
+  --accent-ink:#FFFFFF;
+  --s1:8px; --s2:16px; --s3:24px; --s4:32px; --s6:48px; --s8:64px; --s12:96px;
+  --text-s:16px;
+  --text-m:24px;
+  --text-l:40px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  font-size:var(--text-s);
+  line-height:1.6;
+  color:var(--body);
+  background:var(--bg);
+}
+h1,h2,h3{color:var(--ink);line-height:1.2;font-weight:700}
+h1{font-size:var(--text-l)}
+h2{font-size:var(--text-m)}
+h3{font-size:var(--text-s)}
+img{max-width:100%;display:block}
+a{text-decoration:none;color:inherit}
+.wrap{max-width:1120px;margin:0 auto;padding:0 var(--s3)}
+
+/* Accent is reserved for CTA buttons only */
+.btn{
+  display:inline-block;
+  background:var(--accent);
+  color:var(--accent-ink);
+  font-weight:500;
+  padding:var(--s2) var(--s4);
+  border:none;
+  cursor:pointer;
+  font-size:var(--text-s);
+}
+
+/* ============ Navbar ============ */
+.nav{border-bottom:1px solid var(--line)}
+.nav .wrap{
+  display:flex;align-items:center;justify-content:space-between;
+  height:var(--s8);
+}
+.brand{font-weight:700;color:var(--ink)}
+.brand span{font-weight:400;color:var(--body)}
+.nav-links{display:none;gap:var(--s4)}
+.nav-links a:hover{color:var(--ink)}
+@media(min-width:720px){.nav-links{display:flex}}
+
+/* ============ Hero ============ */
+.hero{padding:var(--s8) 0}
+.hero .wrap{display:grid;gap:var(--s6)}
+.hero p{margin:var(--s3) 0 var(--s4);max-width:48ch}
+.hero-img{border:1px solid var(--line);background:var(--bg-alt)}
+.hero-img img{width:100%;aspect-ratio:3/2;object-fit:cover}
+@media(min-width:880px){
+  .hero{padding:var(--s12) 0}
+  .hero .wrap{grid-template-columns:1fr 1fr;align-items:center}
+}
+
+/* ============ Features ============ */
+.features{background:var(--bg-alt);padding:var(--s12) 0}
+.features h2{margin-bottom:var(--s6)}
+.cards{display:grid;gap:var(--s3)}
+.card{background:var(--bg);border:1px solid var(--line);padding:var(--s4)}
+.card h3{margin-bottom:var(--s1)}
+@media(min-width:720px){.cards{grid-template-columns:repeat(3,1fr)}}
+
+/* ============ Testimonial ============ */
+.testimonial{padding:var(--s12) 0}
+.testimonial blockquote{
+  font-size:var(--text-m);
+  color:var(--ink);
+  max-width:40ch;
+  margin:0 auto;
+  text-align:center;
+}
+.testimonial cite{
+  display:block;
+  font-style:normal;
+  font-size:var(--text-s);
+  color:var(--body);
+  margin-top:var(--s3);
+}
+
+/* ============ Final CTA ============ */
+.final-cta{background:var(--bg-alt);padding:var(--s12) 0;text-align:center}
+.final-cta h2{margin-bottom:var(--s2)}
+.final-cta p{max-width:48ch;margin:0 auto var(--s4)}
+
+/* ============ Footer ============ */
+.footer{border-top:1px solid var(--line);padding:var(--s6) 0}
+.footer .wrap{display:flex;flex-direction:column;gap:var(--s2)}
+.footer a:hover{color:var(--ink)}
+@media(min-width:720px){
+  .footer .wrap{flex-direction:row;justify-content:space-between;align-items:center}
+}
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top">TechSolve <span>IT Solutions PH</span></a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#services">Services</a>
+      <a href="#testimonial">Clients</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <a class="btn" href="#contact">Get a Free Consultation</a>
+  </div>
+</header>
+
+<!-- Hero -->
+<main id="top">
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <h1>Technology That Drives Business Growth</h1>
+      <p>Delivering reliable IT support, digital transformation, and innovative solutions for businesses across the Philippines.</p>
+      <a class="btn" href="#contact">Get a Free Consultation</a>
+    </div>
+    <div class="hero-img">
+      <img src="assets/techsolve-hero.jpg" alt="IT specialist monitoring business systems across multiple screens" />
+    </div>
+  </div>
+</section>
+
+<!-- Feature cards -->
+<section class="features" id="services">
+  <div class="wrap">
+    <h2>Our IT Services</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>Managed IT Support</h3>
+        <p>24/7 monitoring and proactive support to keep your business running smoothly, every day.</p>
+      </div>
+      <div class="card">
+        <h3>Cybersecurity</h3>
+        <p>Protect your data and systems with advanced threat detection and security solutions.</p>
+      </div>
+      <div class="card">
+        <h3>Cloud Services</h3>
+        <p>Secure, scalable, and cost-effective cloud solutions built for growing Philippine businesses.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Testimonial -->
+<section class="testimonial" id="testimonial">
+  <div class="wrap">
+    <blockquote>
+      &ldquo;TechSolve resolved our downtime issues in days, not months. They feel less like a vendor and more like our own IT department.&rdquo;
+      <cite>Operations Director, Manila-based retail company</cite>
+    </blockquote>
+  </div>
+</section>
+
+<!-- Final CTA -->
+<section class="final-cta" id="contact">
+  <div class="wrap">
+    <h2>Let&rsquo;s build the right IT solution for your business.</h2>
+    <p>Tell us what&rsquo;s slowing you down — we&rsquo;ll consult, assess, implement, and support. Free, no-obligation consultation.</p>
+    <a class="btn" href="mailto:info@techsolveph.com">Get a Free Consultation</a>
+  </div>
+</section>
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="wrap">
+    <span>&copy; 2026 TechSolve IT Solutions PH</span>
+    <a href="tel:+6328123 4567">(02) 8 123 4567</a>
+    <a href="mailto:info@techsolveph.com">info@techsolveph.com</a>
+    <a href="https://www.techsolveph.com">www.techsolveph.com</a>
+  </div>
+</footer>
+
+</body>
+</html>

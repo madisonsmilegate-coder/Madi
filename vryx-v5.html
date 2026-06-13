@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VRYX OS — Operational Intelligence Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:       #0C0C0A;
+  --surface:  #111110;
+  --border:   rgba(255,255,255,.07);
+  --border-s: rgba(255,255,255,.12);
+  --text:     #F0EDE6;
+  --muted:    #6B6860;
+  --dimmed:   #3A3835;
+  --accent:   #6EF08A;
+  --accent-d: #4AB866;
+  --red:      #FF5A5A;
+  --yellow:   #F5C842;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'IBM Plex Sans', sans-serif;
+  --r:        4px;
+  --r-lg:     8px;
+  --ease:     cubic-bezier(.4,0,.2,1);
+}
+
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:1.6;overflow-x:hidden}
+
+/* ── Layout ─────────────────────────────────────── */
+.wrap{max-width:1100px;margin:0 auto;padding:0 32px}
+.wrap-wide{max-width:1280px;margin:0 auto;padding:0 32px}
+
+/* ── Nav ─────────────────────────────────────────── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;border-bottom:1px solid var(--border);background:rgba(12,12,10,.85);backdrop-filter:blur(12px)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:56px;max-width:1100px;margin:0 auto;padding:0 32px}
+.nav-logo{font-size:13px;font-weight:600;letter-spacing:.08em;color:var(--text);text-decoration:none;display:flex;align-items:center;gap:8px}
+.nav-logo-mark{width:22px;height:22px;background:var(--accent);border-radius:3px;display:grid;place-items:center}
+.nav-logo-mark svg{width:12px;height:12px}
+.nav-links{display:flex;align-items:center;gap:0;list-style:none}
+.nav-links a{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:8px 16px;transition:color .15s var(--ease);letter-spacing:.03em}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{font-family:var(--mono);font-size:12px;font-weight:500;background:var(--accent);color:#0C0C0A;border:none;border-radius:var(--r);padding:7px 16px;cursor:pointer;letter-spacing:.03em;transition:background .15s var(--ease);text-decoration:none}
+.nav-cta:hover{background:var(--accent-d)}
+.nav-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin-right:20px}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse-dot 2s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── Hero ─────────────────────────────────────────── */
+.hero{padding:160px 0 100px;border-bottom:1px solid var(--border)}
+.hero-inner{max-width:1100px;margin:0 auto;padding:0 32px;display:grid;grid-template-columns:1fr 420px;gap:80px;align-items:start}
+.hero-label{font-size:11px;letter-spacing:.12em;color:var(--accent);text-transform:uppercase;margin-bottom:28px;font-weight:500}
+.hero-h1{font-size:clamp(36px,4.5vw,58px);font-weight:300;line-height:1.1;letter-spacing:-.02em;margin-bottom:28px;font-family:var(--mono)}
+.hero-h1 strong{font-weight:600;color:var(--text)}
+.hero-h1 em{font-style:italic;color:var(--muted)}
+.hero-body{font-size:15px;color:var(--muted);line-height:1.75;max-width:480px;margin-bottom:40px;font-family:var(--sans);font-weight:300}
+.hero-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#0C0C0A;font-family:var(--mono);font-size:13px;font-weight:500;padding:11px 20px;border-radius:var(--r);border:none;cursor:pointer;letter-spacing:.02em;transition:background .15s var(--ease),transform .15s var(--ease);text-decoration:none}
+.btn-primary:hover{background:var(--accent-d);transform:translateY(-1px)}
+.btn-ghost{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--muted);font-family:var(--mono);font-size:13px;padding:11px 20px;border-radius:var(--r);border:1px solid var(--border-s);cursor:pointer;letter-spacing:.02em;transition:color .15s,border-color .15s;text-decoration:none}
+.btn-ghost:hover{color:var(--text);border-color:var(--border-s)}
+.hero-meta{font-size:11px;color:var(--dimmed);margin-top:24px;font-family:var(--mono);letter-spacing:.03em}
+
+/* ── Terminal Panel ───────────────────────────────── */
+.terminal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;font-size:12px;line-height:1.7}
+.terminal-bar{display:flex;align-items:center;gap:6px;padding:10px 14px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02)}
+.t-dot{width:10px;height:10px;border-radius:50%}
+.t-dot:nth-child(1){background:#FF5F56}
+.t-dot:nth-child(2){background:#FFBD2E}
+.t-dot:nth-child(3){background:#27C93F}
+.terminal-label{font-size:11px;color:var(--dimmed);margin-left:auto;letter-spacing:.04em}
+.terminal-body{padding:16px}
+.t-line{display:flex;gap:10px;padding:1px 0}
+.t-ts{color:var(--dimmed);flex-shrink:0;user-select:none}
+.t-tag{display:inline-block;padding:1px 6px;border-radius:2px;font-size:10px;font-weight:500;margin-right:4px;letter-spacing:.04em}
+.t-tag.ok{background:rgba(110,240,138,.1);color:var(--accent)}
+.t-tag.warn{background:rgba(245,200,66,.1);color:var(--yellow)}
+.t-tag.err{background:rgba(255,90,90,.1);color:var(--red)}
+.t-tag.info{background:rgba(255,255,255,.06);color:var(--muted)}
+.t-msg{color:var(--text)}
+.t-dim{color:var(--dimmed)}
+.t-cursor{display:inline-block;width:7px;height:13px;background:var(--accent);vertical-align:middle;animation:blink .9s step-end infinite;margin-left:2px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ── Stats bar ────────────────────────────────────── */
+.stats-bar{border-bottom:1px solid var(--border);padding:40px 0}
+.stats-inner{display:grid;grid-template-columns:repeat(4,1fr);gap:0;max-width:1100px;margin:0 auto;padding:0 32px}
+.stat-item{padding:0 32px;border-right:1px solid var(--border)}
+.stat-item:first-child{padding-left:0}
+.stat-item:last-child{border-right:none}
+.stat-num{font-size:32px;font-weight:300;letter-spacing:-.03em;color:var(--text);line-height:1}
+.stat-num span{color:var(--accent)}
+.stat-label{font-size:11px;color:var(--dimmed);margin-top:6px;letter-spacing:.04em;font-family:var(--mono)}
+.stat-delta{font-size:11px;color:var(--accent);margin-top:4px;letter-spacing:.03em}
+
+/* ── Section headers ─────────────────────────────── */
+.section{padding:100px 0;border-bottom:1px solid var(--border)}
+.section:last-of-type{border-bottom:none}
+.section-label{font-size:11px;letter-spacing:.12em;color:var(--accent);text-transform:uppercase;margin-bottom:12px;font-weight:500;font-family:var(--mono)}
+.section-h2{font-size:clamp(24px,3vw,38px);font-weight:300;line-height:1.15;letter-spacing:-.02em;margin-bottom:16px;font-family:var(--mono)}
+.section-h2 strong{font-weight:600}
+.section-sub{font-size:15px;color:var(--muted);line-height:1.7;max-width:540px;font-family:var(--sans);font-weight:300}
+
+/* ── Feature grid ────────────────────────────────── */
+.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:64px;background:var(--border);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.feat-card{background:var(--bg);padding:32px;transition:background .2s var(--ease)}
+.feat-card:hover{background:var(--surface)}
+.feat-icon{width:32px;height:32px;border-radius:var(--r);border:1px solid var(--border-s);display:grid;place-items:center;margin-bottom:20px;color:var(--muted);transition:color .2s,border-color .2s}
+.feat-card:hover .feat-icon{color:var(--accent);border-color:rgba(110,240,138,.3)}
+.feat-title{font-size:13px;font-weight:500;margin-bottom:8px;letter-spacing:.01em;font-family:var(--mono)}
+.feat-desc{font-size:13px;color:var(--muted);line-height:1.65;font-family:var(--sans);font-weight:300}
+.feat-tag{display:inline-block;margin-top:16px;font-size:10px;letter-spacing:.06em;color:var(--dimmed);text-transform:uppercase;border:1px solid var(--border);padding:2px 8px;border-radius:2px;font-family:var(--mono)}
+
+/* ── Log stream ──────────────────────────────────── */
+.log-section{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start;padding:100px 0;border-bottom:1px solid var(--border)}
+.log-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.log-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+.log-title{font-size:12px;font-weight:500;letter-spacing:.04em;color:var(--text)}
+.log-badge{font-size:10px;padding:2px 8px;background:rgba(110,240,138,.1);color:var(--accent);border-radius:2px;letter-spacing:.04em}
+.log-stream{padding:0;font-size:11.5px;line-height:1;max-height:320px;overflow:hidden;position:relative}
+.log-stream::after{content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,var(--surface));pointer-events:none}
+.log-entry{display:flex;gap:12px;padding:8px 16px;border-bottom:1px solid rgba(255,255,255,.03);align-items:baseline}
+.log-entry:last-child{border-bottom:none}
+.log-time{color:var(--dimmed);flex-shrink:0;font-size:11px;letter-spacing:.02em}
+.log-sev{width:32px;flex-shrink:0;text-align:center}
+.log-sev.resolved{color:var(--accent)}
+.log-sev.active{color:var(--yellow)}
+.log-sev.critical{color:var(--red)}
+.log-text{color:var(--muted);font-size:11.5px}
+.log-text strong{color:var(--text);font-weight:500}
+.log-entry.new{animation:log-slide .3s var(--ease)}
+@keyframes log-slide{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Ops metrics ─────────────────────────────────── */
+.metrics-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:0}
+.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 24px}
+.metric-name{font-size:11px;color:var(--dimmed);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+.metric-val{font-size:28px;font-weight:300;letter-spacing:-.02em;line-height:1}
+.metric-val .unit{font-size:14px;color:var(--muted);margin-left:2px}
+.metric-bar{height:3px;background:var(--border);border-radius:2px;margin-top:12px;overflow:hidden}
+.metric-fill{height:100%;border-radius:2px;background:var(--accent);transition:width 1.2s var(--ease)}
+.metric-sub{font-size:11px;color:var(--dimmed);margin-top:8px;letter-spacing:.02em}
+
+/* ── Architecture ────────────────────────────────── */
+.arch-section{padding:100px 0;border-bottom:1px solid var(--border)}
+.arch-diagram{margin-top:64px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.arch-row{display:grid;grid-template-columns:120px 1fr;border-bottom:1px solid var(--border)}
+.arch-row:last-child{border-bottom:none}
+.arch-layer{padding:20px 24px;background:rgba(255,255,255,.02);border-right:1px solid var(--border);display:flex;align-items:center}
+.arch-layer-name{font-size:11px;color:var(--dimmed);letter-spacing:.06em;text-transform:uppercase;font-weight:500;white-space:nowrap}
+.arch-nodes{display:flex;align-items:center;gap:8px;padding:12px 20px;flex-wrap:wrap}
+.arch-node{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:6px 12px;font-size:11.5px;color:var(--muted);letter-spacing:.02em;transition:border-color .2s,color .2s;cursor:default}
+.arch-node:hover{border-color:var(--border-s);color:var(--text)}
+.arch-node.accent{border-color:rgba(110,240,138,.25);color:var(--accent)}
+.arch-node svg{opacity:.5;flex-shrink:0}
+.arch-arrow{color:var(--dimmed);font-size:14px;margin:0 2px}
+
+/* ── Pricing ─────────────────────────────────────── */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:64px;background:var(--border);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.price-card{background:var(--bg);padding:36px 32px;transition:background .2s}
+.price-card:hover{background:var(--surface)}
+.price-card.featured{background:var(--surface);border-top:2px solid var(--accent)}
+.price-tier{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:16px}
+.price-amt{font-size:40px;font-weight:300;letter-spacing:-.03em;line-height:1;margin-bottom:4px}
+.price-amt sup{font-size:18px;vertical-align:top;margin-top:8px;font-weight:400;color:var(--muted)}
+.price-per{font-size:12px;color:var(--dimmed);margin-bottom:24px;letter-spacing:.02em}
+.price-desc{font-size:13px;color:var(--muted);line-height:1.65;margin-bottom:28px;font-family:var(--sans);font-weight:300;border-bottom:1px solid var(--border);padding-bottom:24px}
+.price-features{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:32px}
+.price-features li{font-size:12.5px;color:var(--muted);display:flex;gap:10px;align-items:baseline;font-family:var(--sans)}
+.price-features li::before{content:'—';color:var(--dimmed);flex-shrink:0;font-family:var(--mono)}
+.price-features li.yes{color:var(--text)}
+.price-features li.yes::before{content:'✓';color:var(--accent)}
+.price-btn{width:100%;padding:10px;font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.03em;border-radius:var(--r);cursor:pointer;transition:all .15s var(--ease)}
+.price-btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--border-s)}
+.price-btn.ghost:hover{color:var(--text);border-color:var(--border-s)}
+.price-btn.solid{background:var(--accent);color:#0C0C0A;border:none}
+.price-btn.solid:hover{background:var(--accent-d)}
+
+/* ── Social proof ────────────────────────────────── */
+.proof-section{padding:80px 0;border-bottom:1px solid var(--border)}
+.proof-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:48px;background:var(--border);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.proof-card{background:var(--bg);padding:32px;transition:background .2s}
+.proof-card:hover{background:var(--surface)}
+.proof-quote{font-size:14px;line-height:1.7;color:var(--muted);margin-bottom:24px;font-family:var(--sans);font-weight:300;font-style:italic}
+.proof-author{display:flex;align-items:center;gap:12px}
+.proof-avatar{width:32px;height:32px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:grid;place-items:center;font-size:12px;font-weight:600;color:var(--muted);flex-shrink:0}
+.proof-name{font-size:12px;font-weight:500;color:var(--text);font-family:var(--mono)}
+.proof-role{font-size:11px;color:var(--dimmed);font-family:var(--mono)}
+.logo-strip{display:flex;align-items:center;gap:40px;margin-top:56px;justify-content:center;flex-wrap:wrap;opacity:.35;filter:grayscale(1)}
+.logo-pill{font-size:12px;font-weight:500;letter-spacing:.06em;color:var(--text);font-family:var(--mono);text-transform:uppercase}
+
+/* ── FAQ ──────────────────────────────────────────── */
+.faq-section{padding:100px 0;border-bottom:1px solid var(--border)}
+.faq-list{margin-top:56px;border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;max-width:720px}
+.faq-item{border-bottom:1px solid var(--border)}
+.faq-item:last-child{border-bottom:none}
+.faq-q{width:100%;background:none;border:none;color:var(--text);font-family:var(--mono);font-size:13px;font-weight:400;text-align:left;padding:20px 24px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;letter-spacing:.01em;transition:color .15s}
+.faq-q:hover{color:var(--accent)}
+.faq-q .faq-icon{width:16px;height:16px;flex-shrink:0;color:var(--dimmed);transition:transform .25s var(--ease),color .15s}
+.faq-item.open .faq-q .faq-icon{transform:rotate(45deg);color:var(--accent)}
+.faq-a{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s var(--ease)}
+.faq-item.open .faq-a{grid-template-rows:1fr}
+.faq-a-inner{overflow:hidden}
+.faq-a-text{padding:0 24px 20px;font-size:13px;color:var(--muted);line-height:1.75;font-family:var(--sans);font-weight:300}
+
+/* ── CTA ─────────────────────────────────────────── */
+.cta-section{padding:120px 0}
+.cta-inner{max-width:640px}
+.cta-label{font-size:11px;letter-spacing:.12em;color:var(--accent);text-transform:uppercase;margin-bottom:20px;font-weight:500}
+.cta-h2{font-size:clamp(28px,3.5vw,48px);font-weight:300;letter-spacing:-.02em;line-height:1.1;margin-bottom:20px}
+.cta-h2 strong{font-weight:600}
+.cta-sub{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:40px;font-family:var(--sans);font-weight:300}
+.cta-form{display:flex;gap:8px;max-width:400px}
+.cta-input{flex:1;background:var(--surface);border:1px solid var(--border-s);border-radius:var(--r);padding:10px 14px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color .15s}
+.cta-input::placeholder{color:var(--dimmed)}
+.cta-input:focus{border-color:rgba(110,240,138,.4)}
+.cta-submit{background:var(--accent);color:#0C0C0A;border:none;border-radius:var(--r);padding:10px 20px;font-family:var(--mono);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:background .15s}
+.cta-submit:hover{background:var(--accent-d)}
+.cta-note{font-size:11px;color:var(--dimmed);margin-top:12px;letter-spacing:.03em}
+
+/* ── Footer ─────────────────────────────────────── */
+footer{border-top:1px solid var(--border);padding:48px 0}
+.footer-inner{display:flex;align-items:center;justify-content:space-between;max-width:1100px;margin:0 auto;padding:0 32px;flex-wrap:wrap;gap:24px}
+.footer-brand{font-size:12px;color:var(--dimmed);letter-spacing:.04em}
+.footer-links{display:flex;gap:24px}
+.footer-links a{font-size:12px;color:var(--dimmed);text-decoration:none;letter-spacing:.03em;transition:color .15s}
+.footer-links a:hover{color:var(--text)}
+.footer-copy{font-size:11px;color:var(--dimmed);letter-spacing:.03em}
+
+/* ── Reveal ─────────────────────────────────────── */
+.rv{transition:opacity .5s var(--ease),transform .5s var(--ease)}
+.rv.pre{opacity:0;transform:translateY(20px)}
+
+/* ── Scroll progress ────────────────────────────── */
+.progress-bar{position:fixed;top:56px;left:0;right:0;height:1px;z-index:99;background:var(--border);transform-origin:left}
+.progress-fill{height:100%;background:var(--accent);transform-origin:left;transform:scaleX(0);transition:transform .1s linear}
+
+/* ── Mobile ─────────────────────────────────────── */
+@media(max-width:900px){
+  .hero-inner{grid-template-columns:1fr;gap:48px}
+  .terminal{display:none}
+  .stats-inner{grid-template-columns:repeat(2,1fr);gap:32px}
+  .stat-item{border-right:none;padding:0}
+  .feature-grid{grid-template-columns:1fr}
+  .log-section{grid-template-columns:1fr;gap:40px;padding:60px 0}
+  .pricing-grid{grid-template-columns:1fr}
+  .proof-grid{grid-template-columns:1fr}
+  .arch-row{grid-template-columns:1fr}
+  .arch-layer{display:none}
+  .metrics-grid{grid-template-columns:1fr}
+  .wrap,.wrap-wide,.nav-inner,.hero-inner,.stats-inner,.footer-inner{padding-left:20px;padding-right:20px}
+  .nav-links{display:none}
+  .hero{padding:120px 0 64px}
+  .section{padding:64px 0}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-mark">
+        <svg viewBox="0 0 12 12" fill="none"><path d="M2 2h4l4 4-4 4H2V6l2-2V2z" fill="#0C0C0A"/></svg>
+      </div>
+      VRYX OS
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="nav-status">
+        <div class="status-dot"></div>
+        All systems operational
+      </div>
+      <a href="#early-access" class="nav-cta">Request access</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── HERO ──────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-label rv">v2.4.1 — General Availability</div>
+      <h1 class="hero-h1 rv">
+        Operational intelligence<br>
+        for <strong>teams that can't afford</strong><br>
+        <em>to be surprised.</em>
+      </h1>
+      <p class="hero-body rv">
+        VRYX OS aggregates signals from your entire stack — infrastructure, queues, deployments, and people — into a single coherent view. Know before your customers do.
+      </p>
+      <div class="hero-actions rv">
+        <a href="#early-access" class="btn-primary">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Start free trial
+        </a>
+        <a href="#architecture" class="btn-ghost">
+          View architecture
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+      <p class="hero-meta rv">No credit card · 14-day trial · SOC 2 Type II certified</p>
+    </div>
+
+    <!-- Terminal -->
+    <div class="terminal rv">
+      <div class="terminal-bar">
+        <div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div>
+        <span class="terminal-label">vryx — ops-log — live</span>
+      </div>
+      <div class="terminal-body" id="terminal-output">
+        <div class="t-line"><span class="t-ts">09:41:02</span><span class="t-tag ok">OK</span><span class="t-msg">deploy/prod — <span class="t-dim">sha:4f2c9a1</span></span></div>
+        <div class="t-line"><span class="t-ts">09:41:08</span><span class="t-tag info">INFO</span><span class="t-msg">health-check passed <span class="t-dim">3/3 nodes</span></span></div>
+        <div class="t-line"><span class="t-ts">09:41:14</span><span class="t-tag warn">WARN</span><span class="t-msg">queue depth ↑ <span class="t-dim">workers=4→8</span></span></div>
+        <div class="t-line"><span class="t-ts">09:41:20</span><span class="t-tag ok">OK</span><span class="t-msg">queue normalised <span class="t-dim">p99=210ms</span></span></div>
+        <div class="t-line"><span class="t-ts">09:41:31</span><span class="t-tag info">INFO</span><span class="t-msg">incident #2041 auto-resolved</span></div>
+        <div class="t-line"><span class="t-ts">09:41:45</span><span class="t-tag ok">OK</span><span class="t-msg">alert suppressed <span class="t-dim">maintenance window</span></span></div>
+        <div class="t-line"><span class="t-ts">09:41:58</span><span class="t-tag info">INFO</span><span class="t-msg">runbook executed <span class="t-dim">db-connection-pool</span></span></div>
+        <div class="t-line"><span class="t-ts">09:42:11</span><span class="t-tag ok">OK</span><span class="t-msg">SLO window reset <span class="t-dim">99.97% / 30d</span></span></div>
+        <div class="t-line"><span class="t-ts">09:42:22</span><span class="t-tag info">INFO</span><span class="t-msg">anomaly detected — <span class="t-dim">investigating</span></span></div>
+        <div class="t-line"><span class="t-ts">09:42:30</span><span class="t-tag ok">OK</span><span class="t-msg">root cause: cache miss <span class="t-dim">remediated</span></span></div>
+        <div class="t-line"><span class="t-ts">09:42:44</span><span class="t-tag info">INFO</span><span class="t-msg">on-call: eng-2 notified</span></div>
+        <div class="t-line" id="t-live"><span class="t-ts" id="t-time">09:42:58</span><span class="t-tag ok">OK</span><span class="t-msg">monitoring active</span><span class="t-cursor"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── STATS ──────────────────────────────────────────── -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-item rv">
+      <div class="stat-num"><span id="s1">99.97</span>%</div>
+      <div class="stat-label">// average uptime across fleet</div>
+      <div class="stat-delta">↑ 0.3% vs prior quarter</div>
+    </div>
+    <div class="stat-item rv">
+      <div class="stat-num"><span id="s2">4.1</span><span style="font-size:20px;color:var(--muted)">min</span></div>
+      <div class="stat-label">// median time-to-resolve</div>
+      <div class="stat-delta">↓ 68% from manual triage</div>
+    </div>
+    <div class="stat-item rv">
+      <div class="stat-num"><span id="s3">840</span><span style="font-size:20px;color:var(--muted)">k</span></div>
+      <div class="stat-label">// incidents auto-remediated / mo</div>
+      <div class="stat-delta">no human intervention</div>
+    </div>
+    <div class="stat-item rv">
+      <div class="stat-num"><span id="s4">12</span><span style="font-size:20px;color:var(--muted)">+</span></div>
+      <div class="stat-label">// integrations shipped</div>
+      <div class="stat-delta">Slack · PagerDuty · Datadog · more</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FEATURES ───────────────────────────────────────── -->
+<section class="section" id="features">
+  <div class="wrap">
+    <div class="section-label rv">Core capabilities</div>
+    <h2 class="section-h2 rv">Built for <strong>engineering teams</strong><br>who operate at scale.</h2>
+    <p class="section-sub rv">Every feature exists because a real team asked for it. No bloat. No AI magic tricks.</p>
+
+    <div class="feature-grid">
+      <div class="feat-card rv">
+        <div class="feat-icon">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v3l2 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="feat-title">Real-time signal aggregation</div>
+        <div class="feat-desc">Every metric, log, and event from your stack — normalised into one stream. No tab-switching, no context loss.</div>
+        <div class="feat-tag">infrastructure</div>
+      </div>
+      <div class="feat-card rv">
+        <div class="feat-icon">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="feat-title">Automated runbook execution</div>
+        <div class="feat-desc">Define once, trigger automatically. VRYX runs your playbooks and logs every action — auditable, repeatable.</div>
+        <div class="feat-tag">automation</div>
+      </div>
+      <div class="feat-card rv">
+        <div class="feat-icon">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="2" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="2" y="8" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="8" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+        </div>
+        <div class="feat-title">SLO tracking and alerting</div>
+        <div class="feat-desc">Set your error budgets. Know immediately when you're burning rate — not after the quarter ends.</div>
+        <div class="feat-tag">reliability</div>
+      </div>
+      <div class="feat-card rv">
+        <div class="feat-icon">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 11L7 3l5 8H2z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M7 7v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="feat-title">Anomaly correlation engine</div>
+        <div class="feat-desc">Surface what's actually related. Group noisy alerts into coherent incidents before your team drowns in pings.</div>
+        <div class="feat-tag">intelligence</div>
+      </div>
+      <div class="feat-card rv">
+        <div class="feat-icon">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v2M7 10v2M2 7h2M10 7h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="7" cy="7" r="2.5" stroke="currentColor" stroke-width="1.2"/></svg>
+        </div>
+        <div class="feat-title">On-call scheduling</div>
+        <div class="feat-desc">Rotations, escalation paths, and overrides — managed without spreadsheets. Integrates with your existing toolchain.</div>
+        <div class="feat-tag">people ops</div>
+      </div>
+      <div class="feat-card rv">
+        <div class="feat-icon">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 4h10M2 7h7M2 10h5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="feat-title">Post-incident reporting</div>
+        <div class="feat-desc">Auto-generated timelines, contributing factors, and action items. MTTR down by 70%. Blame-free by default.</div>
+        <div class="feat-tag">learning</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── OPS LOG ─────────────────────────────────────────── -->
+<div class="wrap">
+  <div class="log-section">
+    <div>
+      <div class="section-label rv">Live operations</div>
+      <h2 class="section-h2 rv">Your stack,<br><strong>always accounted for.</strong></h2>
+      <p class="section-sub rv" style="margin-bottom:40px">VRYX monitors continuously and acts immediately. Not every alert needs a human — let the platform handle the routine.</p>
+      <div class="metrics-grid">
+        <div class="metric-card rv">
+          <div class="metric-name">// error rate</div>
+          <div class="metric-val">0.03<span class="unit">%</span></div>
+          <div class="metric-bar"><div class="metric-fill" style="width:3%"></div></div>
+          <div class="metric-sub">threshold: 0.1% · nominal</div>
+        </div>
+        <div class="metric-card rv">
+          <div class="metric-name">// p99 latency</div>
+          <div class="metric-val">184<span class="unit">ms</span></div>
+          <div class="metric-bar"><div class="metric-fill" style="width:37%"></div></div>
+          <div class="metric-sub">SLO: 500ms · 37% of budget</div>
+        </div>
+        <div class="metric-card rv">
+          <div class="metric-name">// deploy frequency</div>
+          <div class="metric-val">14<span class="unit">/day</span></div>
+          <div class="metric-bar"><div class="metric-fill" style="width:70%"></div></div>
+          <div class="metric-sub">↑ 2× from last month</div>
+        </div>
+        <div class="metric-card rv">
+          <div class="metric-name">// active incidents</div>
+          <div class="metric-val" style="color:var(--accent)">0</div>
+          <div class="metric-bar"><div class="metric-fill" style="width:0%"></div></div>
+          <div class="metric-sub">last: 09:41 · auto-resolved</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="log-panel rv">
+        <div class="log-header">
+          <span class="log-title">ops-stream · prod</span>
+          <span class="log-badge">LIVE</span>
+        </div>
+        <div class="log-stream" id="log-stream">
+          <div class="log-entry"><span class="log-time">09:41:02</span><span class="log-sev resolved">RSLV</span><span class="log-text"><strong>deploy/prod</strong> — canary pass</span></div>
+          <div class="log-entry"><span class="log-time">09:41:08</span><span class="log-sev resolved">RSLV</span><span class="log-text"><strong>health</strong> — 3/3 nodes passing</span></div>
+          <div class="log-entry"><span class="log-time">09:41:14</span><span class="log-sev active">ACTV</span><span class="log-text"><strong>queue</strong> — depth spike · scaling</span></div>
+          <div class="log-entry"><span class="log-time">09:41:20</span><span class="log-sev resolved">RSLV</span><span class="log-text"><strong>queue</strong> — normalised p99=210ms</span></div>
+          <div class="log-entry"><span class="log-time">09:41:31</span><span class="log-sev resolved">RSLV</span><span class="log-text"><strong>#2041</strong> — incident auto-closed</span></div>
+          <div class="log-entry"><span class="log-time">09:41:45</span><span class="log-sev resolved">RSLV</span><span class="log-text"><strong>alert</strong> — suppressed (maint.)</span></div>
+          <div class="log-entry"><span class="log-time">09:42:11</span><span class="log-sev resolved">RSLV</span><span class="log-text"><strong>runbook</strong> — db-conn-pool exec</span></div>
+          <div class="log-entry"><span class="log-time">09:42:30</span><span class="log-sev resolved">RSLV</span><span class="log-text"><strong>anomaly</strong> — cache miss · fixed</span></div>
+          <div class="log-entry new"><span class="log-time">09:42:58</span><span class="log-sev resolved">RSLV</span><span class="log-text"><strong>monitor</strong> — all clear</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ARCHITECTURE ───────────────────────────────────── -->
+<section class="arch-section" id="architecture">
+  <div class="wrap">
+    <div class="section-label rv">How it works</div>
+    <h2 class="section-h2 rv">Designed to be <strong>understood,<br>not just trusted.</strong></h2>
+    <p class="section-sub rv">Open APIs, documented internals, no black-box inference. You know exactly what VRYX is doing and why.</p>
+
+    <div class="arch-diagram rv">
+      <div class="arch-row">
+        <div class="arch-layer"><span class="arch-layer-name">Ingest</span></div>
+        <div class="arch-nodes">
+          <div class="arch-node"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1"/></svg>Prometheus</div>
+          <div class="arch-node"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1"/></svg>Datadog</div>
+          <div class="arch-node"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1"/></svg>CloudWatch</div>
+          <div class="arch-node"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1"/></svg>OpenTelemetry</div>
+          <div class="arch-node"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1"/></svg>Webhooks</div>
+          <span class="arch-arrow">→</span>
+          <div class="arch-node accent">Ingest API</div>
+        </div>
+      </div>
+      <div class="arch-row">
+        <div class="arch-layer"><span class="arch-layer-name">Process</span></div>
+        <div class="arch-nodes">
+          <div class="arch-node accent">Signal Router</div>
+          <span class="arch-arrow">→</span>
+          <div class="arch-node accent">Correlation Engine</div>
+          <span class="arch-arrow">→</span>
+          <div class="arch-node accent">SLO Calculator</div>
+          <span class="arch-arrow">→</span>
+          <div class="arch-node accent">Runbook Executor</div>
+        </div>
+      </div>
+      <div class="arch-row">
+        <div class="arch-layer"><span class="arch-layer-name">Deliver</span></div>
+        <div class="arch-nodes">
+          <div class="arch-node"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="1" y="1" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1"/></svg>Dashboard</div>
+          <div class="arch-node"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="1" y="1" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1"/></svg>Slack</div>
+          <div class="arch-node"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="1" y="1" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1"/></svg>PagerDuty</div>
+          <div class="arch-node"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="1" y="1" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1"/></svg>REST API</div>
+          <div class="arch-node"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="1" y="1" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1"/></svg>Webhooks out</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PRICING ────────────────────────────────────────── -->
+<section class="section" id="pricing">
+  <div class="wrap">
+    <div class="section-label rv">Pricing</div>
+    <h2 class="section-h2 rv">No usage traps.<br><strong>Flat, predictable pricing.</strong></h2>
+    <p class="section-sub rv">Every tier includes unlimited alerts, full API access, and SOC 2 compliance. Pay for seats, not events.</p>
+
+    <div class="pricing-grid">
+      <div class="price-card rv">
+        <div class="price-tier">Startup</div>
+        <div class="price-amt"><sup>$</sup>49</div>
+        <div class="price-per">per seat / month · billed annually</div>
+        <div class="price-desc">For teams finding their operational rhythm. Core monitoring and alerting included.</div>
+        <ul class="price-features">
+          <li class="yes">Up to 10 seats</li>
+          <li class="yes">Unlimited alerts</li>
+          <li class="yes">30-day retention</li>
+          <li class="yes">5 runbooks</li>
+          <li>SLO tracking</li>
+          <li>SSO / SAML</li>
+          <li>Dedicated support</li>
+        </ul>
+        <button class="price-btn ghost">Start free trial</button>
+      </div>
+      <div class="price-card featured rv">
+        <div class="price-tier">Scale</div>
+        <div class="price-amt"><sup>$</sup>89</div>
+        <div class="price-per">per seat / month · billed annually</div>
+        <div class="price-desc">For engineering orgs running multiple services in production. Automation and SLO tooling included.</div>
+        <ul class="price-features">
+          <li class="yes">Up to 50 seats</li>
+          <li class="yes">Unlimited alerts</li>
+          <li class="yes">90-day retention</li>
+          <li class="yes">Unlimited runbooks</li>
+          <li class="yes">SLO tracking</li>
+          <li class="yes">SSO / SAML</li>
+          <li>Dedicated support</li>
+        </ul>
+        <button class="price-btn solid">Start free trial</button>
+      </div>
+      <div class="price-card rv">
+        <div class="price-tier">Enterprise</div>
+        <div class="price-amt" style="font-size:28px;margin-top:8px">Custom</div>
+        <div class="price-per">talk to us first</div>
+        <div class="price-desc">For organisations with complex compliance requirements, custom integrations, or large seat counts.</div>
+        <ul class="price-features">
+          <li class="yes">Unlimited seats</li>
+          <li class="yes">Unlimited alerts</li>
+          <li class="yes">Custom retention</li>
+          <li class="yes">Unlimited runbooks</li>
+          <li class="yes">SLO tracking</li>
+          <li class="yes">SSO / SAML</li>
+          <li class="yes">Dedicated support</li>
+        </ul>
+        <button class="price-btn ghost">Contact sales</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PROOF ──────────────────────────────────────────── -->
+<section class="proof-section">
+  <div class="wrap">
+    <div class="section-label rv">What teams say</div>
+    <h2 class="section-h2 rv">Trusted by <strong>engineering teams</strong><br>who ship frequently.</h2>
+    <div class="proof-grid">
+      <div class="proof-card rv">
+        <p class="proof-quote">"We replaced three separate tools with VRYX. The correlation engine alone saved us from a P1 we would have missed entirely."</p>
+        <div class="proof-author">
+          <div class="proof-avatar">AK</div>
+          <div>
+            <div class="proof-name">A. Kovalenko</div>
+            <div class="proof-role">Staff SRE · Fintech startup</div>
+          </div>
+        </div>
+      </div>
+      <div class="proof-card rv">
+        <p class="proof-quote">"The runbook executor is the feature I didn't know I needed. Our MTTR went from 40 minutes to under 5 in the first month."</p>
+        <div class="proof-author">
+          <div class="proof-avatar">TM</div>
+          <div>
+            <div class="proof-name">T. Morrison</div>
+            <div class="proof-role">VP Engineering · SaaS platform</div>
+          </div>
+        </div>
+      </div>
+      <div class="proof-card rv">
+        <p class="proof-quote">"Finally a product that respects that engineers are smart. No wizard setup, no magic. Clear docs, clean API, does exactly what it says."</p>
+        <div class="proof-author">
+          <div class="proof-avatar">RL</div>
+          <div>
+            <div class="proof-name">R. Lim</div>
+            <div class="proof-role">Platform Eng Lead · E-commerce</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="logo-strip rv">
+      <span class="logo-pill">Vercel</span>
+      <span class="logo-pill">Linear</span>
+      <span class="logo-pill">Resend</span>
+      <span class="logo-pill">Supabase</span>
+      <span class="logo-pill">Neon</span>
+      <span class="logo-pill">Railway</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── FAQ ────────────────────────────────────────────── -->
+<section class="faq-section" id="faq">
+  <div class="wrap">
+    <div class="section-label rv">FAQ</div>
+    <h2 class="section-h2 rv">Straight answers to<br><strong>straight questions.</strong></h2>
+    <div class="faq-list rv">
+      <div class="faq-item">
+        <button class="faq-q">How does the correlation engine actually work?<svg class="faq-icon" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+        <div class="faq-a"><div class="faq-a-inner"><p class="faq-a-text">VRYX groups alerts using time-window clustering and service dependency graphs. You define your topology once via config file or API; the engine uses that graph to determine blast radius and suppress redundant pages. No "AI" inference — deterministic, auditable logic you can inspect.</p></div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Can I self-host?<svg class="faq-icon" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+        <div class="faq-a"><div class="faq-a-inner"><p class="faq-a-text">Yes. Enterprise customers can deploy VRYX inside their own VPC using the Docker image and Helm chart. State is stored in Postgres + Redis — nothing proprietary. Cloud and self-hosted versions share the same codebase.</p></div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">What's the data retention policy?<svg class="faq-icon" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+        <div class="faq-a"><div class="faq-a-inner"><p class="faq-a-text">Cloud: 30 days on Startup, 90 days on Scale, custom on Enterprise. All data is encrypted at rest (AES-256) and in transit (TLS 1.3). You can export your full dataset at any time via the REST API. Self-hosted customers manage retention themselves.</p></div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">How do runbooks work and can I version-control them?<svg class="faq-icon" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+        <div class="faq-a"><div class="faq-a-inner"><p class="faq-a-text">Runbooks are YAML files with typed steps: HTTP calls, shell commands, Slack messages, PagerDuty escalations. They live in your Git repo and VRYX syncs them via webhook. Every execution is logged with full step output — searchable by incident ID.</p></div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">What happens when you're down?<svg class="faq-icon" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+        <div class="faq-a"><div class="faq-a-inner"><p class="faq-a-text">The ingest pipeline is multi-region active-active. The dashboard has a degraded mode that shows cached state. On-call notifications have a direct-to-carrier SMS fallback. Our SLA is 99.9% uptime — we publish our own ops data at status.vryx.io.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ────────────────────────────────────────────── -->
+<section class="cta-section" id="early-access">
+  <div class="wrap">
+    <div class="cta-inner rv">
+      <div class="cta-label">Get early access</div>
+      <h2 class="cta-h2">Stop being the last<br><strong>to know.</strong></h2>
+      <p class="cta-sub">Start your 14-day trial. No credit card required. Full feature access from day one.</p>
+      <form class="cta-form" onsubmit="return false">
+        <input class="cta-input" type="email" placeholder="you@yourcompany.com" autocomplete="email">
+        <button class="cta-submit">Request access →</button>
+      </form>
+      <p class="cta-note">SOC 2 Type II certified · GDPR compliant · data never sold</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ──────────────────────────────────────────── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">VRYX OS — v2.4.1</div>
+    <div class="footer-links">
+      <a href="#">Docs</a>
+      <a href="#">Status</a>
+      <a href="#">Changelog</a>
+      <a href="#">Security</a>
+      <a href="#">Terms</a>
+      <a href="#">Privacy</a>
+    </div>
+    <div class="footer-copy">© 2026 VRYX Inc.</div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+
+  // ── Scroll progress ──────────────────────────────────
+  const fill = document.getElementById('progress');
+  function updateProgress(){
+    const h = document.documentElement.scrollHeight - innerHeight;
+    if(h > 0) fill.style.transform = 'scaleX(' + (scrollY / h) + ')';
+  }
+  addEventListener('scroll', updateProgress, {passive:true});
+
+  // ── Reveal system ────────────────────────────────────
+  const revs = [...document.querySelectorAll('.rv')];
+  const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(!reduce){
+    revs.forEach(el=>{
+      if(el.getBoundingClientRect().top > innerHeight * 0.92) el.classList.add('pre');
+    });
+    function reveal(){
+      for(let i = revs.length-1; i >= 0; i--){
+        const el = revs[i];
+        if(el.classList.contains('pre') && el.getBoundingClientRect().top < innerHeight * 0.92){
+          el.classList.remove('pre');
+        }
+      }
+    }
+    addEventListener('scroll', reveal, {passive:true});
+    addEventListener('resize', reveal, {passive:true});
+    reveal();
+    setTimeout(()=>revs.forEach(el=>el.classList.remove('pre')), 3500);
+  }
+
+  // ── Live terminal clock ──────────────────────────────
+  const tTime = document.getElementById('t-time');
+  if(tTime){
+    const base = Date.now();
+    const startH = 9, startM = 42, startS = 58;
+    setInterval(()=>{
+      const elapsed = Math.floor((Date.now()-base)/1000);
+      let s = (startS + elapsed) % 60;
+      let m = (startM + Math.floor((startS+elapsed)/60)) % 60;
+      let h = (startH + Math.floor((startM*60+startS+elapsed)/3600)) % 24;
+      tTime.textContent = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    }, 1000);
+  }
+
+  // ── Append random log entries ────────────────────────
+  const logStream = document.getElementById('log-stream');
+  const logEntries = [
+    ['RSLV','<strong>cert</strong> — auto-renewed 90d'],
+    ['RSLV','<strong>deploy/staging</strong> — passed smoke tests'],
+    ['ACTV','<strong>db</strong> — connection spike · watching'],
+    ['RSLV','<strong>db</strong> — normalised (idle=40)'],
+    ['RSLV','<strong>cron/cleanup</strong> — completed 1.2s'],
+    ['RSLV','<strong>cache</strong> — warm hit ratio 98.4%'],
+    ['ACTV','<strong>cdn</strong> — purge in progress'],
+    ['RSLV','<strong>cdn</strong> — purge complete 4s'],
+    ['RSLV','<strong>billing-worker</strong> — 2,041 jobs processed'],
+    ['RSLV','<strong>alert</strong> — deduplicated (×3)'],
+  ];
+  let logIdx = 0;
+  if(logStream){
+    setInterval(()=>{
+      const [sev, text] = logEntries[logIdx % logEntries.length];
+      logIdx++;
+      const now = new Date();
+      const ts = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry new';
+      const sevClass = sev === 'RSLV' ? 'resolved' : sev === 'ACTV' ? 'active' : 'critical';
+      entry.innerHTML = `<span class="log-time">${ts}</span><span class="log-sev ${sevClass}">${sev}</span><span class="log-text">${text}</span>`;
+      logStream.appendChild(entry);
+      if(logStream.children.length > 14) logStream.removeChild(logStream.firstElementChild);
+    }, 3200);
+  }
+
+  // ── FAQ accordion ────────────────────────────────────
+  document.querySelectorAll('.faq-q').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const item = btn.closest('.faq-item');
+      const wasOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));
+      if(!wasOpen) item.classList.add('open');
+    });
+  });
+
+  // ── Magnetic primary CTA ─────────────────────────────
+  document.querySelectorAll('.btn-primary,.nav-cta').forEach(btn=>{
+    btn.addEventListener('mousemove',e=>{
+      const r = btn.getBoundingClientRect();
+      const x = e.clientX - r.left - r.width/2;
+      const y = e.clientY - r.top - r.height/2;
+      btn.style.transform = `translate(${x*.15}px,${y*.25}px)`;
+    });
+    btn.addEventListener('mouseleave',()=>{ btn.style.transform=''; });
+  });
+
+})();
+</script>
+</body>
+</html>

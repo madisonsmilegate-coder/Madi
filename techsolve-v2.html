@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TechSolve IT Solutions PH — Your Business Never Slows Down</title>
+<meta name="description" content="Reliable IT support, cybersecurity, and cloud solutions for Philippine businesses. Fix problems before they cost you." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* =====================================================================
+   Design System — "Command Center" theme
+   Headlines: Sora  |  Body: Inter
+   Primary #0B1424 (deep navy)  |  Accent #3B82F6 → #60A5FA
+   Neutrals: #F7F9FC / #E3E8F0 / #5B6B82
+   Radius 12px · shadows soft · transitions 150ms ease
+===================================================================== */
+:root{
+  --primary:#0B1424;
+  --primary-2:#101D33;
+  --accent:#3B82F6;
+  --accent-lt:#60A5FA;
+  --accent-dk:#2563EB;
+  --n1:#F7F9FC;
+  --n2:#E3E8F0;
+  --n3:#5B6B82;
+  --r:12px;
+  --shadow:0 4px 12px rgba(11,20,36,.07);
+  --shadow-lg:0 16px 48px rgba(11,20,36,.16);
+  --font-h:'Sora',sans-serif;
+  --font-b:'Inter',system-ui,sans-serif;
+  --t:150ms ease;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-b);font-size:16px;line-height:1.65;color:var(--n3);background:#fff}
+h1,h2,h3{font-family:var(--font-h);color:var(--primary);line-height:1.12}
+h1{font-size:clamp(2.3rem,5.5vw,3.8rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(1.6rem,3vw,2.4rem);font-weight:700;letter-spacing:-.01em}
+h3{font-size:1.08rem;font-weight:700}
+p{max-width:60ch}
+img{max-width:100%;display:block}
+a{text-decoration:none;color:inherit}
+.wrap{max-width:1140px;margin:0 auto;padding:0 24px}
+.btn{
+  display:inline-flex;align-items:center;gap:10px;
+  background:var(--accent);color:#fff;
+  font-weight:600;font-size:.92rem;
+  padding:14px 30px;border-radius:var(--r);
+  border:none;cursor:pointer;
+  transition:background var(--t),transform var(--t),box-shadow var(--t);
+}
+.btn:hover{background:var(--accent-dk);transform:translateY(-2px);box-shadow:0 8px 20px rgba(59,130,246,.35)}
+.btn .arr{transition:transform var(--t)}
+.btn:hover .arr{transform:translateX(3px)}
+.btn-ghost{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.25)}
+.btn-ghost:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.5);box-shadow:none}
+.section-label{
+  font-size:.75rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:14px;
+}
+
+/* ================================================== NAV (dark, sticky) */
+.nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(11,20,36,.85);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:72px;gap:16px}
+.brand{display:flex;align-items:center;gap:11px;font-family:var(--font-h);font-weight:800;font-size:1.05rem;color:#fff}
+.brand-icon{
+  width:36px;height:36px;border-radius:9px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent) 0%,var(--accent-lt) 100%);
+  display:grid;place-items:center;
+}
+.brand-icon svg{color:#fff}
+.brand small{font-weight:400;font-size:.72rem;color:rgba(255,255,255,.5);display:block;letter-spacing:.1em}
+.nav-links{display:none;gap:34px;list-style:none}
+.nav-links a{font-size:.9rem;font-weight:500;color:rgba(255,255,255,.65);transition:color var(--t)}
+.nav-links a:hover{color:#fff}
+@media(min-width:820px){.nav-links{display:flex}}
+.nav .btn{padding:11px 22px;font-size:.85rem}
+
+/* ============================================== HERO (dark, dramatic) */
+.hero{
+  background:
+    radial-gradient(900px 500px at 80% -10%, rgba(59,130,246,.22), transparent 60%),
+    radial-gradient(700px 400px at 0% 110%, rgba(59,130,246,.10), transparent 60%),
+    var(--primary);
+  color:rgba(255,255,255,.7);
+  padding:96px 0 120px;
+  position:relative;
+  overflow:hidden;
+}
+.hero::before{ /* faint grid texture */
+  content:"";position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size:56px 56px;
+  mask-image:radial-gradient(800px 600px at 70% 20%,#000 0%,transparent 75%);
+}
+.hero .wrap{display:grid;gap:64px;align-items:center;position:relative}
+.hero h1{color:#fff;margin-bottom:22px}
+.hero h1 em{font-style:normal;color:var(--accent-lt)}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:9px;
+  font-size:.76rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent-lt);
+  background:rgba(59,130,246,.12);
+  border:1px solid rgba(59,130,246,.3);
+  padding:6px 14px;border-radius:99px;
+  margin-bottom:26px;
+}
+.hero-eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--accent-lt);box-shadow:0 0 8px var(--accent-lt)}
+.hero-sub{font-size:1.08rem;margin-bottom:40px;line-height:1.75;max-width:50ch}
+.hero-actions{display:flex;flex-wrap:wrap;gap:14px}
+.hero-trust{margin-top:44px;display:flex;align-items:center;gap:12px;font-size:.85rem;color:rgba(255,255,255,.55)}
+.hero-trust-avatars{display:flex}
+.hero-trust-avatars span{
+  width:30px;height:30px;border-radius:50%;
+  border:2px solid var(--primary);
+  background:var(--primary-2);
+  margin-left:-8px;
+  font-size:.58rem;font-weight:700;
+  display:grid;place-items:center;color:rgba(255,255,255,.8);
+  font-family:var(--font-h);
+}
+.hero-trust-avatars span:first-child{margin-left:0}
+.hero-trust b{color:#fff;font-weight:600}
+
+/* hero visual: framed screenshot + floating stat chips */
+.hero-visual{position:relative}
+.hero-img-wrap{
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.14);
+  overflow:hidden;
+  box-shadow:var(--shadow-lg), 0 0 80px rgba(59,130,246,.18);
+}
+.hero-img-wrap img{width:100%;height:auto}
+.chip{
+  position:absolute;
+  display:flex;align-items:center;gap:10px;
+  background:rgba(16,29,51,.92);
+  border:1px solid rgba(255,255,255,.14);
+  backdrop-filter:blur(8px);
+  border-radius:var(--r);
+  padding:12px 16px;
+  box-shadow:var(--shadow-lg);
+}
+.chip .chip-ico{
+  width:34px;height:34px;border-radius:9px;flex-shrink:0;
+  background:rgba(59,130,246,.18);display:grid;place-items:center;
+}
+.chip .chip-ico svg{color:var(--accent-lt)}
+.chip b{font-family:var(--font-h);font-size:1rem;color:#fff;display:block;line-height:1.1}
+.chip small{font-size:.7rem;color:rgba(255,255,255,.55);letter-spacing:.04em}
+.chip-1{top:-22px;right:-14px}
+.chip-2{bottom:-24px;left:-14px}
+@media(max-width:899px){
+  .chip-1{top:-18px;right:8px}
+  .chip-2{bottom:-18px;left:8px}
+}
+@media(min-width:900px){.hero .wrap{grid-template-columns:1.05fr 1fr}}
+
+/* ====================================================== PROOF BAR */
+.proof-bar{background:#fff;border-bottom:1px solid var(--n2);padding:30px 0}
+.proof-bar .wrap{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 44px;align-items:center}
+.proof-item{display:flex;align-items:center;gap:9px;font-size:.86rem;font-weight:500;color:var(--n3)}
+.proof-item svg{color:var(--accent);flex-shrink:0}
+
+/* ======================================================= FEATURES */
+.features{padding:104px 0;background:var(--n1)}
+.section-head{margin-bottom:60px;max-width:46ch}
+.section-head h2{margin-bottom:14px}
+.cards{display:grid;gap:24px}
+.card{
+  position:relative;
+  background:#fff;
+  border:1px solid var(--n2);
+  border-radius:var(--r);
+  box-shadow:var(--shadow);
+  padding:34px 30px 30px;
+  transition:box-shadow var(--t),transform var(--t),border-color var(--t);
+  overflow:hidden;
+}
+.card::after{ /* accent reveal line */
+  content:"";position:absolute;left:0;top:0;height:3px;width:100%;
+  background:var(--accent);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform var(--t);
+}
+.card:hover{box-shadow:0 12px 32px rgba(11,20,36,.12);transform:translateY(-4px);border-color:rgba(59,130,246,.3)}
+.card:hover::after{transform:scaleX(1)}
+.card-num{
+  position:absolute;top:24px;right:26px;
+  font-family:var(--font-h);font-weight:800;font-size:.78rem;
+  color:var(--n2);letter-spacing:.08em;
+  transition:color var(--t);
+}
+.card:hover .card-num{color:var(--accent)}
+.card-icon{
+  width:46px;height:46px;border-radius:11px;
+  background:rgba(59,130,246,.09);
+  display:grid;place-items:center;
+  margin-bottom:22px;
+  transition:background var(--t);
+}
+.card:hover .card-icon{background:rgba(59,130,246,.16)}
+.card-icon svg{color:var(--accent)}
+.card h3{margin-bottom:9px}
+.card p{font-size:.93rem}
+@media(min-width:640px){.cards{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:960px){.cards{grid-template-columns:repeat(3,1fr)}}
+
+/* ===================================================== TESTIMONIAL */
+.testimonial{padding:104px 0;background:#fff}
+.testimonial .inner{
+  max-width:780px;margin:0 auto;
+  border:1px solid var(--n2);border-radius:16px;
+  box-shadow:var(--shadow);
+  padding:clamp(32px,6vw,60px);
+  position:relative;
+}
+.testimonial .inner::before{
+  content:"“";
+  position:absolute;top:-6px;left:28px;
+  font-family:var(--font-h);font-weight:800;font-size:6rem;
+  color:rgba(59,130,246,.14);line-height:1;
+}
+.stars{display:flex;gap:5px;margin-bottom:22px}
+.stars svg{color:#F59E0B}
+.testimonial blockquote{
+  font-family:var(--font-h);
+  font-size:clamp(1.15rem,2.4vw,1.5rem);
+  font-weight:600;
+  color:var(--primary);
+  line-height:1.4;
+  margin-bottom:30px;
+}
+.testimonial-author{display:flex;align-items:center;gap:14px}
+.author-avatar{
+  width:46px;height:46px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent-lt));
+  display:grid;place-items:center;
+  font-family:var(--font-h);font-weight:800;font-size:.85rem;color:#fff;
+}
+.author-name{font-weight:600;color:var(--primary);font-size:.92rem}
+.author-role{font-size:.82rem}
+
+/* ======================================================= FINAL CTA */
+.final-cta{
+  background:
+    radial-gradient(800px 400px at 50% -20%, rgba(59,130,246,.25), transparent 65%),
+    var(--primary);
+  padding:110px 0;
+  color:rgba(255,255,255,.65);
+  position:relative;overflow:hidden;
+}
+.final-cta::before{
+  content:"";position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+  background-size:56px 56px;
+}
+.final-cta .wrap{position:relative;text-align:center}
+.final-cta h2{color:#fff;margin-bottom:18px;font-size:clamp(1.8rem,4vw,2.8rem)}
+.final-cta p{margin:0 auto 40px;max-width:52ch}
+.final-cta .section-label{color:var(--accent-lt)}
+.cta-contacts{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:12px 36px;
+  margin-top:48px;font-size:.88rem;
+}
+.cta-contacts a{display:flex;align-items:center;gap:9px;color:rgba(255,255,255,.7);transition:color var(--t)}
+.cta-contacts a:hover{color:#fff}
+.cta-contacts svg{color:var(--accent-lt)}
+
+/* ========================================================== FOOTER */
+.footer{background:#060D1A;padding:34px 0}
+.footer .wrap{
+  display:flex;flex-wrap:wrap;gap:10px 28px;align-items:center;justify-content:space-between;
+  font-size:.82rem;color:rgba(255,255,255,.35);
+}
+.footer a{color:rgba(255,255,255,.45);transition:color var(--t)}
+.footer a:hover{color:#fff}
+</style>
+</head>
+<body>
+
+<!-- ============================================================ NAV -->
+<header class="nav" id="top">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <span class="brand-icon">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="6" height="6" rx="1.5"/><rect x="10" y="2" width="6" height="6" rx="1.5"/>
+          <rect x="2" y="10" width="6" height="6" rx="1.5"/><rect x="10" y="10" width="6" height="6" rx="1.5"/>
+        </svg>
+      </span>
+      <span>TechSolve<small>IT SOLUTIONS PH</small></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#services">Services</a></li>
+      <li><a href="#testimonial">Clients</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <a class="btn" href="#contact">Free Consultation</a>
+  </div>
+</header>
+
+<!-- =========================================================== HERO -->
+<main>
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <div class="hero-eyebrow"><span class="dot"></span>Your Trusted IT Partner in the Philippines</div>
+      <h1>Your Business Stays Up. Your Data Stays <em>Safe.</em></h1>
+      <p class="hero-sub">We resolve IT problems before they cost you — managed support, cybersecurity, and cloud services built for Philippine businesses that can't afford downtime.</p>
+      <div class="hero-actions">
+        <a class="btn" href="#contact">Get a Free Consultation <span class="arr">→</span></a>
+        <a class="btn btn-ghost" href="#services">See Our Services</a>
+      </div>
+      <div class="hero-trust">
+        <div class="hero-trust-avatars"><span>MB</span><span>RL</span><span>JT</span><span>+</span></div>
+        <span>Trusted by <b>200+ businesses</b> across the Philippines</span>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="chip chip-1">
+        <span class="chip-ico">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 13l4-4 3 3 7-7"/><path d="M11 5h5v5"/></svg>
+        </span>
+        <span><b>99.9%</b><small>UPTIME GUARANTEE</small></span>
+      </div>
+      <div class="hero-img-wrap">
+        <img src="assets/techsolve-hero.png" alt="IT specialist monitoring business dashboards across multiple screens" />
+      </div>
+      <div class="chip chip-2">
+        <span class="chip-ico">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="7"/><path d="M9 5v4l2.5 2.5"/></svg>
+        </span>
+        <span><b>24/7</b><small>PROACTIVE SUPPORT</small></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================================================== PROOF BAR -->
+<div class="proof-bar">
+  <div class="wrap">
+    <div class="proof-item">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1l1.9 3.8 4.2.6-3 3 .7 4.2L8 10.5l-3.8 2 .7-4.2-3-3 4.2-.6z"/></svg>
+      Local expertise, global standards
+    </div>
+    <div class="proof-item">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5L2 4.5v4c0 3 2.5 5.5 6 6 3.5-.5 6-3 6-6v-4z"/></svg>
+      SOC-certified security
+    </div>
+    <div class="proof-item">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M8 4v4l2.5 2.5"/></svg>
+      15-minute average response
+    </div>
+    <div class="proof-item">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/><path d="M5 8l2 2 4-4"/></svg>
+      Customised for every business
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================= FEATURES -->
+<section class="features" id="services">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-label">Our IT Services</div>
+      <h2>Stop firefighting. Start growing.</h2>
+      <p>Six specialised services that keep your business protected, online, and moving forward — handled by one accountable partner.</p>
+    </div>
+    <div class="cards">
+
+      <div class="card">
+        <span class="card-num">01</span>
+        <div class="card-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="18" height="14" rx="2"/><path d="M8 21h6M11 17v4"/>
+          </svg>
+        </div>
+        <h3>Managed IT Support</h3>
+        <p>Around-the-clock monitoring and rapid response so downtime never becomes a disaster.</p>
+      </div>
+
+      <div class="card">
+        <span class="card-num">02</span>
+        <div class="card-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 2L3 6v5c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6z"/><path d="M8 11l2 2 4-4"/>
+          </svg>
+        </div>
+        <h3>Cybersecurity</h3>
+        <p>Advanced threat detection and security hardening to protect your data and your clients.</p>
+      </div>
+
+      <div class="card">
+        <span class="card-num">03</span>
+        <div class="card-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17.5 15a4 4 0 0 0 0-8 6 6 0 0 0-11.5-1A5 5 0 0 0 5 15.9"/><path d="M11 11v8M7.5 15.5L11 19l3.5-3.5"/>
+          </svg>
+        </div>
+        <h3>Cloud Services</h3>
+        <p>Scalable, cost-effective cloud infrastructure so you pay for what you use — nothing more.</p>
+      </div>
+
+      <div class="card">
+        <span class="card-num">04</span>
+        <div class="card-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="4" r="2"/><circle cx="4" cy="18" r="2"/><circle cx="18" cy="18" r="2"/>
+            <path d="M11 6v5M11 11l-5.5 5.5M11 11l5.5 5.5"/>
+          </svg>
+        </div>
+        <h3>Network &amp; Infrastructure</h3>
+        <p>Reliable, fast networks designed and maintained to handle your peak business load.</p>
+      </div>
+
+      <div class="card">
+        <span class="card-num">05</span>
+        <div class="card-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 17 21 11 15 5"/><polyline points="7 5 1 11 7 17"/><line x1="13" y1="3" x2="9" y2="19"/>
+          </svg>
+        </div>
+        <h3>Software Development</h3>
+        <p>Custom software that automates your workflows and cuts the hours lost to manual tasks.</p>
+      </div>
+
+      <div class="card">
+        <span class="card-num">06</span>
+        <div class="card-icon">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="11" cy="5" rx="8" ry="3"/><path d="M3 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M3 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/>
+          </svg>
+        </div>
+        <h3>Data Backup &amp; Recovery</h3>
+        <p>Secure, automated backups with rapid recovery so a single incident never becomes a crisis.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================== TESTIMONIAL -->
+<section class="testimonial" id="testimonial">
+  <div class="wrap">
+    <div class="inner">
+      <div class="stars">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><path d="M9 1l2.1 4.3 4.7.7-3.4 3.3.8 4.7L9 11.8l-4.2 2.2.8-4.7L2.2 6l4.7-.7z"/></svg>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><path d="M9 1l2.1 4.3 4.7.7-3.4 3.3.8 4.7L9 11.8l-4.2 2.2.8-4.7L2.2 6l4.7-.7z"/></svg>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><path d="M9 1l2.1 4.3 4.7.7-3.4 3.3.8 4.7L9 11.8l-4.2 2.2.8-4.7L2.2 6l4.7-.7z"/></svg>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><path d="M9 1l2.1 4.3 4.7.7-3.4 3.3.8 4.7L9 11.8l-4.2 2.2.8-4.7L2.2 6l4.7-.7z"/></svg>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><path d="M9 1l2.1 4.3 4.7.7-3.4 3.3.8 4.7L9 11.8l-4.2 2.2.8-4.7L2.2 6l4.7-.7z"/></svg>
+      </div>
+      <blockquote>TechSolve fixed in two days what had been causing downtime for months. It no longer feels like we have a vendor — it feels like we have our own IT department.</blockquote>
+      <div class="testimonial-author">
+        <div class="author-avatar">RC</div>
+        <div>
+          <div class="author-name">Ramon Cruz</div>
+          <div class="author-role">Operations Director, Manila-based retail group · 3 branches</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= FINAL CTA -->
+<section class="final-cta" id="contact">
+  <div class="wrap">
+    <div class="section-label">Get Started</div>
+    <h2>Tell us what's slowing you down.</h2>
+    <p>Free, no-obligation consultation. We'll identify the issue, propose a solution, and give you a clear timeline — usually within 24 hours.</p>
+    <a class="btn" href="mailto:info@techsolveph.com">Book a Free Consultation <span class="arr">→</span></a>
+    <div class="cta-contacts">
+      <a href="tel:+63281234567">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 11.5v2a1.5 1.5 0 0 1-1.7 1.5A13.5 13.5 0 0 1 1 3.2 1.5 1.5 0 0 1 2.5 1.5h2A1.5 1.5 0 0 1 6 2.8l.6 2a1.5 1.5 0 0 1-.4 1.5l-.9.9a11 11 0 0 0 3.5 3.5l.9-.9a1.5 1.5 0 0 1 1.5-.4l2 .6a1.5 1.5 0 0 1 1.3 1.5z"/></svg>
+        (02) 8 123 4567
+      </a>
+      <a href="mailto:info@techsolveph.com">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3" width="13" height="10" rx="2"/><path d="M1.5 5l6.5 4.5L14.5 5"/></svg>
+        info@techsolveph.com
+      </a>
+      <a href="https://www.techsolveph.com">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 1.5a10 10 0 0 1 0 13M8 1.5a10 10 0 0 0 0 13M1.5 8h13"/></svg>
+        www.techsolveph.com
+      </a>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ========================================================== FOOTER -->
+<footer class="footer">
+  <div class="wrap">
+    <span>&copy; 2026 TechSolve IT Solutions PH. All rights reserved.</span>
+    <span>Proudly serving businesses across the Philippines 🇵🇭</span>
+    <a href="#top">Back to top ↑</a>
+  </div>
+</footer>
+
+</body>
+</html>

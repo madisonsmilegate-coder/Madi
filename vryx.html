@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VRYX OS — The Operating System for Autonomous Companies</title>
+<meta name="description" content="VRYX OS resolves your customers' problems before your team wakes up. Autonomous workflows, self-healing operations, zero backlog." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   VRYX OS v2 — "Autonomy" design system
+   Theme: machine-calm · void + mint status light
+   Palette:
+     --void  #07090B   --panel  #0D1117   --panel2  #11161D
+     --line  #1B232B   --text   #8B98A5   --bright  #E6EDF3
+     --mint  #2CE8A5   --mint-dk #18B57D
+   Motion: transform+opacity only · 300–600ms ease-out · ≤24px
+============================================================ */
+:root{
+  --void:#07090B; --panel:#0D1117; --panel2:#11161D;
+  --line:#1B232B; --text:#8B98A5; --bright:#E6EDF3;
+  --mint:#2CE8A5; --mint-dk:#18B57D;
+  --mint-glow:rgba(44,232,165,.14);
+  --red:#FF4D6D; --red-bg:rgba(255,77,109,.08);
+  --font-d:'Unbounded',sans-serif;
+  --font-b:'Inter',system-ui,sans-serif;
+  --font-m:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+::selection{background:var(--mint);color:var(--void)}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--void)}
+::-webkit-scrollbar-thumb{background:var(--line)}
+::-webkit-scrollbar-thumb:hover{background:var(--mint-dk)}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  font-family:var(--font-b);font-size:16px;line-height:1.65;
+  color:var(--text);background:var(--void);
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+h1,h2,h3{font-family:var(--font-d);color:var(--bright);line-height:1.1}
+h1{font-size:clamp(2.6rem,6.5vw,5rem);font-weight:700;letter-spacing:-.015em}
+h2{font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:600;letter-spacing:-.01em}
+h3{font-size:1rem;font-weight:600}
+p{max-width:58ch}
+.mono{font-family:var(--font-m)}
+a{text-decoration:none;color:inherit}
+.wrap{max-width:1160px;margin:0 auto;padding:0 28px}
+
+/* ============================================================ MOTION */
+.a{will-change:opacity,transform;transition:opacity 500ms var(--ease),transform 500ms var(--ease)}
+.a-hide{opacity:0;transform:translateY(20px)}
+.a-hide.a-in{opacity:1;transform:none}
+.w{display:inline-block;transition:opacity 500ms var(--ease),transform 500ms var(--ease)}
+.w-hide .w{opacity:0;transform:translateY(22px)}
+.w-in .w{opacity:1;transform:none}
+.img-reveal{overflow:hidden}
+.img-reveal .img-body{transition:transform 600ms var(--ease),opacity 600ms var(--ease)}
+.img-reveal.a-hide .img-body{transform:scale(1.07);opacity:.3}
+.img-reveal.a-in .img-body{transform:scale(1);opacity:1}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  .a-hide,.w-hide .w{opacity:1!important;transform:none!important}
+}
+
+/* ============================================================ PROGRESS */
+.progress{position:fixed;top:0;left:0;right:0;height:2px;z-index:400;pointer-events:none}
+.progress span{display:block;height:100%;background:var(--mint);transform:scaleX(0);transform-origin:left;box-shadow:0 0 10px var(--mint)}
+
+/* ============================================================ NAV */
+.nav{
+  position:fixed;top:2px;left:0;right:0;z-index:300;
+  background:rgba(7,9,11,.8);
+  backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--line);
+}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:20px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--font-d);font-weight:700;font-size:.92rem;color:var(--bright);letter-spacing:.04em}
+.brand-dot{width:9px;height:9px;border-radius:2px;background:var(--mint);box-shadow:0 0 9px var(--mint);animation:blink 3s ease-in-out infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.brand small{font-family:var(--font-m);font-size:.6rem;color:var(--text);letter-spacing:.12em;font-weight:400}
+.nav-links{display:none;gap:32px;list-style:none}
+.nav-links a{font-size:.84rem;font-weight:500;color:var(--text);position:relative;padding-bottom:2px;transition:color 250ms var(--ease)}
+.nav-links a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--mint);transform:scaleX(0);transform-origin:left;transition:transform 250ms var(--ease)}
+.nav-links a:hover{color:var(--bright)}
+.nav-links a:hover::after{transform:scaleX(1)}
+@media(min-width:800px){.nav-links{display:flex}}
+/* hamburger */
+.burger{
+  display:flex;flex-direction:column;justify-content:center;
+  gap:5px;width:32px;height:32px;background:none;border:none;cursor:pointer;padding:4px;
+}
+.burger span{display:block;height:1.5px;background:var(--bright);transform-origin:center;transition:transform 300ms var(--ease),opacity 200ms}
+.burger.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.burger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.burger.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+@media(min-width:800px){.burger{display:none}}
+/* mobile menu */
+.mob-menu{
+  position:fixed;inset:0;top:66px;z-index:290;
+  background:rgba(7,9,11,.97);backdrop-filter:blur(20px);
+  border-top:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:36px;
+  opacity:0;pointer-events:none;
+  transition:opacity 300ms var(--ease);
+}
+.mob-menu.open{opacity:1;pointer-events:all}
+.mob-menu a{font-family:var(--font-d);font-size:1.4rem;font-weight:600;color:var(--text);transition:color 200ms}
+.mob-menu a:hover{color:var(--bright)}
+/* buttons */
+.btn{
+  display:inline-flex;align-items:center;gap:10px;
+  background:var(--mint);color:var(--void);
+  font-family:var(--font-d);font-weight:600;font-size:.8rem;letter-spacing:.02em;
+  padding:13px 26px;border-radius:8px;border:none;cursor:pointer;
+  transition:background 250ms var(--ease),transform 300ms var(--ease),box-shadow 300ms var(--ease);
+}
+.btn:hover{background:var(--mint-dk);transform:translateY(-2px) scale(1.02);box-shadow:0 8px 28px var(--mint-glow)}
+.btn:active{transform:scale(.96);transition-duration:80ms}
+.btn .arr{transition:transform 280ms var(--ease)}
+.btn:hover .arr{transform:translateX(4px)}
+.btn-line{
+  background:transparent;color:var(--bright);border:1px solid var(--line);
+  font-family:var(--font-d);font-weight:600;font-size:.8rem;letter-spacing:.02em;
+  padding:12px 26px;border-radius:8px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:10px;
+  transition:border-color 250ms var(--ease),background 250ms var(--ease),transform 300ms var(--ease);
+}
+.btn-line:hover{border-color:var(--mint);background:rgba(44,232,165,.05);transform:translateY(-2px) scale(1.02)}
+.btn-line:active{transform:scale(.96);transition-duration:80ms}
+.nav .btn{padding:9px 18px;font-size:.72rem}
+
+/* ============================================================ HERO */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+  padding:120px 0 0;position:relative;overflow:hidden;
+}
+.hero-glow{
+  position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(700px 420px at 50% -5%, rgba(44,232,165,.1), transparent 65%),
+             radial-gradient(500px 300px at 80% 100%, rgba(44,232,165,.05), transparent 60%);
+  transition:background .1s;
+}
+/* mouse-tracked secondary glow set via JS */
+.hero-mouse-glow{
+  position:absolute;width:500px;height:500px;border-radius:50%;
+  background:radial-gradient(circle, rgba(44,232,165,.07) 0%, transparent 70%);
+  pointer-events:none;z-index:0;
+  transform:translate(-50%,-50%);
+  transition:left .6s var(--ease),top .6s var(--ease);
+  left:50%;top:50%;
+}
+/* grid */
+.hero-grid{
+  position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(139,152,165,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(139,152,165,.045) 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(900px 600px at 50% 30%,#000,transparent 80%);
+}
+/* scanning line */
+.hero-scan{
+  position:absolute;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--mint),transparent);
+  opacity:.2;z-index:1;pointer-events:none;
+  animation:scan 8s linear infinite;
+}
+@keyframes scan{from{top:-1px}to{top:100%}}
+.hero .wrap{position:relative;z-index:2;text-align:center;display:flex;flex-direction:column;align-items:center}
+.hero-badge{
+  font-family:var(--font-m);font-size:.7rem;letter-spacing:.16em;color:var(--mint);
+  display:inline-flex;align-items:center;gap:10px;
+  border:1px solid rgba(44,232,165,.22);background:rgba(44,232,165,.05);
+  padding:7px 16px;border-radius:99px;margin-bottom:36px;
+}
+.badge-pulse{width:6px;height:6px;border-radius:50%;background:var(--mint);position:relative}
+.badge-pulse::after{
+  content:"";position:absolute;inset:-4px;border-radius:50%;
+  border:1px solid var(--mint);animation:ring 2.4s var(--ease) infinite;
+}
+@keyframes ring{from{opacity:.8;transform:scale(.5)}to{opacity:0;transform:scale(2.2)}}
+.hero h1{margin-bottom:28px;max-width:18ch}
+.hero h1 .mint{color:var(--mint)}
+.hero-sub{font-size:1.06rem;line-height:1.78;max-width:52ch;margin-bottom:44px}
+.hero-actions{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
+
+/* terminal */
+.hero-term{
+  margin-top:68px;width:100%;max-width:780px;
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  text-align:left;font-family:var(--font-m);font-size:.78rem;line-height:1.9;
+  box-shadow:0 32px 96px rgba(0,0,0,.6),0 0 64px rgba(44,232,165,.05);
+  overflow:hidden;
+}
+.term-bar{
+  display:flex;align-items:center;gap:6px;
+  padding:12px 18px;border-bottom:1px solid var(--line);
+  background:rgba(27,35,43,.6);
+}
+.term-dot{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.term-dot:first-child{background:#3A4654}
+.term-title{margin-left:8px;font-size:.66rem;color:var(--text);letter-spacing:.1em}
+.term-body{padding:22px 24px 26px;min-height:160px}
+.tl{display:block;color:var(--text)}
+.tl b{color:var(--bright);font-weight:500}
+.tl.ok{color:var(--mint)}
+.tl.dim{opacity:.4}
+.tl.err{color:var(--red)}
+.tcaret{display:inline-block;width:7px;height:13px;background:var(--mint);vertical-align:middle;animation:ca 1.1s steps(1) infinite}
+@keyframes ca{50%{opacity:0}}
+
+/* ============================================================ TICKER */
+.ticker{
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  background:var(--panel);padding:14px 0;overflow:hidden;
+  position:relative;
+}
+.ticker::before,.ticker::after{
+  content:"";position:absolute;top:0;bottom:0;width:80px;z-index:2;
+}
+.ticker::before{left:0;background:linear-gradient(90deg,var(--panel),transparent)}
+.ticker::after{right:0;background:linear-gradient(-90deg,var(--panel),transparent)}
+.ticker-track{display:flex;gap:0;width:max-content;animation:tick 40s linear infinite}
+.ticker-track:hover{animation-play-state:paused}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.tick-item{
+  display:flex;align-items:center;gap:10px;padding:0 36px;
+  font-family:var(--font-m);font-size:.7rem;white-space:nowrap;
+  border-right:1px solid var(--line);
+}
+.tick-item .ok{color:var(--mint)}
+.tick-item .gray{opacity:.45}
+.tick-item .t{color:var(--bright)}
+
+/* ============================================================ STATS */
+.stats{padding:100px 0;border-top:1px solid var(--line)}
+.stats .grid{display:grid;gap:2px;background:var(--line);border-radius:14px;overflow:hidden}
+@media(min-width:720px){.stats .grid{grid-template-columns:repeat(4,1fr)}}
+.stat{background:var(--panel);padding:40px 32px;transition:background 250ms var(--ease)}
+.stat:hover{background:var(--panel2)}
+.stat-num{
+  font-family:var(--font-d);font-weight:700;font-size:clamp(2.2rem,4vw,3.2rem);
+  color:var(--bright);line-height:1;margin-bottom:10px;font-variant-numeric:tabular-nums;
+}
+.stat-num em{color:var(--mint);font-style:normal;font-size:.55em;font-weight:600;margin-left:2px}
+.stat-label{font-size:.78rem;letter-spacing:.03em}
+
+/* ============================================================ FEATURES */
+.features{padding:104px 0;border-top:1px solid var(--line)}
+.sec-tag{font-family:var(--font-m);font-size:.68rem;letter-spacing:.2em;color:var(--mint);text-transform:uppercase;margin-bottom:18px;display:block}
+.sec-head{margin-bottom:64px}
+.sec-head h2{margin-bottom:16px}
+.cards{display:grid;gap:18px}
+@media(min-width:640px){.cards{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:980px){.cards{grid-template-columns:repeat(3,1fr)}}
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  padding:32px 28px;position:relative;
+  transition:border-color 300ms var(--ease),box-shadow 300ms var(--ease);
+  transform-style:preserve-3d;
+  /* transform handled by JS for 3D tilt */
+}
+.card:hover{border-color:rgba(44,232,165,.3);box-shadow:0 20px 56px rgba(0,0,0,.45),0 0 40px rgba(44,232,165,.07)}
+.card-ico{
+  width:44px;height:44px;border-radius:10px;
+  background:rgba(44,232,165,.07);border:1px solid rgba(44,232,165,.16);
+  display:grid;place-items:center;margin-bottom:24px;
+  transition:transform 300ms var(--ease),background 300ms var(--ease);
+}
+.card:hover .card-ico{transform:translateY(-3px) scale(1.06);background:rgba(44,232,165,.12)}
+.card-ico svg{color:var(--mint)}
+.card h3{margin-bottom:10px;transition:transform 300ms var(--ease)}
+.card p{font-size:.88rem;transition:transform 300ms var(--ease)}
+.card:hover h3{transform:translateY(-2px)}
+.card:hover p{transform:translateY(-1px)}
+.card-chip{
+  margin-top:22px;font-family:var(--font-m);font-size:.64rem;letter-spacing:.14em;
+  color:var(--text);opacity:.5;display:flex;align-items:center;gap:8px;
+  transition:opacity 250ms,color 250ms;
+}
+.card-chip::before{content:"";width:12px;height:1px;background:currentColor}
+.card:hover .card-chip{opacity:1;color:var(--mint)}
+
+/* ============================================================ COMPARE */
+.compare{padding:104px 0;border-top:1px solid var(--line)}
+.compare-grid{
+  display:grid;gap:2px;background:var(--line);border-radius:14px;overflow:hidden;
+  margin-top:48px;
+}
+@media(min-width:720px){.compare-grid{grid-template-columns:1fr 1fr}}
+.compare-side{padding:40px 36px 44px}
+.compare-side.before{background:rgba(255,77,109,.04)}
+.compare-side.after{background:rgba(44,232,165,.04)}
+.compare-header{
+  font-family:var(--font-m);font-size:.68rem;letter-spacing:.2em;font-weight:500;
+  margin-bottom:28px;padding-bottom:14px;border-bottom:1px solid var(--line);
+}
+.compare-side.before .compare-header{color:var(--red)}
+.compare-side.after .compare-header{color:var(--mint)}
+.compare-list{list-style:none;display:flex;flex-direction:column;gap:14px}
+.compare-list li{
+  display:flex;align-items:flex-start;gap:12px;
+  font-size:.9rem;line-height:1.55;
+}
+.compare-list li::before{content:"";width:16px;height:16px;border-radius:50%;flex-shrink:0;margin-top:2px;display:grid;place-items:center;font-size:.6rem;font-weight:700}
+.compare-side.before .compare-list li::before{background:var(--red-bg);border:1px solid rgba(255,77,109,.3);color:var(--red)}
+.compare-side.after .compare-list li::before{background:rgba(44,232,165,.1);border:1px solid rgba(44,232,165,.25);color:var(--mint)}
+
+/* ============================================================ PIPELINE */
+.how{padding:104px 0;border-top:1px solid var(--line)}
+.pipeline{display:grid;gap:18px;margin-top:8px}
+@media(min-width:840px){.pipeline{grid-template-columns:repeat(3,1fr)}}
+.pipe{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:30px 28px;position:relative}
+.pipe-num{font-family:var(--font-m);font-size:.66rem;letter-spacing:.16em;color:var(--mint);margin-bottom:18px;display:block}
+.pipe h3{margin-bottom:9px}
+.pipe p{font-size:.87rem}
+@media(min-width:840px){
+  .pipe:not(:last-child)::after{
+    content:"";position:absolute;right:-18px;top:50%;width:18px;height:1px;
+    background:linear-gradient(90deg,var(--line),var(--mint));z-index:1;
+  }
+}
+
+/* ============================================================ INTEGRATIONS */
+.integrations{padding:80px 0;border-top:1px solid var(--line)}
+.int-grid{
+  display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:40px;
+}
+.int-chip{
+  font-family:var(--font-m);font-size:.7rem;letter-spacing:.1em;
+  color:var(--text);border:1px solid var(--line);border-radius:8px;
+  padding:10px 18px;background:var(--panel);
+  transition:border-color 250ms var(--ease),color 250ms var(--ease),background 250ms var(--ease);
+}
+.int-chip:hover{border-color:var(--mint);color:var(--bright);background:rgba(44,232,165,.04)}
+
+/* ============================================================ QUOTE */
+.quote{padding:104px 0;border-top:1px solid var(--line)}
+.quote-inner{max-width:840px;margin:0 auto;text-align:center}
+.quote-mark{font-family:var(--font-d);font-size:5rem;font-weight:800;color:var(--mint);line-height:.5;display:block;margin-bottom:28px;opacity:.7}
+.quote blockquote{
+  font-family:var(--font-d);font-weight:500;
+  font-size:clamp(1.15rem,2.4vw,1.75rem);
+  color:var(--bright);line-height:1.5;margin-bottom:34px;text-wrap:balance;
+}
+.quote-author{display:inline-flex;align-items:center;gap:14px;text-align:left}
+.q-av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--mint),#0FA56F);display:grid;place-items:center;font-family:var(--font-d);font-weight:700;font-size:.78rem;color:var(--void)}
+.q-name{color:var(--bright);font-weight:600;font-size:.9rem;display:block}
+.q-role{font-size:.78rem}
+
+/* ============================================================ CTA */
+.cta{padding:120px 0 130px;border-top:1px solid var(--line);position:relative;overflow:hidden}
+.cta::before{content:"";position:absolute;inset:0;background:radial-gradient(640px 400px at 50% 120%, rgba(44,232,165,.13), transparent 65%);pointer-events:none}
+.cta .wrap{position:relative;z-index:1;text-align:center;display:flex;flex-direction:column;align-items:center}
+.cta h2{font-size:clamp(2rem,4.5vw,3.4rem);margin-bottom:20px;max-width:20ch}
+.cta p{margin-bottom:44px;max-width:46ch;font-size:1rem}
+.cta-form{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:460px}
+.cta-input{
+  flex:1 1 220px;background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  padding:13px 18px;font-family:var(--font-b);font-size:.9rem;color:var(--bright);outline:none;
+  transition:border-color 250ms var(--ease),background 250ms var(--ease);
+}
+.cta-input::placeholder{color:var(--text);opacity:.5}
+.cta-input:focus{border-color:var(--mint);background:rgba(44,232,165,.04)}
+.cta-meta{
+  margin-top:36px;font-family:var(--font-m);font-size:.68rem;letter-spacing:.12em;
+  color:var(--text);display:flex;flex-wrap:wrap;gap:8px 28px;justify-content:center;
+}
+.cta-meta span{display:flex;align-items:center;gap:7px}
+.cta-meta svg{color:var(--mint)}
+
+/* ============================================================ FOOTER */
+.footer{border-top:1px solid var(--line);padding:36px 0}
+.footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justify-content:space-between;font-size:.78rem;color:var(--text)}
+.footer a{transition:color 200ms}
+.footer a:hover{color:var(--bright)}
+.f-mono{font-family:var(--font-m);font-size:.64rem;letter-spacing:.1em;opacity:.5}
+</style>
+</head>
+<body>
+
+<div class="progress"><span id="pbar"></span></div>
+
+<!-- ================================================================ NAV -->
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <span class="brand-dot"></span>
+      VRYX&thinsp;OS
+      <small>v4.2.0 — ONLINE</small>
+    </a>
+    <ul class="nav-links" id="navlinks">
+      <li><a href="#features">Capabilities</a></li>
+      <li><a href="#how">Pipeline</a></li>
+      <li><a href="#compare">Compare</a></li>
+      <li><a href="#contact">Deploy</a></li>
+    </ul>
+    <div style="display:flex;gap:12px;align-items:center">
+      <a class="btn" href="#contact">Initialize <span class="arr">→</span></a>
+      <button class="burger" id="burger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+<nav class="mob-menu" id="mobmenu">
+  <a href="#features" class="mob-link">Capabilities</a>
+  <a href="#how" class="mob-link">Pipeline</a>
+  <a href="#compare" class="mob-link">Compare</a>
+  <a href="#contact" class="mob-link">Deploy</a>
+  <a class="btn" href="#contact" style="margin-top:8px">Initialize <span class="arr">→</span></a>
+</nav>
+
+<!-- ================================================================ HERO -->
+<main id="top">
+<section class="hero" id="hero">
+  <div class="hero-glow" id="heroGlow"></div>
+  <div class="hero-mouse-glow" id="mouseglow"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-scan"></div>
+  <div class="wrap">
+    <div class="hero-badge a a-hide" id="sys">
+      <span class="badge-pulse"></span>ALL SYSTEMS AUTONOMOUS
+    </div>
+    <h1 class="w-hide" id="headline">
+      <span class="w">Your&nbsp;</span><span class="w">customers&rsquo;&nbsp;</span><span class="w">problems,&nbsp;</span><br>
+      <span class="w">resolved&nbsp;</span><span class="w">while&nbsp;</span><span class="w">you&nbsp;</span><span class="w mint">sleep.</span>
+    </h1>
+    <p class="hero-sub a a-hide" id="sub">VRYX&nbsp;OS is the operating system for autonomous companies. It detects, diagnoses, and resolves customer issues end-to-end&nbsp;— no queues, no backlog, no&nbsp;9-to-5.</p>
+    <div class="hero-actions a a-hide" id="ctas">
+      <a class="btn" href="#contact">Deploy VRYX OS <span class="arr">→</span></a>
+      <a class="btn-line" href="#features">View Capabilities</a>
+    </div>
+
+    <!-- live terminal -->
+    <div class="hero-term img-reveal a-hide" data-reveal>
+      <div class="img-body">
+        <div class="term-bar">
+          <span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span>
+          <span class="term-title">vryx — resolution-engine&nbsp;·&nbsp;LIVE</span>
+        </div>
+        <div class="term-body" id="termBody">
+          <span class="tl dim">$ vryx monitor --live --stream</span>
+          <span class="tl dim">connecting to event fabric… <span class="tcaret"></span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ LIVE TICKER -->
+<div class="ticker">
+  <div class="ticker-track" id="ticker"><!-- populated by JS --></div>
+</div>
+
+<!-- ================================================================ STATS -->
+<section class="stats">
+  <div class="grid" data-stagger>
+    <div class="stat a a-hide">
+      <div class="stat-num"><span data-count="98" data-decimals="1">0</span><em>%</em></div>
+      <div class="stat-label">Issues resolved without human escalation</div>
+    </div>
+    <div class="stat a a-hide">
+      <div class="stat-num"><span data-count="7.2" data-decimals="1">0</span><em>sec</em></div>
+      <div class="stat-label">Median end-to-end resolution time</div>
+    </div>
+    <div class="stat a a-hide">
+      <div class="stat-num"><span data-count="40000" data-format="k">0</span><em>+</em></div>
+      <div class="stat-label">Customer problems resolved daily</div>
+    </div>
+    <div class="stat a a-hide">
+      <div class="stat-num"><span data-count="0">0</span><em>backlog</em></div>
+      <div class="stat-label">Tickets waiting in queue, ever</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ FEATURES -->
+<section class="features" id="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-tag a a-hide" data-reveal>[ 01 / capabilities ]</span>
+      <h2 class="a a-hide" data-reveal>Built to resolve,<br>not to route.</h2>
+      <p class="a a-hide" data-reveal>Legacy tools assign problems to humans. VRYX&nbsp;OS eliminates the problem itself&nbsp;— then learns so it never happens twice.</p>
+    </div>
+    <div class="cards" data-stagger>
+      <div class="card a a-hide" data-tilt>
+        <div class="card-ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8"/><path d="M10 6v4l3 2"/></svg></div>
+        <h3>Autonomous Resolution</h3>
+        <p>Detects issues from any channel, isolates root cause, and executes the fix — end-to-end, in seconds.</p>
+        <span class="card-chip">MODULE / RESOLVE</span>
+      </div>
+      <div class="card a a-hide" data-tilt>
+        <div class="card-ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v4M10 14v4M2 10h4M14 10h4"/><circle cx="10" cy="10" r="3"/></svg></div>
+        <h3>Self-Healing Operations</h3>
+        <p>Infrastructure that monitors itself, reroutes around failures, and repairs before customers notice.</p>
+        <span class="card-chip">MODULE / HEAL</span>
+      </div>
+      <div class="card a a-hide" data-tilt>
+        <div class="card-ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16l4-6 4 3 4-8 4 6"/><path d="M2 19h16"/></svg></div>
+        <h3>Predictive Prevention</h3>
+        <p>Learns from every incident to forecast the next one — and neutralises it before it exists.</p>
+        <span class="card-chip">MODULE / PREDICT</span>
+      </div>
+      <div class="card a a-hide" data-tilt>
+        <div class="card-ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="16" height="11" rx="2"/><path d="M6 18h8M10 14v4"/></svg></div>
+        <h3>Unified Command</h3>
+        <p>One live console for every system, customer, and resolution — human oversight without human bottlenecks.</p>
+        <span class="card-chip">MODULE / COMMAND</span>
+      </div>
+      <div class="card a a-hide" data-tilt>
+        <div class="card-ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L3 5.5v4c0 4.5 3 8 7 9 4-1 7-4.5 7-9v-4z"/><path d="M7 10l2 2 4-4"/></svg></div>
+        <h3>Zero-Trust Fabric</h3>
+        <p>Every autonomous action is signed, sandboxed, and auditable. Full control, full transparency.</p>
+        <span class="card-chip">MODULE / SECURE</span>
+      </div>
+      <div class="card a a-hide" data-tilt>
+        <div class="card-ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="6" r="3"/><path d="M4 18c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 8c1.7.9 3 2.7 3 5M1 13c0-2.3 1.3-4.1 3-5"/></svg></div>
+        <h3>Drops Into Your Stack</h3>
+        <p>Native connectors for your CRM, cloud, and comms. Deploy in an afternoon, not a quarter.</p>
+        <span class="card-chip">MODULE / CONNECT</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ COMPARE -->
+<section class="compare" id="compare">
+  <div class="wrap">
+    <span class="sec-tag a a-hide" data-reveal>[ 02 / before &amp; after ]</span>
+    <h2 class="a a-hide" data-reveal>The last support queue<br>your company ever runs.</h2>
+    <div class="compare-grid a a-hide" data-reveal>
+      <div class="compare-side before">
+        <div class="compare-header">✕ &nbsp;WITHOUT VRYX OS</div>
+        <ul class="compare-list">
+          <li>Tickets pile up while your team sleeps</li>
+          <li>Junior agents triaging the same issues daily</li>
+          <li>Root cause buried in five different dashboards</li>
+          <li>Customers wait hours for a reply at 2&nbsp;AM</li>
+          <li>Every incident requires a post-mortem and a human</li>
+          <li>Backlog resets every Monday morning</li>
+        </ul>
+      </div>
+      <div class="compare-side after">
+        <div class="compare-header">✓ &nbsp;WITH VRYX OS</div>
+        <ul class="compare-list">
+          <li>Issues detected and resolved in seconds, 24/7</li>
+          <li>Your team handles edge cases, not routine failures</li>
+          <li>Root cause isolated by the engine in milliseconds</li>
+          <li>Customer notified and fixed before they hit send</li>
+          <li>Every incident trains the model automatically</li>
+          <li>Zero backlog — structurally impossible</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ PIPELINE -->
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-tag a a-hide" data-reveal>[ 03 / pipeline ]</span>
+      <h2 class="a a-hide" data-reveal>Problem in. Resolution out.</h2>
+    </div>
+    <div class="pipeline" data-stagger>
+      <div class="pipe a a-hide">
+        <span class="pipe-num">PHASE_01 / SENSE</span>
+        <h3>Detect</h3>
+        <p>Every channel — email, chat, logs, sensors — streams into one event fabric. Nothing slips through.</p>
+      </div>
+      <div class="pipe a a-hide">
+        <span class="pipe-num">PHASE_02 / REASON</span>
+        <h3>Diagnose</h3>
+        <p>VRYX isolates root cause in milliseconds and selects the optimal resolution path from its model.</p>
+      </div>
+      <div class="pipe a a-hide">
+        <span class="pipe-num">PHASE_03 / ACT</span>
+        <h3>Resolve</h3>
+        <p>The fix executes, the customer is informed, and the system learns. Median time: 7.2 seconds.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ INTEGRATIONS -->
+<section class="integrations">
+  <div class="wrap">
+    <span class="sec-tag a a-hide" data-reveal>[ 04 / integrations ]</span>
+    <h2 class="a a-hide" data-reveal style="max-width:18ch">Works with everything you already run.</h2>
+    <div class="int-grid a a-hide" data-reveal>
+      <span class="int-chip">SALESFORCE</span>
+      <span class="int-chip">ZENDESK</span>
+      <span class="int-chip">HUBSPOT</span>
+      <span class="int-chip">SLACK</span>
+      <span class="int-chip">JIRA</span>
+      <span class="int-chip">PAGERDUTY</span>
+      <span class="int-chip">AWS</span>
+      <span class="int-chip">GCP</span>
+      <span class="int-chip">AZURE</span>
+      <span class="int-chip">DATADOG</span>
+      <span class="int-chip">STRIPE</span>
+      <span class="int-chip">INTERCOM</span>
+      <span class="int-chip">LINEAR</span>
+      <span class="int-chip">+ 200 MORE</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ QUOTE -->
+<section class="quote">
+  <div class="wrap">
+    <div class="quote-inner">
+      <span class="quote-mark a a-hide" data-reveal>&ldquo;</span>
+      <blockquote class="a a-hide" data-reveal>We turned off our ticket queue in week one. VRYX resolved more issues overnight than our team closed in a month&nbsp;— our customers think we hired a hundred people.</blockquote>
+      <div class="quote-author a a-hide" data-reveal>
+        <span class="q-av">LN</span>
+        <span>
+          <span class="q-name">Lena Navarro</span>
+          <span class="q-role">COO — Meridian Logistics, fully automated since 2025</span>
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ CTA -->
+<section class="cta" id="contact">
+  <div class="wrap">
+    <span class="sec-tag a a-hide" data-reveal>[ 05 / deploy ]</span>
+    <h2 class="a a-hide" data-reveal>Set your operations<br>to autonomous.</h2>
+    <p class="a a-hide" data-reveal>Deploy VRYX&nbsp;OS against your real ticket history. See what it would have resolved&nbsp;— before you commit to anything.</p>
+    <form class="cta-form a a-hide" data-reveal onsubmit="return false">
+      <input class="cta-input" type="email" placeholder="you@company.com" autocomplete="email" />
+      <button class="btn" type="submit">Start Free Simulation <span class="arr">→</span></button>
+    </form>
+    <div class="cta-meta a a-hide" data-reveal>
+      <span><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 6.5l2.5 2.5 6-6"/></svg>No credit card</span>
+      <span><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 6.5l2.5 2.5 6-6"/></svg>Deploy in one afternoon</span>
+      <span><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 6.5l2.5 2.5 6-6"/></svg>SOC 2 Type II</span>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ================================================================ FOOTER -->
+<footer class="footer">
+  <div class="wrap">
+    <span class="f-mono">VRYX OS // BUILD 4.2.0 // ALL SYSTEMS NOMINAL</span>
+    <span>&copy; 2026 VRYX Systems, Inc.</span>
+    <a href="#top" class="f-mono">RETURN_TO_TOP ↑</a>
+  </div>
+</footer>
+
+<!-- ============================================================ SCRIPTS -->
+<script>
+(function(){
+  const R = matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  /* ---- Progress bar ---- */
+  const pbar = document.getElementById('pbar');
+  addEventListener('scroll', ()=>{
+    const max = document.body.scrollHeight - innerHeight;
+    pbar.style.transform = `scaleX(${max > 0 ? scrollY / max : 0})`;
+  }, {passive:true});
+
+  /* ---- Hamburger ---- */
+  const burger = document.getElementById('burger');
+  const mob    = document.getElementById('mobmenu');
+  burger.addEventListener('click', ()=>{
+    burger.classList.toggle('open');
+    mob.classList.toggle('open');
+  });
+  mob.querySelectorAll('a').forEach(a => a.addEventListener('click', ()=>{
+    burger.classList.remove('open');
+    mob.classList.remove('open');
+  }));
+
+  /* ---- Hero mouse-tracking glow ---- */
+  const hero     = document.getElementById('hero');
+  const mglow    = document.getElementById('mouseglow');
+  if (!R) {
+    hero.addEventListener('mousemove', e=>{
+      const r = hero.getBoundingClientRect();
+      mglow.style.left = (e.clientX - r.left) + 'px';
+      mglow.style.top  = (e.clientY - r.top)  + 'px';
+    });
+  }
+
+  /* ---- Ticker ---- */
+  const tickets = [
+    {id:'#48211', issue:'payment timeout',      ms:'7.2s'},
+    {id:'#48214', issue:'login loop detected',  ms:'2.1s'},
+    {id:'#48216', issue:'webhook failure',       ms:'4.4s'},
+    {id:'#48219', issue:'billing mismatch',     ms:'3.8s'},
+    {id:'#48223', issue:'SSL cert expiry',       ms:'1.1s'},
+    {id:'#48227', issue:'API rate limit hit',    ms:'5.6s'},
+    {id:'#48230', issue:'order stuck in queue', ms:'8.3s'},
+    {id:'#48235', issue:'password reset loop',  ms:'2.7s'},
+    {id:'#48241', issue:'DNS resolution fail',   ms:'1.9s'},
+    {id:'#48248', issue:'shipment delay alert',  ms:'6.1s'},
+  ];
+  const track = document.getElementById('ticker');
+  const render = () => [...tickets,...tickets].map(t =>
+    `<span class="tick-item"><span class="ok">✓</span> <span class="gray">${t.id}</span> <span class="t">${t.issue}</span> <span class="gray">·</span> <span class="ok">${t.ms}</span></span>`
+  ).join('');
+  track.innerHTML = render();
+
+  /* ---- Reduced-motion static fallback ---- */
+  if (R) {
+    document.querySelectorAll('.a-hide').forEach(el=>el.classList.add('a-in'));
+    document.getElementById('headline').classList.add('w-in');
+    document.querySelectorAll('[data-count]').forEach(setFinal);
+    initTerminalStatic();
+    return;
+  }
+
+  /* ---- Hero entrance sequence ---- */
+  const hl    = document.getElementById('headline');
+  const words = hl.querySelectorAll('.w');
+  words.forEach((w,i) => w.style.transitionDelay = (i * 80) + 'ms');
+
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.getElementById('sys').classList.add('a-in');
+    setTimeout(()=> hl.classList.add('w-in'), 160);
+    const done = 160 + words.length * 80 + 180;
+    setTimeout(()=> document.getElementById('sub').classList.add('a-in'), done);
+    setTimeout(()=> document.getElementById('ctas').classList.add('a-in'), done + 140);
+  }));
+
+  /* ---- Scroll reveals ---- */
+  const io = new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if (!e.isIntersecting) return;
+      e.target.classList.add('a-in');
+      e.target.querySelectorAll('[data-count]').forEach(countUp);
+      io.unobserve(e.target);
+    });
+  }, {threshold:.14, rootMargin:'0px 0px -36px 0px'});
+
+  document.querySelectorAll('[data-reveal]').forEach(el=>io.observe(el));
+
+  document.querySelectorAll('[data-stagger]').forEach(parent=>{
+    const kids = parent.querySelectorAll('.a-hide');
+    kids.forEach((k,i)=> k.style.transitionDelay = (i * 70) + 'ms');
+    const sio = new IntersectionObserver(es=>{
+      es.forEach(e=>{
+        if (!e.isIntersecting) return;
+        kids.forEach(k=>k.classList.add('a-in'));
+        sio.unobserve(e.target);
+      });
+    }, {threshold:.08, rootMargin:'0px 0px -36px 0px'});
+    sio.observe(parent);
+  });
+
+  /* ---- 3D card tilt ---- */
+  document.querySelectorAll('[data-tilt]').forEach(card=>{
+    card.addEventListener('mousemove', e=>{
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width  - 0.5;
+      const y = (e.clientY - r.top)  / r.height - 0.5;
+      card.style.transition = 'border-color 300ms,box-shadow 300ms,transform 80ms';
+      card.style.transform = `perspective(700px) rotateX(${-y*7}deg) rotateY(${x*7}deg) translateY(-6px)`;
+    });
+    card.addEventListener('mouseleave', ()=>{
+      card.style.transition = 'border-color 300ms,box-shadow 300ms,transform 400ms cubic-bezier(.22,.61,.36,1)';
+      card.style.transform = '';
+    });
+  });
+
+  /* ---- Live terminal typewriter ---- */
+  const TICKETS = [
+    {id:'#48211', issue:'payment gateway timeout',  cause:'upstream API latency',      fix:'failover route deployed · customer notified',   ms:'7.2s'},
+    {id:'#48214', issue:'login loop detected',      cause:'expired session token',     fix:'token refreshed · session restored',             ms:'2.1s'},
+    {id:'#48219', issue:'billing charge mismatch',  cause:'currency conversion drift', fix:'ledger corrected · refund issued',               ms:'3.8s'},
+    {id:'#48227', issue:'API rate limit breached',  cause:'batch job spike at 02:47',  fix:'request queue throttled · spike absorbed',        ms:'5.6s'},
+    {id:'#48241', issue:'DNS resolution failure',   cause:'TTL propagation lag',       fix:'backup resolver activated · traffic rerouted',   ms:'1.9s'},
+  ];
+  let tidx = 0;
+  const termBody = document.getElementById('termBody');
+
+  function ts(offset=0){
+    const d = new Date(Date.now() + offset*1000);
+    return [d.getHours(),d.getMinutes(),d.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');
+  }
+
+  function typeChars(el, html, done){
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    const txt = div.textContent;
+    const tagged = html.includes('<');
+    let i = 0;
+    const span = document.createElement('span');
+    span.className = el.className;
+    termBody.appendChild(span);
+    const iv = setInterval(()=>{
+      i++;
+      if (tagged) span.innerHTML = html; // reveal styled version instantly for tagged lines
+      else span.textContent = txt.slice(0, i);
+      if (i >= txt.length){ clearInterval(iv); if (done) setTimeout(done, 90); }
+    }, tagged ? 1 : 22);
+  }
+
+  function runTerminal(){
+    const t = TICKETS[tidx++ % TICKETS.length];
+    const lines = [
+      {cls:'tl dim', text:`$ vryx monitor --live --stream`},
+      {cls:'tl',     html:`<span class="tl">[${ts()}] ticket ${t.id} <b>${t.issue}</b> — detected</span>`},
+      {cls:'tl',     html:`<span class="tl">[${ts(1)}] root cause: <b>${t.cause}</b></span>`},
+      {cls:'tl',     html:`<span class="tl">[${ts(3)}] ${t.fix}</span>`},
+      {cls:'tl ok',  html:`<span class="tl ok">[${ts(5)}] ✓ resolved — ${t.ms} end-to-end · CSAT 5/5</span>`},
+      {cls:'tl dim', html:`<span class="tl dim">[${ts(5)}] awaiting next event… <span class="tcaret"></span></span>`},
+    ];
+    termBody.innerHTML = '';
+    let i = 0;
+    function next(){
+      if (i >= lines.length) { setTimeout(runTerminal, 5500); return; }
+      const l = lines[i++];
+      const el = document.createElement('span');
+      el.className = l.cls;
+      if (l.html) {
+        termBody.appendChild(el);
+        el.outerHTML; /* flush */
+        const span2 = document.createElement('span');
+        termBody.appendChild(span2);
+        span2.outerHTML;
+        /* just append the HTML version after a small delay */
+        const tmp = document.createElement('span');
+        termBody.appendChild(tmp);
+        setTimeout(()=>{
+          tmp.outerHTML = l.html;
+          setTimeout(next, 340);
+        }, 30);
+      } else {
+        typeChars(el, l.text, next);
+      }
+    }
+    next();
+  }
+
+  /* Start terminal after hero CTAs appear */
+  const afterWords = 160 + words.length * 80 + 180 + 140 + 600;
+  setTimeout(runTerminal, afterWords);
+
+  function initTerminalStatic(){
+    termBody.innerHTML = `
+      <span class="tl dim">$ vryx monitor --live --stream</span>
+      <span class="tl">[02:47:12] ticket #48211 <b>payment gateway timeout</b> — detected</span>
+      <span class="tl">[02:47:13] root cause: <b>upstream API latency</b></span>
+      <span class="tl">[02:47:15] failover route deployed · customer notified</span>
+      <span class="tl ok">[02:47:19] ✓ resolved — 7.2s end-to-end · CSAT 5/5</span>
+      <span class="tl dim">[02:47:19] awaiting next event… <span class="tcaret"></span></span>
+    `;
+  }
+
+  /* ---- Number counters ---- */
+  function setFinal(el){
+    el.textContent = fmt(parseFloat(el.dataset.count), el);
+  }
+  function fmt(v, el){
+    if (el.dataset.format === 'k') return Math.round(v/1000)+'k';
+    const d = parseInt(el.dataset.decimals||0);
+    return d ? v.toFixed(d) : Math.round(v).toLocaleString();
+  }
+  function countUp(el){
+    if (el.dataset.done) return;
+    el.dataset.done='1';
+    const target = parseFloat(el.dataset.count);
+    const dur = 1000, t0 = performance.now();
+    (function tick(t){
+      const p = Math.min((t-t0)/dur,1);
+      const e = 1-Math.pow(1-p,3);
+      el.textContent = fmt(target*e, el);
+      if (p<1) requestAnimationFrame(tick);
+    })(t0);
+  }
+})();
+</script>
+
+</body>
+</html>

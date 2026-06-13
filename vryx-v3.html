@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>VRYX OS — Autonomous Company Operations</title>
+<meta name="description" content="The AI layer that runs your entire company operations automatically."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+/* ─── TOKENS ─── */
+:root{
+  --void:#06080C;--deep:#0A0E16;--panel:#0F1520;--rail:#151C2A;
+  --edge:#1C2638;--line:#243047;--mist:#5B6B85;--fog:#8898AA;
+  --white:#E8F1FF;--off:#B8C8DC;
+  --cyan:#00F0FF;--cyan2:#00C8D4;--cyan-d:rgba(0,240,255,.1);--cyan-g:rgba(0,240,255,.3);
+  --violet:#7B5CFA;--violet-d:rgba(123,92,250,.12);
+  --green:#00E87A;--amber:#FFB800;--red:#FF4D6D;
+  --bg:var(--void);--bg2:var(--deep);--bg3:var(--panel);
+  --text:var(--white);--text2:var(--off);--text3:var(--fog);
+  --border:var(--line);--accent:var(--cyan);
+  --mono:'JetBrains Mono',monospace;
+  --dis:'Unbounded',sans-serif;
+  --body:'Inter',system-ui,sans-serif;
+  --ease:.22,.61,.36,1;
+  --dur:.3s;
+}
+[data-theme="light"]{
+  --void:#F0EEE8;--deep:#F8F6F0;--panel:#FFFFFF;--rail:#F4F2EC;
+  --edge:#E8E4DC;--line:#D8D2C8;--mist:#8A8278;--fog:#A09890;
+  --white:#1A1614;--off:#2E2A26;
+  --cyan:#0077FF;--cyan2:#0060DD;--cyan-d:rgba(0,119,255,.08);--cyan-g:rgba(0,119,255,.25);
+  --violet:#6B4EE0;--violet-d:rgba(107,78,224,.1);
+  --bg:var(--void);--bg2:var(--deep);--bg3:var(--panel);
+  --text:var(--white);--text2:var(--off);--text3:var(--mist);
+  --border:var(--line);--accent:var(--cyan);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;font-size:16px}
+body{
+  font-family:var(--body);color:var(--text);background:var(--bg);
+  overflow-x:hidden;transition:background var(--dur),color var(--dur);
+  cursor:none;
+}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+::selection{background:var(--cyan);color:var(--void)}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--accent)}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+
+/* ─── CURSOR ─── */
+#c-dot,#c-ring{position:fixed;pointer-events:none;z-index:9999;border-radius:50%;transform:translate(-50%,-50%)}
+#c-dot{width:5px;height:5px;background:var(--accent);top:0;left:0}
+#c-ring{
+  width:30px;height:30px;border:1px solid var(--cyan-g);top:0;left:0;
+  transition:width .18s,height .18s,border-color .18s,opacity .3s;
+}
+body.hovering #c-ring{width:44px;height:44px;border-color:var(--accent)}
+[data-theme="light"] #c-dot{background:var(--cyan)}
+
+/* ─── PROGRESS BAR ─── */
+#bar{position:fixed;top:0;left:0;width:100%;height:2px;z-index:1000;
+  background:linear-gradient(90deg,var(--cyan),var(--violet));
+  transform:scaleX(0);transform-origin:left;will-change:transform}
+
+/* ─── NAV ─── */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:600;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:22px 56px;transition:background .4s,border-color .4s,padding .3s;
+  border-bottom:1px solid transparent;
+}
+.nav.stuck{
+  background:rgba(6,8,12,.88);backdrop-filter:blur(20px);
+  border-color:var(--border);padding:14px 56px;
+}
+[data-theme="light"] .nav.stuck{background:rgba(240,238,232,.9)}
+.nav-logo{font-family:var(--dis);font-size:14px;font-weight:900;color:var(--accent);letter-spacing:.06em}
+.nav-links{display:flex;gap:36px;align-items:center}
+.nav-links a{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);
+  font-family:var(--mono);transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-right{display:flex;align-items:center;gap:20px}
+.theme-btn{
+  width:44px;height:24px;border-radius:12px;border:1px solid var(--border);
+  background:var(--bg3);cursor:none;position:relative;transition:background .3s,border-color .3s;
+  flex-shrink:0;
+}
+.theme-btn::after{
+  content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;
+  border-radius:50%;background:var(--accent);transition:transform .3s cubic-bezier(var(--ease));
+}
+[data-theme="light"] .theme-btn::after{transform:translateX(20px)}
+.nav-cta{
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--void);background:var(--accent);padding:10px 24px;
+  transition:opacity .2s,transform .2s;cursor:none;
+}
+.nav-cta:hover{opacity:.85;transform:translateY(-1px)}
+@media(max-width:780px){
+  .nav{padding:16px 20px}.nav.stuck{padding:12px 20px}
+  .nav-links{display:none}
+}
+
+/* ─── AURORA HERO ─── */
+.hero{
+  min-height:100vh;display:flex;align-items:center;
+  padding:120px 56px 80px;position:relative;overflow:hidden;
+}
+@media(max-width:780px){.hero{padding:100px 20px 60px}}
+.aurora{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.ab{position:absolute;border-radius:50%;filter:blur(100px);opacity:.18}
+[data-theme="light"] .ab{opacity:.12}
+.ab1{width:700px;height:700px;top:-20%;left:-10%;
+  background:radial-gradient(circle,var(--cyan) 0%,transparent 70%);
+  animation:drift1 22s ease-in-out infinite alternate}
+.ab2{width:600px;height:600px;top:10%;right:-15%;
+  background:radial-gradient(circle,var(--violet) 0%,transparent 70%);
+  animation:drift2 18s ease-in-out infinite alternate}
+.ab3{width:500px;height:500px;bottom:-25%;left:30%;
+  background:radial-gradient(circle,rgba(0,232,122,.7) 0%,transparent 70%);
+  animation:drift3 26s ease-in-out infinite alternate}
+@keyframes drift1{from{transform:translate(0,0) scale(1)}to{transform:translate(80px,60px) scale(1.2)}}
+@keyframes drift2{from{transform:translate(0,0) scale(1.1)}to{transform:translate(-60px,80px) scale(.9)}}
+@keyframes drift3{from{transform:translate(0,0) scale(.9)}to{transform:translate(40px,-60px) scale(1.15)}}
+.grid-bg{
+  position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(var(--edge) 1px,transparent 1px),
+    linear-gradient(90deg,var(--edge) 1px,transparent 1px);
+  background-size:52px 52px;opacity:.4;
+}
+[data-theme="light"] .grid-bg{opacity:.25}
+.hero-inner{
+  max-width:1120px;margin:0 auto;width:100%;z-index:1;position:relative;
+  display:grid;grid-template-columns:1fr 1.1fr;gap:80px;align-items:center;
+}
+@media(max-width:960px){.hero-inner{grid-template-columns:1fr;gap:56px}}
+.hero-left{}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);border:1px solid var(--cyan-g);padding:7px 16px;margin-bottom:32px;
+}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.6)}}
+.hero-h1{
+  font-family:var(--dis);font-size:clamp(40px,6vw,80px);font-weight:900;
+  line-height:.95;letter-spacing:-.03em;color:var(--text);margin-bottom:24px;
+}
+.hero-h1 em{
+  font-style:normal;color:transparent;
+  background:linear-gradient(135deg,var(--cyan),var(--violet));
+  -webkit-background-clip:text;background-clip:text;
+}
+.hero-sub{color:var(--text3);font-size:18px;line-height:1.65;max-width:460px;margin-bottom:40px}
+.hero-ctas{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:56px}
+.btn-p{
+  font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--accent);color:var(--void);font-weight:500;padding:15px 36px;
+  border:none;cursor:none;transition:transform .2s cubic-bezier(var(--ease)),box-shadow .2s;
+}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 0 36px var(--cyan-g)}
+.btn-g{
+  font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+  background:transparent;color:var(--text);padding:15px 36px;
+  border:1px solid var(--border);cursor:none;transition:border-color .2s,color .2s;
+}
+.btn-g:hover{border-color:var(--accent);color:var(--accent)}
+.hero-proof{display:flex;flex-wrap:wrap;gap:32px}
+.proof-item{display:flex;flex-direction:column;gap:4px}
+.proof-n{font-family:var(--dis);font-size:32px;font-weight:700;color:var(--text);letter-spacing:-.02em;line-height:1}
+.proof-n b{color:var(--accent)}
+.proof-l{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+
+/* ─── HERO DEMO WIDGET ─── */
+.hero-demo{position:relative}
+.demo-frame{
+  background:var(--bg3);border:1px solid var(--border);
+  box-shadow:0 0 80px rgba(0,240,255,.08),0 40px 80px rgba(0,0,0,.4);
+  overflow:hidden;position:relative;z-index:2;
+}
+.demo-topbar{
+  background:var(--rail);border-bottom:1px solid var(--border);
+  padding:12px 16px;display:flex;align-items:center;gap:10px;
+}
+.demo-dots span{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px}
+.demo-dots .d1{background:#FF5F57}.demo-dots .d2{background:#FEBC2E}.demo-dots .d3{background:#28C840}
+.demo-title{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.08em;margin-left:auto;margin-right:auto}
+.demo-scenarios{
+  display:flex;gap:2px;padding:12px 16px;
+  background:var(--bg2);border-bottom:1px solid var(--border);
+}
+.scen-btn{
+  font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  padding:6px 14px;border:1px solid var(--border);background:transparent;
+  color:var(--text3);cursor:none;transition:all .2s;
+}
+.scen-btn.active,.scen-btn:hover{background:var(--cyan-d);border-color:var(--accent);color:var(--accent)}
+.demo-body{padding:20px;min-height:260px;font-family:var(--mono);font-size:12px;line-height:1.85;overflow:hidden}
+.demo-row{display:flex;align-items:baseline;gap:10px;margin-bottom:2px;opacity:0;transform:translateX(-8px)}
+.demo-row.show{opacity:1;transform:none;transition:opacity .3s,transform .3s cubic-bezier(var(--ease))}
+.dr-icon{font-size:14px;flex-shrink:0;width:18px}
+.dr-label{color:var(--text3)}
+.dr-val{margin-left:auto;padding:2px 10px;font-size:10px;letter-spacing:.06em}
+.v-done{background:rgba(0,232,122,.15);color:var(--green);border:1px solid rgba(0,232,122,.3)}
+.v-run{background:rgba(0,240,255,.1);color:var(--accent);border:1px solid rgba(0,240,255,.3)}
+.v-ai{background:rgba(123,92,250,.15);color:var(--violet);border:1px solid rgba(123,92,250,.3)}
+.v-warn{background:rgba(255,184,0,.1);color:var(--amber);border:1px solid rgba(255,184,0,.3)}
+.demo-footer{
+  border-top:1px solid var(--border);background:var(--bg2);
+  padding:10px 16px;display:flex;align-items:center;justify-content:space-between;
+}
+.df-status{font-family:var(--mono);font-size:10px;color:var(--green);letter-spacing:.08em;display:flex;align-items:center;gap:6px}
+.df-status::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.6s ease-in-out infinite}
+.df-time{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.06em}
+
+/* Floating parallax cards */
+.p-card{
+  position:absolute;z-index:3;background:var(--bg3);border:1px solid var(--border);
+  padding:14px 18px;font-family:var(--mono);font-size:11px;
+  box-shadow:0 16px 40px rgba(0,0,0,.35);
+  will-change:transform;pointer-events:none;
+}
+.pc1{top:-28px;right:-24px}
+.pc2{bottom:-20px;left:-32px}
+.pc3{top:50%;left:-48px;transform:translateY(-50%)}
+.p-card .pc-val{font-size:18px;font-weight:500;color:var(--accent);margin-bottom:2px}
+.p-card .pc-lbl{color:var(--text3);font-size:9px;letter-spacing:.1em;text-transform:uppercase}
+.pc-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px;animation:pulse 1.6s ease-in-out infinite}
+
+/* ─── MARQUEE ─── */
+.marquee-sec{
+  padding:20px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  background:var(--bg2);overflow:hidden;
+}
+.marquee-inner{display:flex;width:max-content;animation:tick 38s linear infinite}
+.marquee-inner:hover{animation-play-state:paused}
+.marquee-item{
+  font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--text3);padding:0 48px;white-space:nowrap;
+  transition:color .2s;
+}
+.marquee-item:hover{color:var(--accent)}
+.marquee-sep{color:var(--border);padding:0 4px}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ─── SECTION COMMONS ─── */
+section{position:relative}
+.wrap{max-width:1120px;margin:0 auto;padding:0 56px}
+@media(max-width:680px){.wrap{padding:0 20px}}
+.sec-eyebrow{
+  font-family:var(--mono);font-size:11px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:10px;
+}
+.sec-eyebrow::before{content:'//';color:var(--violet)}
+.sec-h{
+  font-family:var(--dis);font-size:clamp(28px,4vw,52px);font-weight:700;
+  line-height:1.05;letter-spacing:-.025em;color:var(--text);margin-bottom:16px;
+}
+.sec-sub{color:var(--text3);font-size:17px;max-width:540px;line-height:1.65;margin-bottom:56px}
+.will-r{transition:opacity .6s cubic-bezier(var(--ease)),transform .6s cubic-bezier(var(--ease))}
+.will-r.pre{opacity:0;transform:translateY(22px)}
+
+/* ─── STICKY STORY ─── */
+.story-sec{padding:100px 0;background:var(--bg2)}
+.story-sec::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+.story-wrap{
+  max-width:1120px;margin:0 auto;padding:0 56px;
+  display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start;
+}
+@media(max-width:900px){.story-wrap{grid-template-columns:1fr;gap:40px;padding:0 20px}}
+.story-steps{padding-top:10vh}
+.story-step{
+  padding:40px 0;border-bottom:1px solid var(--border);opacity:.35;
+  transition:opacity .5s cubic-bezier(var(--ease));
+}
+.story-step:last-child{border-bottom:none}
+.story-step.active{opacity:1}
+.step-num{
+  font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.15em;
+  text-transform:uppercase;margin-bottom:16px;
+}
+.step-h{font-family:var(--dis);font-size:clamp(18px,2.5vw,26px);font-weight:700;
+  color:var(--text);margin-bottom:12px;letter-spacing:-.01em}
+.step-p{color:var(--text3);font-size:16px;line-height:1.65;max-width:420px}
+.story-visual{
+  position:sticky;top:15vh;height:560px;
+  background:var(--bg3);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+}
+@media(max-width:900px){.story-visual{position:relative;height:320px;top:auto}}
+.sv-panel{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  padding:32px;opacity:0;transition:opacity .5s cubic-bezier(var(--ease)),transform .5s cubic-bezier(var(--ease));
+  transform:translateY(16px);
+}
+.sv-panel.active{opacity:1;transform:none}
+.sv-inner{width:100%}
+.sv-metric{text-align:center;margin-bottom:28px}
+.sv-big{font-family:var(--dis);font-size:72px;font-weight:900;letter-spacing:-.04em;line-height:1}
+.sv-unit{font-family:var(--mono);font-size:13px;color:var(--text3);margin-top:6px;letter-spacing:.08em;text-transform:uppercase}
+.sv-bar-wrap{display:flex;flex-direction:column;gap:10px}
+.sv-bar-row{display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:11px;color:var(--text3)}
+.sv-bar-track{flex:1;height:4px;background:var(--edge);border-radius:2px;overflow:hidden}
+.sv-bar-fill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(var(--ease))}
+.sv-bar-label{width:32px;text-align:right;color:var(--accent);font-size:10px}
+
+/* ─── FEATURES TABS ─── */
+.feat-sec{padding:100px 0}
+.feat-tabs{display:flex;gap:2px;margin-bottom:40px;flex-wrap:wrap}
+.ftab{
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  padding:12px 28px;border:1px solid var(--border);background:transparent;
+  color:var(--text3);cursor:none;transition:all .2s;
+}
+.ftab.active,.ftab:hover{background:var(--cyan-d);border-color:var(--accent);color:var(--accent)}
+.ftab.active{pointer-events:none}
+.feat-panels{position:relative;min-height:420px}
+.feat-panel{
+  position:absolute;inset:0;opacity:0;transform:translateX(20px);
+  transition:opacity .35s cubic-bezier(var(--ease)),transform .35s cubic-bezier(var(--ease));
+  pointer-events:none;
+}
+.feat-panel.active{opacity:1;transform:none;position:relative;pointer-events:auto}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+@media(max-width:720px){.feat-grid{grid-template-columns:1fr}}
+.feat-card{
+  background:var(--bg3);border:1px solid var(--border);padding:36px 32px;
+  transition:border-color .25s,background .25s,transform .25s;cursor:none;
+}
+.feat-card:hover{border-color:var(--accent);background:var(--cyan-d);transform:translateY(-4px)}
+.feat-icon{font-size:30px;margin-bottom:20px}
+.feat-name{font-family:var(--dis);font-size:17px;font-weight:700;color:var(--text);margin-bottom:10px;letter-spacing:-.01em}
+.feat-desc{color:var(--text3);font-size:15px;line-height:1.65}
+
+/* ─── PRICING ─── */
+.price-sec{padding:100px 0;background:var(--bg2)}
+.price-sec::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--violet),transparent)}
+.price-toggle{
+  display:flex;align-items:center;gap:16px;margin-bottom:56px;
+  font-family:var(--mono);font-size:13px;color:var(--text3);
+}
+.toggle-track{
+  width:52px;height:28px;border-radius:14px;border:1px solid var(--border);
+  background:var(--bg3);cursor:none;position:relative;transition:background .3s;
+}
+.toggle-track.on{background:var(--cyan-d);border-color:var(--accent)}
+.toggle-track::after{
+  content:'';position:absolute;top:4px;left:4px;width:18px;height:18px;
+  border-radius:50%;background:var(--text3);transition:transform .3s cubic-bezier(var(--ease)),background .3s;
+}
+.toggle-track.on::after{transform:translateX(24px);background:var(--accent)}
+.toggle-label{color:var(--text)}
+.save-badge{
+  font-size:10px;letter-spacing:.1em;color:var(--void);background:var(--green);
+  padding:3px 10px;text-transform:uppercase;
+}
+.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+@media(max-width:800px){.price-grid{grid-template-columns:1fr}}
+.price-card{
+  background:var(--bg3);border:1px solid var(--border);padding:44px 40px;
+  transition:border-color .25s,transform .25s;position:relative;
+}
+.price-card.featured{border-color:var(--accent);background:rgba(0,240,255,.04)}
+.price-card:hover:not(.featured){border-color:var(--border);transform:translateY(-4px)}
+.feat-pip{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  background:var(--accent);color:var(--void);padding:5px 18px;
+}
+.price-plan{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:20px}
+.price-amount{
+  font-family:var(--dis);font-size:56px;font-weight:900;letter-spacing:-.04em;
+  color:var(--text);line-height:1;margin-bottom:6px;display:flex;align-items:flex-start;gap:4px;
+}
+.price-currency{font-size:24px;margin-top:8px;color:var(--text3)}
+.price-val{transition:opacity .2s}
+.price-period{font-family:var(--mono);font-size:12px;color:var(--text3);margin-bottom:28px}
+.price-desc{color:var(--text3);font-size:15px;line-height:1.6;margin-bottom:32px}
+.price-features{list-style:none;margin-bottom:40px;display:flex;flex-direction:column;gap:12px}
+.price-features li{
+  font-size:14px;color:var(--text3);display:flex;align-items:center;gap:10px;
+  font-family:var(--mono);
+}
+.price-features li::before{content:'✓';color:var(--accent);font-weight:700}
+.price-btn{
+  width:100%;font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+  padding:14px;border:1px solid var(--border);background:transparent;
+  color:var(--text);cursor:none;transition:all .2s;
+}
+.price-btn:hover{border-color:var(--accent);color:var(--accent)}
+.price-card.featured .price-btn{
+  background:var(--accent);color:var(--void);border-color:transparent;
+}
+.price-card.featured .price-btn:hover{opacity:.85}
+
+/* ─── TESTIMONIALS ─── */
+.testi-sec{padding:100px 0}
+.testi-track-wrap{overflow:hidden;position:relative;cursor:grab}
+.testi-track-wrap:active{cursor:grabbing}
+.testi-track{display:flex;gap:24px;transition:transform .35s cubic-bezier(var(--ease));will-change:transform;user-select:none}
+.testi-card{
+  flex-shrink:0;width:420px;background:var(--bg3);border:1px solid var(--border);
+  padding:40px;position:relative;
+}
+@media(max-width:500px){.testi-card{width:300px;padding:28px}}
+.testi-stars{color:var(--amber);font-size:14px;margin-bottom:20px;letter-spacing:2px}
+.testi-quote{
+  font-size:16px;line-height:1.7;color:var(--text);margin-bottom:28px;
+  font-style:italic;
+}
+.testi-author{display:flex;align-items:center;gap:14px}
+.testi-avatar{
+  width:44px;height:44px;border-radius:50%;background:var(--edge);
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;
+}
+.testi-info{display:flex;flex-direction:column;gap:2px}
+.testi-name{font-weight:600;font-size:14px;color:var(--text)}
+.testi-title{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.06em}
+.testi-dots{display:flex;justify-content:center;gap:8px;margin-top:32px}
+.testi-dot{
+  width:24px;height:3px;background:var(--border);
+  transition:background .3s,width .3s;cursor:none;
+}
+.testi-dot.active{background:var(--accent);width:40px}
+
+/* ─── FAQ ─── */
+.faq-sec{padding:100px 0;background:var(--bg2)}
+.faq-sec::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+.faq-list{max-width:720px}
+.faq-item{border-bottom:1px solid var(--border)}
+.faq-q{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  padding:24px 0;background:none;border:none;color:var(--text);
+  font-family:var(--body);font-size:17px;font-weight:500;text-align:left;cursor:none;
+  transition:color .2s;
+}
+.faq-q:hover{color:var(--accent)}
+.faq-q.open{color:var(--accent)}
+.faq-icon{
+  width:24px;height:24px;flex-shrink:0;border:1px solid var(--border);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:var(--text3);transition:transform .3s cubic-bezier(var(--ease)),border-color .2s;
+}
+.faq-q.open .faq-icon{transform:rotate(45deg);border-color:var(--accent);color:var(--accent)}
+.faq-a{
+  overflow:hidden;height:0;transition:height .4s cubic-bezier(var(--ease));
+}
+.faq-a-inner{padding:0 0 24px;color:var(--text3);font-size:16px;line-height:1.7}
+
+/* ─── FINAL CTA ─── */
+.cta-sec{padding:140px 0;text-align:center;overflow:hidden}
+.cta-orb{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:900px;height:900px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(0,240,255,.07) 0%,transparent 65%);
+}
+.cta-sec .sec-h{font-size:clamp(36px,6vw,80px);max-width:none;margin-bottom:20px}
+.cta-form{display:flex;gap:0;max-width:480px;margin:40px auto 0;flex-wrap:wrap;justify-content:center;gap:12px}
+.cta-input{
+  flex:1;min-width:240px;background:var(--bg3);border:1px solid var(--border);
+  color:var(--text);font-family:var(--mono);font-size:13px;padding:16px 20px;outline:none;
+  transition:border-color .2s;
+}
+.cta-input::placeholder{color:var(--text3)}
+.cta-input:focus{border-color:var(--accent)}
+.cta-sub{
+  font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--accent);color:var(--void);border:none;padding:16px 32px;cursor:none;
+  transition:opacity .2s,transform .2s;
+}
+.cta-sub:hover{opacity:.85;transform:translateY(-1px)}
+.cta-note{font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:16px;letter-spacing:.06em}
+
+/* ─── FOOTER ─── */
+.footer{border-top:1px solid var(--border);padding:40px 0;background:var(--bg2)}
+.footer .wrap{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px}
+.foot-links{display:flex;gap:28px;flex-wrap:wrap}
+.foot-links a{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;transition:color .2s}
+.foot-links a:hover{color:var(--accent)}
+.foot-copy{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.06em}
+.foot-status{
+  font-family:var(--mono);font-size:11px;color:var(--green);letter-spacing:.08em;
+  display:flex;align-items:center;gap:6px;
+}
+.foot-status::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.6s ease-in-out infinite}
+</style>
+</head>
+<body>
+
+<div id="c-dot"></div>
+<div id="c-ring"></div>
+<div id="bar"></div>
+
+<!-- ─── NAV ─── -->
+<header class="nav" id="nav">
+  <a class="nav-logo" href="#top">VRYX OS</a>
+  <nav class="nav-links">
+    <a href="#story">How It Works</a>
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
+  </nav>
+  <div class="nav-right">
+    <button class="theme-btn" id="themeBtn" aria-label="Toggle theme"></button>
+    <a class="nav-cta" href="#contact">Request Demo</a>
+  </div>
+</header>
+
+<!-- ─── HERO ─── -->
+<section class="hero" id="top">
+  <div class="aurora">
+    <div class="ab ab1"></div>
+    <div class="ab ab2"></div>
+    <div class="ab ab3"></div>
+  </div>
+  <div class="grid-bg"></div>
+  <div class="hero-inner">
+
+    <div class="hero-left">
+      <div class="hero-badge"><span class="badge-dot"></span>Now in General Availability</div>
+      <h1 class="hero-h1">Your company.<br>Runs <em>itself.</em></h1>
+      <p class="hero-sub">VRYX OS is the AI layer that automatically resolves support tickets, manages procurement, and orchestrates operations — before you even wake up.</p>
+      <div class="hero-ctas">
+        <a class="btn-p" href="#contact">Start Free Trial</a>
+        <a class="btn-g" href="#story">See How It Works</a>
+      </div>
+      <div class="hero-proof">
+        <div class="proof-item"><span class="proof-n" data-count="2.4"><b>0</b>min</span><span class="proof-l">Avg. resolution time</span></div>
+        <div class="proof-item"><span class="proof-n" data-count="99.97"><b>0</b>%</span><span class="proof-l">Uptime SLA</span></div>
+        <div class="proof-item"><span class="proof-n" data-count="230"><b>0</b>+</span><span class="proof-l">Enterprise clients</span></div>
+      </div>
+    </div>
+
+    <div class="hero-demo" id="heroDemo">
+      <!-- Floating parallax cards -->
+      <div class="p-card pc1" data-depth="0.5">
+        <div class="pc-val"><span class="pc-dot"></span>98.6%</div>
+        <div class="pc-lbl">Auto-resolved today</div>
+      </div>
+      <div class="p-card pc2" data-depth="0.8">
+        <div class="pc-val">1,247</div>
+        <div class="pc-lbl">Tickets this week</div>
+      </div>
+      <div class="p-card pc3" data-depth="0.3">
+        <div class="pc-val">43h</div>
+        <div class="pc-lbl">Saved this month</div>
+      </div>
+      <!-- Main demo widget -->
+      <div class="demo-frame">
+        <div class="demo-topbar">
+          <div class="demo-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+          <span class="demo-title">VRYX OS — Live Operations Center</span>
+        </div>
+        <div class="demo-scenarios">
+          <button class="scen-btn active" data-scene="0">Support Ticket</button>
+          <button class="scen-btn" data-scene="1">Procurement</button>
+          <button class="scen-btn" data-scene="2">HR Request</button>
+        </div>
+        <div class="demo-body" id="demoBody"></div>
+        <div class="demo-footer">
+          <span class="df-status">All systems operational</span>
+          <span class="df-time" id="demoTime">—</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─── MARQUEE ─── -->
+<div class="marquee-sec" aria-hidden="true">
+  <div class="marquee-inner" id="marqueeInner"></div>
+</div>
+
+<!-- ─── STICKY STORY ─── -->
+<section class="story-sec" id="story">
+  <div class="story-wrap">
+
+    <div class="story-steps">
+      <div class="sec-eyebrow will-r">How It Works</div>
+      <h2 class="sec-h will-r">From chaos to calm,<br>autonomously.</h2>
+
+      <div class="story-step active" data-step="0">
+        <div class="step-num">01 — Ingestion</div>
+        <h3 class="step-h">Every request, automatically captured</h3>
+        <p class="step-p">VRYX OS monitors email, Slack, your helpdesk, and custom webhooks 24/7. Nothing slips through — every request is classified, prioritized, and queued in milliseconds.</p>
+      </div>
+      <div class="story-step" data-step="1">
+        <div class="step-num">02 — AI Resolution</div>
+        <h3 class="step-h">The AI resolves 94% without humans</h3>
+        <p class="step-p">Our multi-model reasoning engine diagnoses the problem, retrieves context from your knowledge base, executes the fix, and sends a personalized response — automatically.</p>
+      </div>
+      <div class="story-step" data-step="2">
+        <div class="step-num">03 — Smart Escalation</div>
+        <h3 class="step-h">The 6% that matter reach the right person instantly</h3>
+        <p class="step-p">Complex issues are routed to the right specialist with full context pre-loaded. No more "explain your problem again." They arrive ready to solve.</p>
+      </div>
+      <div class="story-step" data-step="3">
+        <div class="step-num">04 — Continuous Learning</div>
+        <h3 class="step-h">Gets smarter with every interaction</h3>
+        <p class="step-p">VRYX learns your company's patterns, preferences, and edge cases. Resolution rates improve week over week without any manual training effort from your team.</p>
+      </div>
+    </div>
+
+    <div class="story-visual" id="storyVisual">
+      <div class="sv-panel active" data-panel="0">
+        <div class="sv-inner">
+          <div class="sv-metric">
+            <div class="sv-big" style="color:var(--cyan)">1,247</div>
+            <div class="sv-unit">Requests ingested this week</div>
+          </div>
+          <div class="sv-bar-wrap">
+            <div class="sv-bar-row"><span style="width:60px">Email</span><div class="sv-bar-track"><div class="sv-bar-fill" style="width:72%;background:var(--cyan)"></div></div><span class="sv-bar-label">72%</span></div>
+            <div class="sv-bar-row"><span style="width:60px">Slack</span><div class="sv-bar-track"><div class="sv-bar-fill" style="width:18%;background:var(--violet)"></div></div><span class="sv-bar-label">18%</span></div>
+            <div class="sv-bar-row"><span style="width:60px">API</span><div class="sv-bar-track"><div class="sv-bar-fill" style="width:10%;background:var(--green)"></div></div><span class="sv-bar-label">10%</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="sv-panel" data-panel="1">
+        <div class="sv-inner">
+          <div class="sv-metric">
+            <div class="sv-big" style="color:var(--green)">94%</div>
+            <div class="sv-unit">Fully auto-resolved</div>
+          </div>
+          <div class="sv-bar-wrap">
+            <div class="sv-bar-row"><span style="width:80px">Tier 1</span><div class="sv-bar-track"><div class="sv-bar-fill" style="width:99%;background:var(--green)"></div></div><span class="sv-bar-label">99%</span></div>
+            <div class="sv-bar-row"><span style="width:80px">Tier 2</span><div class="sv-bar-track"><div class="sv-bar-fill" style="width:88%;background:var(--cyan)"></div></div><span class="sv-bar-label">88%</span></div>
+            <div class="sv-bar-row"><span style="width:80px">Tier 3</span><div class="sv-bar-track"><div class="sv-bar-fill" style="width:61%;background:var(--violet)"></div></div><span class="sv-bar-label">61%</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="sv-panel" data-panel="2">
+        <div class="sv-inner">
+          <div class="sv-metric">
+            <div class="sv-big" style="color:var(--amber)">2.4<span style="font-size:36px">min</span></div>
+            <div class="sv-unit">Average escalation routing time</div>
+          </div>
+          <div class="sv-bar-wrap">
+            <div class="sv-bar-row"><span style="width:80px">P1 Critical</span><div class="sv-bar-track"><div class="sv-bar-fill" style="width:95%;background:var(--red)"></div></div><span class="sv-bar-label">&lt;1m</span></div>
+            <div class="sv-bar-row"><span style="width:80px">P2 High</span><div class="sv-bar-track"><div class="sv-bar-fill" style="width:75%;background:var(--amber)"></div></div><span class="sv-bar-label">2.4m</span></div>
+            <div class="sv-bar-row"><span style="width:80px">P3 Medium</span><div class="sv-bar-track"><div class="sv-bar-fill" style="width:50%;background:var(--cyan)"></div></div><span class="sv-bar-label">8m</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="sv-panel" data-panel="3">
+        <div class="sv-inner">
+          <div class="sv-metric">
+            <div class="sv-big" style="color:var(--violet)">+12%</div>
+            <div class="sv-unit">Resolution improvement / month</div>
+          </div>
+          <div class="sv-bar-wrap">
+            <div class="sv-bar-row"><span style="width:70px">Week 1</span><div class="sv-bar-track"><div class="sv-bar-fill" style="width:72%;background:var(--violet)"></div></div><span class="sv-bar-label">72%</span></div>
+            <div class="sv-bar-row"><span style="width:70px">Week 4</span><div class="sv-bar-track"><div class="sv-bar-fill" style="width:82%;background:var(--violet)"></div></div><span class="sv-bar-label">82%</span></div>
+            <div class="sv-bar-row"><span style="width:70px">Week 8</span><div class="sv-bar-track"><div class="sv-bar-fill" style="width:94%;background:var(--cyan)"></div></div><span class="sv-bar-label">94%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─── FEATURES ─── -->
+<section class="feat-sec" id="features">
+  <div class="wrap">
+    <div class="sec-eyebrow will-r">Product Capabilities</div>
+    <h2 class="sec-h will-r">Built for every layer<br>of your company</h2>
+    <div class="feat-tabs will-r">
+      <button class="ftab active" data-tab="ops">Operations</button>
+      <button class="ftab" data-tab="it">IT & Support</button>
+      <button class="ftab" data-tab="hr">HR & People</button>
+      <button class="ftab" data-tab="finance">Finance</button>
+    </div>
+    <div class="feat-panels will-r">
+      <div class="feat-panel active" data-panel="ops">
+        <div class="feat-grid">
+          <div class="feat-card"><div class="feat-icon">⚡</div><div class="feat-name">Workflow Automation</div><div class="feat-desc">Auto-trigger multi-step workflows across your tool stack based on request type, priority, and business rules you define once.</div></div>
+          <div class="feat-card"><div class="feat-icon">🗺️</div><div class="feat-name">Process Mapping</div><div class="feat-desc">AI learns your actual workflows from historical data — no manual mapping required. Continuously refines as patterns evolve.</div></div>
+          <div class="feat-card"><div class="feat-icon">📊</div><div class="feat-name">Ops Intelligence</div><div class="feat-desc">Real-time dashboards showing bottlenecks, anomalies, and opportunities. Weekly ops health reports delivered to your inbox.</div></div>
+        </div>
+      </div>
+      <div class="feat-panel" data-panel="it">
+        <div class="feat-grid">
+          <div class="feat-card"><div class="feat-icon">🛡️</div><div class="feat-name">Auto Ticket Resolution</div><div class="feat-desc">Tier-1 and most Tier-2 tickets resolved autonomously. Password resets, access grants, software issues — handled while you sleep.</div></div>
+          <div class="feat-card"><div class="feat-icon">🔍</div><div class="feat-name">Anomaly Detection</div><div class="feat-desc">Monitors systems for performance degradation and security events. Raises incidents before users report them, with root-cause analysis.</div></div>
+          <div class="feat-card"><div class="feat-icon">🔗</div><div class="feat-name">240+ Integrations</div><div class="feat-desc">Native connectors to Jira, Zendesk, ServiceNow, Okta, AWS, and 235 more tools. Two-way sync with no data silos.</div></div>
+        </div>
+      </div>
+      <div class="feat-panel" data-panel="hr">
+        <div class="feat-grid">
+          <div class="feat-card"><div class="feat-icon">🧑‍💼</div><div class="feat-name">Onboarding Automation</div><div class="feat-desc">New hire provisioning, equipment requests, system access, and first-week checklists — fully automated from offer acceptance.</div></div>
+          <div class="feat-card"><div class="feat-icon">📋</div><div class="feat-name">Policy Q&A</div><div class="feat-desc">Employees get instant, accurate answers to HR policy questions from your company's own documentation. No more HR ticket backlog.</div></div>
+          <div class="feat-card"><div class="feat-icon">🔄</div><div class="feat-name">Offboarding Workflows</div><div class="feat-desc">Secure, compliant offboarding in minutes. Revokes access, archives assets, and generates audit-ready documentation automatically.</div></div>
+        </div>
+      </div>
+      <div class="feat-panel" data-panel="finance">
+        <div class="feat-grid">
+          <div class="feat-card"><div class="feat-icon">🧾</div><div class="feat-name">Invoice Processing</div><div class="feat-desc">Extract, validate, and route invoices automatically. Flags discrepancies, duplicates, and policy violations before they reach approvers.</div></div>
+          <div class="feat-card"><div class="feat-icon">💳</div><div class="feat-name">Spend Intelligence</div><div class="feat-desc">AI categorizes and analyzes company spend in real time. Identifies savings opportunities and anomalous transactions automatically.</div></div>
+          <div class="feat-card"><div class="feat-icon">✅</div><div class="feat-name">Approval Automation</div><div class="feat-desc">Smart routing of approvals based on policy, amount, and context. Routine approvals are auto-approved; exceptions get human eyes.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── PRICING ─── -->
+<section class="price-sec" id="pricing">
+  <div class="wrap">
+    <div class="sec-eyebrow will-r">Pricing</div>
+    <h2 class="sec-h will-r">Start free. Scale forever.</h2>
+    <div class="price-toggle will-r">
+      <span>Monthly</span>
+      <div class="toggle-track" id="priceToggle"></div>
+      <span class="toggle-label">Yearly</span>
+      <span class="save-badge">Save 20%</span>
+    </div>
+    <div class="price-grid will-r">
+      <div class="price-card">
+        <div class="price-plan">Starter</div>
+        <div class="price-amount"><span class="price-currency">$</span><span class="price-val" data-monthly="49" data-yearly="39">49</span></div>
+        <div class="price-period">per seat / month</div>
+        <p class="price-desc">For small teams starting their automation journey. All the essentials to replace Tier-1 ops work.</p>
+        <ul class="price-features">
+          <li>Up to 500 tickets/month</li>
+          <li>3 workflow automations</li>
+          <li>Email & Slack integration</li>
+          <li>Standard analytics</li>
+          <li>Community support</li>
+        </ul>
+        <button class="price-btn">Get Started Free</button>
+      </div>
+      <div class="price-card featured">
+        <div class="feat-pip">Most Popular</div>
+        <div class="price-plan">Growth</div>
+        <div class="price-amount"><span class="price-currency">$</span><span class="price-val" data-monthly="149" data-yearly="119">149</span></div>
+        <div class="price-period">per seat / month</div>
+        <p class="price-desc">For scaling companies that want to eliminate ops overhead and focus teams on high-value work.</p>
+        <ul class="price-features">
+          <li>Unlimited tickets</li>
+          <li>Unlimited workflows</li>
+          <li>240+ integrations</li>
+          <li>AI anomaly detection</li>
+          <li>Advanced analytics & reporting</li>
+          <li>Priority support (4h SLA)</li>
+        </ul>
+        <button class="price-btn">Start 14-Day Trial</button>
+      </div>
+      <div class="price-card">
+        <div class="price-plan">Enterprise</div>
+        <div class="price-amount"><span style="font-size:32px;margin-top:12px;color:var(--text3)">Custom</span></div>
+        <div class="price-period">volume pricing available</div>
+        <p class="price-desc">For large organizations that need custom models, compliance controls, and dedicated infrastructure.</p>
+        <ul class="price-features">
+          <li>Everything in Growth</li>
+          <li>Custom AI model fine-tuning</li>
+          <li>SOC 2 Type II + HIPAA</li>
+          <li>Dedicated infrastructure</li>
+          <li>White-glove onboarding</li>
+          <li>24/7 dedicated support</li>
+        </ul>
+        <button class="price-btn">Talk to Sales</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── TESTIMONIALS ─── -->
+<section class="testi-sec">
+  <div class="wrap">
+    <div class="sec-eyebrow will-r">Customer Stories</div>
+    <h2 class="sec-h will-r" style="margin-bottom:48px">Teams that chose less noise</h2>
+  </div>
+  <div class="testi-track-wrap will-r" id="testiWrap">
+    <div class="testi-track" id="testiTrack" style="padding:0 56px">
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-quote">"We reduced our IT support overhead by 71% in the first month. Our team now works on actual product — not answering the same password reset tickets over and over."</p>
+        <div class="testi-author"><div class="testi-avatar">👨‍💼</div><div class="testi-info"><span class="testi-name">Rafael Santos</span><span class="testi-title">CTO, FinEdge Philippines</span></div></div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-quote">"VRYX OS onboards new employees from day one without anyone lifting a finger. Provisioning, access, equipment — it just happens. Our People team calls it a superpower."</p>
+        <div class="testi-author"><div class="testi-avatar">👩‍💼</div><div class="testi-info"><span class="testi-name">Ana Reyes</span><span class="testi-title">Head of People Ops, Growthly</span></div></div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-quote">"We were drowning in procurement requests. VRYX now handles 88% of them end-to-end. Our finance team spends their time on strategy, not purchase order paperwork."</p>
+        <div class="testi-author"><div class="testi-avatar">👨‍💻</div><div class="testi-info"><span class="testi-name">Marco Lim</span><span class="testi-title">VP Operations, Mobius Commerce</span></div></div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-quote">"The escalation routing alone was worth it. Urgent issues reach the right person in under 3 minutes with full context. We've cut our mean-time-to-resolve by 4x."</p>
+        <div class="testi-author"><div class="testi-avatar">👩‍🔬</div><div class="testi-info"><span class="testi-name">Diane Ocampo</span><span class="testi-title">Director of IT, MedCore PH</span></div></div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-quote">"Onboarded in 3 days, first ROI in week one. The VRYX team is exceptional and the product genuinely does what it says on the tin. Rarely can you say that about enterprise software."</p>
+        <div class="testi-author"><div class="testi-avatar">🧑‍💼</div><div class="testi-info"><span class="testi-name">Josh Villanueva</span><span class="testi-title">CEO, Stackworks SEA</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="testi-dots" id="testiDots"></div>
+</section>
+
+<!-- ─── FAQ ─── -->
+<section class="faq-sec" id="faq">
+  <div class="wrap">
+    <div class="sec-eyebrow will-r">FAQ</div>
+    <h2 class="sec-h will-r" style="margin-bottom:48px">Common questions</h2>
+    <div class="faq-list will-r" id="faqList">
+      <div class="faq-item">
+        <button class="faq-q"><span>How quickly can we get VRYX OS running?</span><span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Most teams are fully live within 3 business days. Our onboarding team handles the integrations, data migration, and initial workflow configuration. You won't need to write a single line of code.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q"><span>What happens when VRYX can't resolve something?</span><span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Unresolvable requests are automatically escalated to the right human with full context pre-loaded — the original request, what VRYX already tried, relevant documentation, and the recommended next step. Nothing falls through the cracks.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q"><span>Is our company data used to train your models?</span><span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Never. Your data is used exclusively to run and improve VRYX OS for your organization. We are SOC 2 Type II certified and GDPR compliant. Enterprise customers get fully isolated infrastructure with no shared compute.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q"><span>Which tools does VRYX OS integrate with?</span><span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">We have 240+ native integrations including Jira, Zendesk, ServiceNow, Okta, Azure AD, Slack, Teams, Google Workspace, HubSpot, Salesforce, SAP, and all major cloud providers. Custom webhook support covers anything else.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q"><span>Do we need a dedicated IT team to manage VRYX?</span><span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">No. VRYX OS is designed to run without a dedicated operator. The system self-monitors and self-improves. An admin dashboard lets non-technical operators adjust rules, add workflows, and review analytics without engineering involvement.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q"><span>What's the contract and cancellation policy?</span><span class="faq-icon">+</span></button>
+        <div class="faq-a"><div class="faq-a-inner">Starter and Growth plans are month-to-month — cancel any time with no penalty. Annual plans offer a 20% discount. Enterprise contracts are custom. All plans include a 14-day free trial with no credit card required.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FINAL CTA ─── -->
+<section class="cta-sec" id="contact">
+  <div class="cta-orb"></div>
+  <div class="wrap" style="position:relative;z-index:1">
+    <div class="sec-eyebrow will-r" style="justify-content:center">Get Started</div>
+    <h2 class="sec-h will-r">Ready to give your team<br>their time back?</h2>
+    <p class="sec-sub will-r" style="margin:0 auto 0;text-align:center">Start your free trial — no credit card, no setup fees, live in 3 days.</p>
+    <form class="cta-form will-r" onsubmit="return false">
+      <input class="cta-input" type="email" placeholder="your@company.com" />
+      <button class="cta-sub">Request Demo</button>
+    </form>
+    <p class="cta-note will-r">No credit card required · 14-day free trial · Cancel any time</p>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer class="footer">
+  <div class="wrap">
+    <span class="foot-copy">© 2026 VRYX Technologies, Inc.</span>
+    <nav class="foot-links">
+      <a href="#">Privacy</a><a href="#">Terms</a><a href="#">Security</a>
+      <a href="#">Status</a><a href="#">Docs</a><a href="#">Blog</a>
+    </nav>
+    <span class="foot-status">All systems operational</span>
+  </div>
+</footer>
+
+<script>
+/* ── Custom cursor ── */
+const dot=document.getElementById('c-dot'),ring=document.getElementById('c-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY;
+  dot.style.left=mx+'px';dot.style.top=my+'px';
+});
+(function lerpRing(){
+  rx+=(mx-rx)*.1;ry+=(my-ry)*.1;
+  ring.style.left=rx+'px';ring.style.top=ry+'px';
+  requestAnimationFrame(lerpRing);
+})();
+document.querySelectorAll('a,button,.feat-card,.price-card,.stack-item,.testi-card').forEach(el=>{
+  el.addEventListener('mouseenter',()=>document.body.classList.add('hovering'));
+  el.addEventListener('mouseleave',()=>document.body.classList.remove('hovering'));
+});
+
+/* ── Scroll progress ── */
+const barEl=document.getElementById('bar');
+window.addEventListener('scroll',()=>{
+  const s=document.documentElement;
+  barEl.style.transform=`scaleX(${s.scrollTop/(s.scrollHeight-s.clientHeight)})`;
+},{passive:true});
+
+/* ── Sticky nav ── */
+const navEl=document.getElementById('nav');
+window.addEventListener('scroll',()=>navEl.classList.toggle('stuck',scrollY>60),{passive:true});
+
+/* ── Theme toggle ── */
+const themeBtn=document.getElementById('themeBtn');
+themeBtn.addEventListener('click',()=>{
+  const html=document.documentElement;
+  html.dataset.theme=html.dataset.theme==='dark'?'light':'dark';
+});
+
+/* ── Reveal (visible by default; deterministic scroll-position check) ── */
+const _revs=[...document.querySelectorAll('.will-r')];
+const _reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(!_reduced){
+  _revs.forEach(el=>{ if(el.getBoundingClientRect().top>innerHeight*0.92) el.classList.add('pre'); });
+  const _reveal=()=>{ _revs.forEach(el=>{ if(el.classList.contains('pre')&&el.getBoundingClientRect().top<innerHeight*0.92) el.classList.remove('pre'); }); };
+  addEventListener('scroll',_reveal,{passive:true});
+  addEventListener('resize',_reveal,{passive:true});
+  _reveal();
+  setTimeout(()=>_revs.forEach(el=>el.classList.remove('pre')),3500);
+}
+
+/* ── Counters ── */
+function easeOut(t){return 1-Math.pow(1-t,3)}
+document.querySelectorAll('[data-count]').forEach(el=>{
+  const target=parseFloat(el.dataset.count);
+  const b=el.querySelector('b');
+  const isDecimal=String(target).includes('.');
+  const io2=new IntersectionObserver(([e])=>{
+    if(!e.isIntersecting)return;io2.unobserve(el);
+    const dur=1800,start=performance.now();
+    requestAnimationFrame(function step(now){
+      const p=Math.min((now-start)/dur,1);
+      const v=easeOut(p)*target;
+      b.textContent=isDecimal?v.toFixed(1):Math.round(v);
+      if(p<1)requestAnimationFrame(step);
+    });
+  },{threshold:.5});
+  io2.observe(el);
+});
+
+/* ── Marquee ── */
+const LOGOS=['Jira','Slack','Zendesk','Salesforce','ServiceNow','Okta','AWS','Azure','Google Workspace','HubSpot','SAP','Notion','PagerDuty','Datadog'];
+const mi=document.getElementById('marqueeInner');
+const set=LOGOS.map(l=>`<span class="marquee-item">${l}</span><span class="marquee-sep">·</span>`).join('');
+mi.innerHTML=set+set; // duplicate for seamless loop
+
+/* ── Hero Demo Widget ── */
+const SCENES=[
+  {title:'Processing: Ticket #4821 — Password Reset',steps:[
+    {icon:'📨',label:'Ticket received from Ana Cruz',val:'v-run',vt:'RECEIVED'},
+    {icon:'🧠',label:'AI: Classifying request type...',val:'v-ai',vt:'AI'},
+    {icon:'🔍',label:'Context: Verified employee in Okta',val:'v-done',vt:'VERIFIED'},
+    {icon:'🔑',label:'Action: Temporary password issued',val:'v-done',vt:'DONE'},
+    {icon:'📧',label:'Email: Reset instructions sent',val:'v-done',vt:'SENT'},
+    {icon:'✅',label:'Ticket closed — 1m 47s total',val:'v-done',vt:'RESOLVED'},
+  ]},
+  {title:'Processing: Purchase Order — Office Supplies',steps:[
+    {icon:'📋',label:'PO request from Marcus Ty (Ops)',val:'v-run',vt:'RECEIVED'},
+    {icon:'🧠',label:'AI: Validating against spend policy',val:'v-ai',vt:'AI'},
+    {icon:'💰',label:'Budget check: ₱12,400 — within limit',val:'v-done',vt:'APPROVED'},
+    {icon:'🛒',label:'Vendor: Auto-selecting preferred supplier',val:'v-ai',vt:'AI'},
+    {icon:'📤',label:'PO #7823 submitted to vendor',val:'v-done',vt:'SENT'},
+    {icon:'✅',label:'Procurement complete — 3m 12s',val:'v-done',vt:'RESOLVED'},
+  ]},
+  {title:'Processing: New Hire Onboarding — Sarah Lee',steps:[
+    {icon:'👤',label:'Onboarding triggered: Start date Jan 15',val:'v-run',vt:'STARTED'},
+    {icon:'🔑',label:'Provisioning: Google Workspace account',val:'v-ai',vt:'AI'},
+    {icon:'💻',label:'Equipment request sent to IT',val:'v-done',vt:'SENT'},
+    {icon:'🛡️',label:'Access: Okta groups assigned by role',val:'v-done',vt:'DONE'},
+    {icon:'📚',label:'Onboarding checklist emailed',val:'v-done',vt:'SENT'},
+    {icon:'✅',label:'Onboarding complete — 4m 3s',val:'v-done',vt:'READY'},
+  ]},
+];
+let activeScene=0,demoTimer=null;
+function runDemo(idx){
+  activeScene=idx;
+  document.querySelectorAll('.scen-btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
+  const scene=SCENES[idx];
+  const body=document.getElementById('demoBody');
+  const timeEl=document.getElementById('demoTime');
+  body.innerHTML='';
+  clearTimeout(demoTimer);
+  let t=0;
+  scene.steps.forEach((step,i)=>{
+    setTimeout(()=>{
+      const row=document.createElement('div');
+      row.className='demo-row';
+      row.innerHTML=`<span class="dr-icon">${step.icon}</span><span class="dr-label">${step.label}</span><span class="dr-val ${step.val}">${step.vt}</span>`;
+      body.appendChild(row);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>row.classList.add('show')));
+      if(i===scene.steps.length-1){
+        const secs=Math.floor(Math.random()*60+60);
+        timeEl.textContent=`Resolved in ${secs}s`;
+      }
+    },i*480+200);
+  });
+  // loop after delay
+  demoTimer=setTimeout(()=>{
+    runDemo((idx+1)%SCENES.length);
+  },scene.steps.length*480+3200);
+}
+runDemo(0);
+document.querySelectorAll('.scen-btn').forEach((btn,i)=>{
+  btn.addEventListener('click',()=>runDemo(i));
+});
+// Live time update
+setInterval(()=>{
+  const now=new Date();
+  document.getElementById('demoTime').textContent=document.getElementById('demoTime').textContent.startsWith('Res')
+    ?document.getElementById('demoTime').textContent
+    :`${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+},1000);
+
+/* ── Parallax cards ── */
+const heroDemo=document.getElementById('heroDemo');
+const pcards=document.querySelectorAll('.p-card[data-depth]');
+let pMouseX=0,pMouseY=0,pCurX=0,pCurY=0;
+document.addEventListener('mousemove',e=>{
+  const rect=heroDemo.getBoundingClientRect();
+  pMouseX=(e.clientX-rect.left-rect.width/2)/rect.width;
+  pMouseY=(e.clientY-rect.top-rect.height/2)/rect.height;
+});
+(function animPCards(){
+  pCurX+=(pMouseX-pCurX)*.06;
+  pCurY+=(pMouseY-pCurY)*.06;
+  pcards.forEach(pc=>{
+    const depth=parseFloat(pc.dataset.depth)||0.5;
+    const tx=pCurX*15*depth;
+    const ty=pCurY*15*depth;
+    pc.style.transform=`translate(${tx}px,${ty}px)`;
+  });
+  requestAnimationFrame(animPCards);
+})();
+
+/* ── Sticky story ── */
+const storySteps=document.querySelectorAll('.story-step');
+const svPanels=document.querySelectorAll('.sv-panel');
+function getActiveStep(){
+  let best=0;
+  storySteps.forEach((s,i)=>{
+    const r=s.getBoundingClientRect();
+    if(r.top<window.innerHeight*0.55&&r.bottom>0)best=i;
+  });
+  return best;
+}
+let lastStep=-1;
+window.addEventListener('scroll',()=>{
+  const a=getActiveStep();
+  if(a===lastStep)return;
+  lastStep=a;
+  storySteps.forEach((s,i)=>s.classList.toggle('active',i===a));
+  svPanels.forEach((p,i)=>p.classList.toggle('active',i===a));
+},{passive:true});
+
+/* ── Feature tabs ── */
+document.querySelectorAll('.ftab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const tab=btn.dataset.tab;
+    document.querySelectorAll('.ftab').forEach(b=>b.classList.toggle('active',b===btn));
+    document.querySelectorAll('.feat-panel').forEach(p=>{
+      if(p.dataset.panel===tab){p.classList.add('active');p.style.pointerEvents='auto'}
+      else{p.classList.remove('active')}
+    });
+  });
+});
+
+/* ── Pricing toggle ── */
+let yearly=false;
+const priceToggle=document.getElementById('priceToggle');
+priceToggle.addEventListener('click',()=>{
+  yearly=!yearly;
+  priceToggle.classList.toggle('on',yearly);
+  document.querySelectorAll('.price-val[data-monthly]').forEach(el=>{
+    const target=parseInt(yearly?el.dataset.yearly:el.dataset.monthly);
+    const start=parseInt(el.textContent)||0;
+    const dur=400,t0=performance.now();
+    (function step(now){
+      const p=Math.min((now-t0)/dur,1);
+      el.textContent=Math.round(start+(target-start)*easeOut(p));
+      if(p<1)requestAnimationFrame(step);
+    })(performance.now());
+  });
+});
+
+/* ── Testimonial carousel ── */
+const track=document.getElementById('testiTrack');
+const wrap=document.getElementById('testiWrap');
+const dots=document.getElementById('testiDots');
+const cards=track.querySelectorAll('.testi-card');
+const cardW=cards[0].offsetWidth+24;
+let curIdx=0,startX=0,dragDx=0,dragging=false;
+
+function buildDots(){
+  dots.innerHTML='';
+  cards.forEach((_,i)=>{
+    const d=document.createElement('div');d.className='testi-dot'+(i===0?' active':'');
+    d.addEventListener('click',()=>goTo(i));
+    dots.appendChild(d);
+  });
+}
+buildDots();
+function goTo(i){
+  curIdx=Math.max(0,Math.min(i,cards.length-1));
+  const offset=56; // padding
+  track.style.transform=`translateX(${-(curIdx*cardW)}px)`;
+  dots.querySelectorAll('.testi-dot').forEach((d,j)=>d.classList.toggle('active',j===curIdx));
+}
+wrap.addEventListener('mousedown',e=>{dragging=true;startX=e.clientX;track.style.transition='none'});
+window.addEventListener('mousemove',e=>{
+  if(!dragging)return;
+  dragDx=e.clientX-startX;
+  const base=-(curIdx*cardW);
+  track.style.transform=`translateX(${base+dragDx}px)`;
+});
+window.addEventListener('mouseup',()=>{
+  if(!dragging)return;dragging=false;
+  track.style.transition='';
+  if(Math.abs(dragDx)>80)goTo(dragDx<0?curIdx+1:curIdx-1);
+  else goTo(curIdx);
+  dragDx=0;
+});
+// touch
+wrap.addEventListener('touchstart',e=>{startX=e.touches[0].clientX;track.style.transition='none'},{passive:true});
+wrap.addEventListener('touchmove',e=>{
+  dragDx=e.touches[0].clientX-startX;
+  track.style.transform=`translateX(${-(curIdx*cardW)+dragDx}px)`;
+},{passive:true});
+wrap.addEventListener('touchend',()=>{
+  track.style.transition='';
+  if(Math.abs(dragDx)>60)goTo(dragDx<0?curIdx+1:curIdx-1);
+  else goTo(curIdx);
+  dragDx=0;
+});
+// Auto-advance
+setInterval(()=>{if(!dragging)goTo((curIdx+1)%cards.length)},5000);
+
+/* ── FAQ accordion ── */
+document.querySelectorAll('.faq-q').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const item=btn.closest('.faq-item');
+    const ans=item.querySelector('.faq-a');
+    const inner=item.querySelector('.faq-a-inner');
+    const open=btn.classList.contains('open');
+    // close all
+    document.querySelectorAll('.faq-q.open').forEach(b=>{
+      b.classList.remove('open');
+      const a=b.closest('.faq-item').querySelector('.faq-a');
+      a.style.height='0';
+    });
+    if(!open){
+      btn.classList.add('open');
+      ans.style.height=inner.offsetHeight+'px';
+    }
+  });
+});
+
+/* ── Lazy-load below-fold animations ── */
+// Ensure no below-fold element starts with a visible transition
+document.querySelectorAll('.will-r:not(.in)').forEach(el=>{
+  const rect=el.getBoundingClientRect();
+  if(rect.top>window.innerHeight){
+    el.style.willChange='opacity,transform';
+  }
+});
+</script>
+</body>
+</html>

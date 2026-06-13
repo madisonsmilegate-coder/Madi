@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VRYX OS — The Operating System for Autonomous Companies</title>
+<meta name="description" content="VRYX OS resolves your customers' problems before your team wakes up. Autonomous workflows, self-healing operations, zero backlog." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   VRYX OS — "Autonomy" design system
+
+   Theme: machine-calm. A deep void with one living color —
+   electric mint — that behaves like a system status light.
+
+   Palette:
+   --void    #07090B   near-black, blue-cold
+   --panel   #0D1117   raised surface
+   --line    #1B232B   hairline borders
+   --text    #8B98A5   body
+   --bright  #E6EDF3   headings
+   --mint    #2CE8A5   system-active accent
+   --mint-dk #18B57D   hover state
+
+   Type: Unbounded (display) · Inter (body) · JetBrains Mono (data)
+   Motion: 300–600ms ease-out · transform/opacity only · ≤24px travel
+============================================================ */
+:root{
+  --void:#07090B;
+  --panel:#0D1117;
+  --panel2:#11161D;
+  --line:#1B232B;
+  --text:#8B98A5;
+  --bright:#E6EDF3;
+  --mint:#2CE8A5;
+  --mint-dk:#18B57D;
+  --mint-glow:rgba(44,232,165,.14);
+  --font-d:'Unbounded',sans-serif;
+  --font-b:'Inter',system-ui,sans-serif;
+  --font-m:'JetBrains Mono',monospace;
+  --out:cubic-bezier(.22,.61,.36,1);
+}
+
+::selection{background:var(--mint);color:var(--void)}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--void)}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--mint-dk)}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+body{
+  font-family:var(--font-b);
+  font-size:16px;line-height:1.65;
+  color:var(--text);
+  background:var(--void);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+h1,h2,h3{font-family:var(--font-d);color:var(--bright);line-height:1.12}
+h1{font-size:clamp(2.4rem,6vw,4.6rem);font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(1.7rem,3.4vw,2.6rem);font-weight:600}
+h3{font-size:1rem;font-weight:600}
+p{max-width:58ch}
+.mono{font-family:var(--font-m)}
+img{max-width:100%;display:block}
+a{text-decoration:none;color:inherit}
+.wrap{max-width:1140px;margin:0 auto;padding:0 28px}
+
+/* ============================================================
+   MOTION SYSTEM
+   All animation = transform + opacity only. 60fps safe.
+   .a-hide  : pre-animation state (set by JS only — no-JS users see everything)
+   .a-in    : revealed state
+   Reduced motion: all transitions/animations collapse to instant.
+============================================================ */
+.a{transition:opacity 500ms var(--out),transform 500ms var(--out);will-change:opacity,transform}
+.a-hide{opacity:0;transform:translateY(20px)}
+.a-hide.a-in{opacity:1;transform:none}
+
+/* word-by-word hero reveal */
+.w{display:inline-block;transition:opacity 500ms var(--out),transform 500ms var(--out)}
+.w-hide .w{opacity:0;transform:translateY(22px)}
+.w-in .w{opacity:1;transform:none}
+
+/* image clip reveal */
+.img-reveal{overflow:hidden;position:relative}
+.img-reveal img,.img-reveal .img-body{
+  transition:transform 600ms var(--out),opacity 600ms var(--out);
+}
+.img-reveal.a-hide img,.img-reveal.a-hide .img-body{transform:scale(1.08);opacity:.4}
+.img-reveal.a-in img,.img-reveal.a-in .img-body{transform:scale(1);opacity:1}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+  }
+  .a-hide,.w-hide .w{opacity:1!important;transform:none!important}
+}
+
+/* ============================================================ PROGRESS */
+.progress{
+  position:fixed;top:0;left:0;right:0;height:2px;z-index:300;
+  background:transparent;
+  pointer-events:none;
+}
+.progress span{
+  display:block;height:100%;
+  background:var(--mint);
+  transform:scaleX(0);transform-origin:left;
+  box-shadow:0 0 12px var(--mint);
+}
+
+/* ============================================================ NAV */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  background:rgba(7,9,11,.78);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--line);
+}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:20px}
+.brand{
+  display:flex;align-items:center;gap:10px;
+  font-family:var(--font-d);font-weight:700;font-size:.95rem;
+  color:var(--bright);letter-spacing:.04em;
+}
+.brand-dot{
+  width:10px;height:10px;border-radius:2px;
+  background:var(--mint);
+  box-shadow:0 0 10px var(--mint);
+  animation:status 3s ease-in-out infinite;
+}
+@keyframes status{0%,100%{opacity:1}50%{opacity:.45}}
+.brand small{font-family:var(--font-m);font-size:.62rem;color:var(--text);font-weight:400;letter-spacing:.14em}
+.nav-links{display:none;gap:32px;list-style:none}
+.nav-links a{
+  font-size:.85rem;font-weight:500;color:var(--text);
+  position:relative;padding:4px 0;
+  transition:color 300ms var(--out);
+}
+.nav-links a::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
+  background:var(--mint);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform 300ms var(--out);
+}
+.nav-links a:hover{color:var(--bright)}
+.nav-links a:hover::after{transform:scaleX(1)}
+@media(min-width:800px){.nav-links{display:flex}}
+
+/* ============================================================ BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;gap:10px;
+  background:var(--mint);color:var(--void);
+  font-family:var(--font-d);font-weight:600;font-size:.82rem;letter-spacing:.02em;
+  padding:14px 28px;border-radius:8px;
+  border:none;cursor:pointer;
+  transition:transform 300ms var(--out),background 300ms var(--out),box-shadow 300ms var(--out);
+}
+.btn:hover{
+  background:var(--mint-dk);
+  transform:translateY(-2px) scale(1.02);
+  box-shadow:0 8px 28px var(--mint-glow);
+}
+.btn:active{transform:translateY(0) scale(.97);transition-duration:100ms}
+.btn .arr{transition:transform 300ms var(--out)}
+.btn:hover .arr{transform:translateX(4px)}
+.btn-line{
+  background:transparent;color:var(--bright);
+  border:1px solid var(--line);
+  font-family:var(--font-d);font-weight:600;font-size:.82rem;letter-spacing:.02em;
+  padding:13px 28px;border-radius:8px;
+  display:inline-flex;align-items:center;gap:10px;
+  cursor:pointer;
+  transition:transform 300ms var(--out),border-color 300ms var(--out),background 300ms var(--out);
+}
+.btn-line:hover{border-color:var(--mint);background:rgba(44,232,165,.05);transform:translateY(-2px) scale(1.02)}
+.btn-line:active{transform:scale(.97);transition-duration:100ms}
+.nav .btn{padding:10px 20px;font-size:.74rem}
+
+/* ============================================================ HERO */
+.hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:120px 0 80px;
+  position:relative;
+  overflow:hidden;
+}
+/* ambient glow + grid */
+.hero::before{
+  content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(700px 420px at 50% -10%, rgba(44,232,165,.09), transparent 65%),
+    radial-gradient(500px 300px at 85% 90%, rgba(44,232,165,.05), transparent 60%);
+  pointer-events:none;
+}
+.hero::after{
+  content:"";position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(139,152,165,.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(139,152,165,.05) 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(900px 600px at 50% 30%,#000,transparent 80%);
+  pointer-events:none;
+}
+.hero .wrap{position:relative;text-align:center;display:flex;flex-direction:column;align-items:center}
+.hero-sys{
+  font-family:var(--font-m);font-size:.72rem;letter-spacing:.18em;
+  color:var(--mint);
+  display:inline-flex;align-items:center;gap:10px;
+  border:1px solid rgba(44,232,165,.25);
+  background:rgba(44,232,165,.06);
+  padding:7px 16px;border-radius:99px;
+  margin-bottom:36px;
+}
+.hero-sys .pulse{
+  width:7px;height:7px;border-radius:50%;background:var(--mint);
+  position:relative;
+}
+.hero-sys .pulse::after{
+  content:"";position:absolute;inset:-4px;border-radius:50%;
+  border:1px solid var(--mint);
+  animation:ring 2.2s var(--out) infinite;
+}
+@keyframes ring{from{opacity:.9;transform:scale(.6)}to{opacity:0;transform:scale(2)}}
+
+.hero h1{margin-bottom:26px;max-width:17ch}
+.hero h1 .mint{color:var(--mint)}
+.hero-sub{
+  font-size:1.06rem;line-height:1.75;max-width:54ch;
+  margin-bottom:40px;
+}
+.hero-actions{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
+
+/* hero terminal visual */
+.hero-term{
+  margin-top:72px;
+  width:100%;max-width:760px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:12px;
+  text-align:left;
+  font-family:var(--font-m);font-size:.8rem;line-height:1.9;
+  box-shadow:0 24px 80px rgba(0,0,0,.5), 0 0 60px rgba(44,232,165,.05);
+}
+.term-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:12px 18px;
+  border-bottom:1px solid var(--line);
+}
+.term-bar i{width:10px;height:10px;border-radius:50%;background:var(--line);display:block}
+.term-bar i:first-child{background:#3A4654}
+.term-bar .term-title{margin-left:10px;font-size:.68rem;color:var(--text);letter-spacing:.1em}
+.term-body{padding:20px 22px 24px}
+.term-line{display:block;color:var(--text)}
+.term-line b{color:var(--bright);font-weight:500}
+.term-line .ok{color:var(--mint)}
+.term-line .dim{opacity:.45}
+.term-caret{
+  display:inline-block;width:8px;height:15px;
+  background:var(--mint);vertical-align:middle;
+  animation:caret 1.1s steps(1) infinite;
+}
+@keyframes caret{50%{opacity:0}}
+
+/* ============================================================ STATS */
+.stats{padding:104px 0;border-top:1px solid var(--line)}
+.stats .wrap{display:grid;gap:2px;background:var(--line);border-radius:12px;overflow:hidden}
+@media(min-width:720px){.stats .wrap{grid-template-columns:repeat(4,1fr)}}
+.stat{
+  background:var(--panel);
+  padding:40px 32px;
+  transition:background 300ms var(--out);
+}
+.stat:hover{background:var(--panel2)}
+.stat-num{
+  font-family:var(--font-d);font-weight:700;
+  font-size:clamp(2.2rem,4vw,3rem);
+  color:var(--bright);line-height:1;margin-bottom:10px;
+  font-variant-numeric:tabular-nums;
+}
+.stat-num em{color:var(--mint);font-style:normal;font-size:.6em;font-weight:600}
+.stat-label{font-size:.8rem;letter-spacing:.04em}
+
+/* ============================================================ FEATURES */
+.features{padding:104px 0}
+.sec-tag{
+  font-family:var(--font-m);font-size:.7rem;letter-spacing:.2em;
+  color:var(--mint);text-transform:uppercase;
+  margin-bottom:18px;display:block;
+}
+.sec-head{margin-bottom:64px;max-width:50ch}
+.sec-head h2{margin-bottom:16px}
+.cards{display:grid;gap:20px}
+@media(min-width:640px){.cards{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:980px){.cards{grid-template-columns:repeat(3,1fr)}}
+.card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:32px 28px;
+  position:relative;
+  transition:transform 300ms var(--out),border-color 300ms var(--out),box-shadow 300ms var(--out);
+}
+.card:hover{
+  transform:translateY(-6px);
+  border-color:rgba(44,232,165,.35);
+  box-shadow:0 16px 48px rgba(0,0,0,.4), 0 0 32px rgba(44,232,165,.06);
+}
+.card-ico{
+  width:44px;height:44px;border-radius:10px;
+  background:rgba(44,232,165,.08);
+  border:1px solid rgba(44,232,165,.18);
+  display:grid;place-items:center;
+  margin-bottom:24px;
+  transition:transform 300ms var(--out);
+}
+.card:hover .card-ico{transform:translateY(-2px) scale(1.05)}
+.card-ico svg{color:var(--mint)}
+.card h3{margin-bottom:10px;transition:transform 300ms var(--out)}
+.card p{font-size:.9rem;transition:transform 300ms var(--out)}
+.card:hover h3{transform:translateY(-2px)}
+.card:hover p{transform:translateY(-1px)}
+.card-meta{
+  margin-top:22px;
+  font-family:var(--font-m);font-size:.66rem;letter-spacing:.14em;
+  color:var(--text);opacity:.6;
+  display:flex;align-items:center;gap:8px;
+  transition:opacity 300ms var(--out),color 300ms var(--out);
+}
+.card-meta::before{content:"";width:14px;height:1px;background:currentColor}
+.card:hover .card-meta{opacity:1;color:var(--mint)}
+
+/* ============================================================ HOW (pipeline) */
+.how{padding:104px 0;border-top:1px solid var(--line)}
+.pipeline{display:grid;gap:20px;margin-top:8px}
+@media(min-width:840px){.pipeline{grid-template-columns:repeat(3,1fr)}}
+.pipe{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:30px 28px;
+  position:relative;
+}
+.pipe-num{
+  font-family:var(--font-m);font-size:.68rem;letter-spacing:.16em;
+  color:var(--mint);margin-bottom:18px;display:block;
+}
+.pipe h3{margin-bottom:9px}
+.pipe p{font-size:.89rem}
+@media(min-width:840px){
+  .pipe:not(:last-child)::after{
+    content:"";
+    position:absolute;right:-20px;top:50%;width:20px;height:1px;
+    background:linear-gradient(90deg,var(--line),var(--mint));
+  }
+}
+
+/* ============================================================ TESTIMONIAL */
+.quote{padding:104px 0;border-top:1px solid var(--line)}
+.quote-inner{
+  max-width:820px;margin:0 auto;text-align:center;
+}
+.quote-mark{
+  font-family:var(--font-d);font-size:4rem;font-weight:800;
+  color:var(--mint);line-height:.6;display:block;margin-bottom:30px;
+  opacity:.8;
+}
+.quote blockquote{
+  font-family:var(--font-d);font-weight:500;
+  font-size:clamp(1.15rem,2.4vw,1.7rem);
+  color:var(--bright);line-height:1.5;
+  margin-bottom:34px;
+  text-wrap:balance;
+}
+.quote-author{
+  display:inline-flex;align-items:center;gap:14px;text-align:left;
+}
+.q-avatar{
+  width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg,var(--mint),#0FA56F);
+  display:grid;place-items:center;
+  font-family:var(--font-d);font-weight:700;font-size:.8rem;color:var(--void);
+}
+.q-name{color:var(--bright);font-weight:600;font-size:.9rem}
+.q-role{font-size:.8rem}
+
+/* ============================================================ CTA */
+.cta{padding:120px 0 130px;border-top:1px solid var(--line);position:relative;overflow:hidden}
+.cta::before{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(640px 380px at 50% 110%, rgba(44,232,165,.12), transparent 65%);
+  pointer-events:none;
+}
+.cta .wrap{position:relative;text-align:center;display:flex;flex-direction:column;align-items:center}
+.cta h2{font-size:clamp(1.9rem,4.4vw,3.2rem);margin-bottom:20px;max-width:20ch}
+.cta p{margin-bottom:40px;max-width:46ch}
+.cta-meta{
+  margin-top:44px;
+  font-family:var(--font-m);font-size:.72rem;letter-spacing:.14em;
+  color:var(--text);
+  display:flex;flex-wrap:wrap;gap:10px 32px;justify-content:center;
+}
+.cta-meta span{display:flex;align-items:center;gap:8px}
+.cta-meta svg{color:var(--mint)}
+
+/* ============================================================ FOOTER */
+.footer{border-top:1px solid var(--line);padding:36px 0}
+.footer .wrap{
+  display:flex;flex-wrap:wrap;gap:10px 28px;
+  align-items:center;justify-content:space-between;
+  font-size:.8rem;color:var(--text);
+}
+.footer .mono{font-size:.68rem;letter-spacing:.12em;opacity:.6}
+.footer a{transition:color 300ms var(--out)}
+.footer a:hover{color:var(--bright)}
+</style>
+</head>
+<body>
+
+<div class="progress"><span id="pbar"></span></div>
+
+<!-- ================================================================ NAV -->
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <span class="brand-dot"></span>
+      VRYX&thinsp;OS <small>v4.2.0 — ONLINE</small>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Capabilities</a></li>
+      <li><a href="#how">Pipeline</a></li>
+      <li><a href="#contact">Deploy</a></li>
+    </ul>
+    <a class="btn" href="#contact">Initialize <span class="arr">→</span></a>
+  </div>
+</header>
+
+<!-- ================================================================ HERO -->
+<main id="top">
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-sys a a-hide" id="sys"><span class="pulse"></span>ALL SYSTEMS AUTONOMOUS</div>
+
+    <h1 class="w-hide" id="headline">
+      <span class="w">Your&nbsp;</span><span class="w">customers&rsquo;&nbsp;</span><span class="w">problems,&nbsp;</span><br>
+      <span class="w">resolved&nbsp;</span><span class="w">while&nbsp;</span><span class="w">you&nbsp;</span><span class="w mint">sleep.</span>
+    </h1>
+
+    <p class="hero-sub a a-hide" id="sub">VRYX&nbsp;OS is the operating system for autonomous companies. It detects, diagnoses, and resolves customer issues end-to-end — no queues, no backlog, no 9-to-5.</p>
+
+    <div class="hero-actions a a-hide" id="ctas">
+      <a class="btn" href="#contact">Deploy VRYX OS <span class="arr">→</span></a>
+      <a class="btn-line" href="#features">View Capabilities</a>
+    </div>
+
+    <div class="hero-term img-reveal a-hide" data-reveal>
+      <div class="img-body">
+        <div class="term-bar">
+          <i></i><i></i><i></i>
+          <span class="term-title">vryx — resolution-engine</span>
+        </div>
+        <div class="term-body">
+          <span class="term-line dim">$ vryx monitor --live</span>
+          <span class="term-line">[02:47:12] ticket&nbsp;#48211 <b>payment gateway timeout</b> — detected</span>
+          <span class="term-line">[02:47:13] root cause isolated: <b>upstream API latency</b></span>
+          <span class="term-line">[02:47:15] failover route deployed · customer notified</span>
+          <span class="term-line"><span class="ok">[02:47:19] ✓ resolved — 7.2s end-to-end · CSAT 5/5</span></span>
+          <span class="term-line dim">[02:47:19] awaiting next event… <span class="term-caret"></span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ STATS -->
+<section class="stats">
+  <div class="wrap">
+    <div class="stat a a-hide" data-reveal>
+      <div class="stat-num"><span data-count="98" data-decimals="1" data-suffix="">0</span><em>%</em></div>
+      <div class="stat-label">Issues resolved without human escalation</div>
+    </div>
+    <div class="stat a a-hide" data-reveal>
+      <div class="stat-num"><span data-count="7" data-decimals="1">0</span><em>sec</em></div>
+      <div class="stat-label">Median end-to-end resolution time</div>
+    </div>
+    <div class="stat a a-hide" data-reveal>
+      <div class="stat-num"><span data-count="40000" data-format="k">0</span><em>+</em></div>
+      <div class="stat-label">Customer problems resolved daily</div>
+    </div>
+    <div class="stat a a-hide" data-reveal>
+      <div class="stat-num"><span data-count="0">0</span><em>backlog</em></div>
+      <div class="stat-label">Tickets waiting in queue, ever</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ FEATURES -->
+<section class="features" id="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-tag a a-hide" data-reveal>[ 01 / capabilities ]</span>
+      <h2 class="a a-hide" data-reveal>Built to resolve, not to route.</h2>
+      <p class="a a-hide" data-reveal>Legacy tools assign problems to humans. VRYX&nbsp;OS eliminates the problem itself — then learns so it never happens twice.</p>
+    </div>
+
+    <div class="cards" data-stagger>
+      <div class="card a a-hide">
+        <div class="card-ico">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8"/><path d="M10 6v4l3 2"/></svg>
+        </div>
+        <h3>Autonomous Resolution</h3>
+        <p>Detects issues from any channel, isolates root cause, and executes the fix — end-to-end, in seconds.</p>
+        <span class="card-meta">MODULE / RESOLVE</span>
+      </div>
+      <div class="card a a-hide">
+        <div class="card-ico">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v4M10 14v4M2 10h4M14 10h4"/><circle cx="10" cy="10" r="3"/></svg>
+        </div>
+        <h3>Self-Healing Operations</h3>
+        <p>Infrastructure that monitors itself, reroutes around failures, and repairs before customers notice.</p>
+        <span class="card-meta">MODULE / HEAL</span>
+      </div>
+      <div class="card a a-hide">
+        <div class="card-ico">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16l4-6 4 3 4-8 4 6"/><path d="M2 19h16"/></svg>
+        </div>
+        <h3>Predictive Prevention</h3>
+        <p>Learns from every incident to forecast the next one — and neutralises it before it exists.</p>
+        <span class="card-meta">MODULE / PREDICT</span>
+      </div>
+      <div class="card a a-hide">
+        <div class="card-ico">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="16" height="11" rx="2"/><path d="M6 18h8M10 14v4"/></svg>
+        </div>
+        <h3>Unified Command</h3>
+        <p>One live console for every system, every customer, every resolution — human oversight without human bottlenecks.</p>
+        <span class="card-meta">MODULE / COMMAND</span>
+      </div>
+      <div class="card a a-hide">
+        <div class="card-ico">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L3 5.5v4c0 4.5 3 8 7 9 4-1 7-4.5 7-9v-4z"/><path d="M7 10l2 2 4-4"/></svg>
+        </div>
+        <h3>Zero-Trust Fabric</h3>
+        <p>Every autonomous action is signed, sandboxed, and auditable. Full control, full transparency.</p>
+        <span class="card-meta">MODULE / SECURE</span>
+      </div>
+      <div class="card a a-hide">
+        <div class="card-ico">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12v12H4z"/><path d="M4 8h12M8 8v8"/></svg>
+        </div>
+        <h3>Drops Into Your Stack</h3>
+        <p>Native connectors for your CRM, cloud, and comms. Deploy in an afternoon, not a quarter.</p>
+        <span class="card-meta">MODULE / CONNECT</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ HOW -->
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-tag a a-hide" data-reveal>[ 02 / pipeline ]</span>
+      <h2 class="a a-hide" data-reveal>Problem in. Resolution out.</h2>
+    </div>
+    <div class="pipeline" data-stagger>
+      <div class="pipe a a-hide">
+        <span class="pipe-num">PHASE_01 / SENSE</span>
+        <h3>Detect</h3>
+        <p>Every channel — email, chat, logs, sensors — streams into one event fabric. Nothing slips through.</p>
+      </div>
+      <div class="pipe a a-hide">
+        <span class="pipe-num">PHASE_02 / REASON</span>
+        <h3>Diagnose</h3>
+        <p>VRYX isolates the root cause in milliseconds and selects the optimal resolution path.</p>
+      </div>
+      <div class="pipe a a-hide">
+        <span class="pipe-num">PHASE_03 / ACT</span>
+        <h3>Resolve</h3>
+        <p>The fix executes, the customer is informed, and the system learns. Median: 7.2 seconds.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ QUOTE -->
+<section class="quote">
+  <div class="wrap">
+    <div class="quote-inner">
+      <span class="quote-mark a a-hide" data-reveal>&ldquo;</span>
+      <blockquote class="a a-hide" data-reveal>We turned off our ticket queue in week one. VRYX resolved more issues overnight than our team closed in a month — our customers think we hired a hundred people.</blockquote>
+      <div class="quote-author a a-hide" data-reveal>
+        <span class="q-avatar">LN</span>
+        <span>
+          <span class="q-name" style="display:block">Lena Navarro</span>
+          <span class="q-role">COO — Meridian Logistics, fully automated since 2025</span>
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ CTA -->
+<section class="cta" id="contact">
+  <div class="wrap">
+    <span class="sec-tag a a-hide" data-reveal>[ 03 / deploy ]</span>
+    <h2 class="a a-hide" data-reveal>Set your operations to autonomous.</h2>
+    <p class="a a-hide" data-reveal>Deploy VRYX&nbsp;OS in a sandbox against your real ticket history. See what it would have resolved — before you commit to anything.</p>
+    <div class="a a-hide" data-reveal>
+      <a class="btn" href="mailto:deploy@vryx.os">Start Free Simulation <span class="arr">→</span></a>
+    </div>
+    <div class="cta-meta a a-hide" data-reveal>
+      <span><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7l3 3 6-7"/></svg>No credit card</span>
+      <span><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7l3 3 6-7"/></svg>Deploys in one afternoon</span>
+      <span><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7l3 3 6-7"/></svg>SOC 2 Type II</span>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ================================================================ FOOTER -->
+<footer class="footer">
+  <div class="wrap">
+    <span class="mono">VRYX OS // BUILD 4.2.0 // ALL SYSTEMS NOMINAL</span>
+    <span>&copy; 2026 VRYX Systems</span>
+    <a href="#top" class="mono">RETURN_TO_TOP ↑</a>
+  </div>
+</footer>
+
+<!-- ============================================================ MOTION ENGINE -->
+<script>
+(function(){
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---- Scroll progress (transform-only) ---- */
+  const pbar = document.getElementById('pbar');
+  addEventListener('scroll', () => {
+    const max = document.body.scrollHeight - innerHeight;
+    pbar.style.transform = `scaleX(${max > 0 ? scrollY / max : 0})`;
+  }, { passive: true });
+
+  if (reduced) {
+    /* Static fallback: everything visible, counters at final value */
+    document.querySelectorAll('.a-hide').forEach(el => el.classList.add('a-in'));
+    document.getElementById('headline').classList.add('w-in');
+    document.querySelectorAll('[data-count]').forEach(el => setFinal(el));
+    return;
+  }
+
+  /* ---- Hero entrance sequence ----
+     1. system badge → 2. headline word-by-word (80ms stagger)
+     → 3. subheadline → 4. CTAs → 5. terminal */
+  const headline = document.getElementById('headline');
+  const words = headline.querySelectorAll('.w');
+  words.forEach((w, i) => w.style.transitionDelay = (i * 80) + 'ms');
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.getElementById('sys').classList.add('a-in');
+    setTimeout(() => headline.classList.add('w-in'), 150);
+    const afterWords = 150 + words.length * 80 + 200;
+    setTimeout(() => document.getElementById('sub').classList.add('a-in'), afterWords);
+    setTimeout(() => document.getElementById('ctas').classList.add('a-in'), afterWords + 140);
+  }));
+
+  /* ---- Scroll-triggered reveals (60–80ms child stagger) ---- */
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      e.target.classList.add('a-in');
+      e.target.querySelectorAll('[data-count]').forEach(countUp);
+      io.unobserve(e.target);
+    });
+  }, { threshold: .15, rootMargin: '0px 0px -40px 0px' });
+
+  /* standalone reveals */
+  document.querySelectorAll('[data-reveal]').forEach(el => {
+    /* skip elements already in the initial viewport's hero sequence */
+    io.observe(el);
+  });
+
+  /* container stagger: children get incremental delays */
+  document.querySelectorAll('[data-stagger]').forEach(parent => {
+    const kids = parent.querySelectorAll('.a-hide');
+    kids.forEach((k, i) => k.style.transitionDelay = (i * 70) + 'ms');
+    const pio = new IntersectionObserver(es => {
+      es.forEach(e => {
+        if (!e.isIntersecting) return;
+        kids.forEach(k => k.classList.add('a-in'));
+        pio.unobserve(e.target);
+      });
+    }, { threshold: .1, rootMargin: '0px 0px -40px 0px' });
+    pio.observe(parent);
+  });
+
+  /* ---- Number counters ---- */
+  function setFinal(el){
+    el.textContent = format(parseFloat(el.dataset.count), el);
+  }
+  function format(v, el){
+    if (el.dataset.format === 'k') return Math.round(v / 1000) + 'k';
+    const d = parseInt(el.dataset.decimals || 0);
+    return d ? v.toFixed(d) : Math.round(v).toLocaleString();
+  }
+  function countUp(el){
+    if (el.dataset.done) return;
+    el.dataset.done = '1';
+    const target = parseFloat(el.dataset.count);
+    const dur = 900;
+    const t0 = performance.now();
+    (function tick(t){
+      const p = Math.min((t - t0) / dur, 1);
+      const eased = 1 - Math.pow(1 - p, 3); /* ease-out cubic */
+      el.textContent = format(target * eased, el);
+      if (p < 1) requestAnimationFrame(tick);
+    })(t0);
+  }
+})();
+</script>
+
+</body>
+</html>

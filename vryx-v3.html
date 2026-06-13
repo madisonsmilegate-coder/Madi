@@ -263,8 +263,8 @@ section{position:relative}
   line-height:1.05;letter-spacing:-.025em;color:var(--text);margin-bottom:16px;
 }
 .sec-sub{color:var(--text3);font-size:17px;max-width:540px;line-height:1.65;margin-bottom:56px}
-.will-r{opacity:0;transform:translateY(22px);transition:opacity .6s cubic-bezier(var(--ease)),transform .6s cubic-bezier(var(--ease))}
-.will-r.in{opacity:1;transform:none}
+.will-r{transition:opacity .6s cubic-bezier(var(--ease)),transform .6s cubic-bezier(var(--ease))}
+.will-r.pre{opacity:0;transform:translateY(22px)}
 
 /* ─── STICKY STORY ─── */
 .story-sec{padding:100px 0;background:var(--bg2)}
@@ -910,11 +910,17 @@ themeBtn.addEventListener('click',()=>{
   html.dataset.theme=html.dataset.theme==='dark'?'light':'dark';
 });
 
-/* ── Reveal ── */
-const io=new IntersectionObserver(entries=>{
-  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}});
-},{threshold:.12});
-document.querySelectorAll('.will-r').forEach(el=>io.observe(el));
+/* ── Reveal (visible by default; deterministic scroll-position check) ── */
+const _revs=[...document.querySelectorAll('.will-r')];
+const _reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(!_reduced){
+  _revs.forEach(el=>{ if(el.getBoundingClientRect().top>innerHeight*0.92) el.classList.add('pre'); });
+  const _reveal=()=>{ _revs.forEach(el=>{ if(el.classList.contains('pre')&&el.getBoundingClientRect().top<innerHeight*0.92) el.classList.remove('pre'); }); };
+  addEventListener('scroll',_reveal,{passive:true});
+  addEventListener('resize',_reveal,{passive:true});
+  _reveal();
+  setTimeout(()=>_revs.forEach(el=>el.classList.remove('pre')),3500);
+}
 
 /* ── Counters ── */
 function easeOut(t){return 1-Math.pow(1-t,3)}

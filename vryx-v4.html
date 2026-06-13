@@ -153,9 +153,9 @@ section{position:relative;z-index:1}
 .eyebrow::before{content:'';width:24px;height:1px;background:var(--coral)}
 .sh{font-family:var(--dis);font-weight:800;font-size:clamp(30px,5vw,62px);line-height:1;letter-spacing:-.03em;margin-bottom:20px}
 .ssub{color:var(--fog);font-size:17px;line-height:1.6;max-width:540px;margin-bottom:60px}
-.reveal{opacity:0;transform:translateY(30px);clip-path:inset(0 0 100% 0);
-  transition:opacity .8s var(--out),transform .9s var(--out),clip-path .8s var(--out)}
-.reveal.in{opacity:1;transform:none;clip-path:inset(0 0 -25% 0)}
+/* visible by default; motion is pure enhancement (never hides content permanently) */
+.reveal{transition:opacity .8s var(--out),transform .9s var(--out),clip-path .8s var(--out)}
+.reveal.pre{opacity:0;transform:translateY(30px);clip-path:inset(0 0 100% 0)}
 
 /* scroll-linked fill heading */
 .fill-h{font-family:var(--dis);font-weight:800;font-size:clamp(34px,6.5vw,92px);line-height:1.04;letter-spacing:-.035em;max-width:14ch}
@@ -164,7 +164,7 @@ section{position:relative;z-index:1}
 .fill-h .word.key.lit{color:var(--lime)}
 
 /* ════════ MARQUEE ════════ */
-.marq{padding:22px 0;border-block:1px solid var(--line);overflow:hidden;background:var(--ink2)}
+.marq{padding:22px 0;border-block:1px solid var(--line);overflow:hidden;background:var(--ink2);position:relative;z-index:1}
 .marq-t{display:flex;width:max-content;animation:scroll 36s linear infinite}
 .marq:hover .marq-t{animation-play-state:paused}
 .marq-i{font-family:var(--dis);font-weight:700;font-size:15px;letter-spacing:.02em;color:var(--ash);padding:0 40px;white-space:nowrap;transition:color .2s}
@@ -295,7 +295,7 @@ section{position:relative;z-index:1}
 .cnote{font-family:var(--mono);font-size:11px;color:var(--ash);margin-top:18px;letter-spacing:.04em}
 
 /* ════════ FOOTER ════════ */
-.foot{border-top:1px solid var(--line);padding:42px 0;background:var(--ink2)}
+.foot{border-top:1px solid var(--line);padding:42px 0;background:var(--ink2);position:relative;z-index:1}
 .foot .wrap{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px}
 .foot .fl{display:flex;gap:26px;flex-wrap:wrap}
 .foot a,.foot .fc{font-family:var(--mono);font-size:11px;color:var(--ash);letter-spacing:.06em}
@@ -309,7 +309,7 @@ section{position:relative;z-index:1}
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   html{scroll-behavior:auto}
   .h1 .ch{opacity:1;transform:none;filter:none}
-  .reveal{opacity:1;transform:none;clip-path:none}
+  .reveal,.reveal.pre{opacity:1;transform:none;clip-path:none}
   .fill-h .word{color:var(--bone)}.fill-h .word.key{color:var(--lime)}
   #mesh{display:none}
 }
@@ -630,11 +630,26 @@ if(fine&&!reduce){
   });
 }
 
-/* ── reveal on scroll ── */
-const ro=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');ro.unobserve(e.target);}}),{threshold:.12});
-document.querySelectorAll('.reveal').forEach(el=>{
-  if(el.getBoundingClientRect().top>innerHeight) ro.observe(el); else el.classList.add('in');
-});
+/* ── reveal on scroll (progressive enhancement: content is visible by default,
+      revealed via a deterministic scroll-position check — no IntersectionObserver) ── */
+const revs=[...document.querySelectorAll('.reveal')];
+if(!reduce){
+  // hide only what's well below the fold on load
+  revs.forEach(el=>{ if(el.getBoundingClientRect().top > innerHeight*0.92) el.classList.add('pre'); });
+  const reveal=()=>{
+    for(let i=revs.length-1;i>=0;i--){
+      const el=revs[i];
+      if(el.classList.contains('pre') && el.getBoundingClientRect().top < innerHeight*0.92){
+        el.classList.remove('pre');
+      }
+    }
+  };
+  addEventListener('scroll',reveal,{passive:true});
+  addEventListener('resize',reveal,{passive:true});
+  reveal();
+  // FAILSAFE: nothing may ever stay hidden
+  setTimeout(()=>revs.forEach(el=>el.classList.remove('pre')),3500);
+}
 
 /* ── animated counters ── */
 const ease=t=>1-Math.pow(1-t,3);
@@ -781,8 +796,9 @@ if(!reduce){
   }
   function frame(ts){
     cmx+=(tmx-cmx)*.04; cmy+=(tmy-cmy)*.04;
+    // transparent clear only — the body's background provides the dark base,
+    // so the canvas can never paint opaque black over the page content
     ctx.clearRect(0,0,W,H);
-    ctx.fillStyle='#080806'; ctx.fillRect(0,0,W,H);
     const base=moodColor();
     ctx.globalCompositeOperation='lighter';
     blobs.forEach((b,i)=>{

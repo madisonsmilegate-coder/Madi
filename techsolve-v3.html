@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TechSolve IT Solutions PH — Your Business Never Slows Down</title>
+<meta name="description" content="Reliable IT support, cybersecurity, and cloud services for Philippine businesses that can't afford downtime." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+<style>
+
+/* ============================================================
+   DESIGN SYSTEM — "Blueprint Edition"
+
+   Theme: Editorial Precision — the confidence of a premium
+   consultancy, the clarity of a hospital, zero decoration
+   that doesn't earn its place.
+
+   Palette (signature — no IT competitor uses this):
+   --paper   #F0EBE3   warm drafting paper
+   --ink     #111010   near-black, warm undertone
+   --accent  #E8410A   burnt signal orange (CTA, accents only)
+   --slate   #1C1F2E   deep blue-slate (dark sections)
+   --mist    #9B9186   warm mid-gray (secondary text)
+   --edge    #DDD6CC   warm light gray (borders, dividers)
+
+   Type: Space Grotesk 800 / 700 for display
+         DM Sans 400 / 500 for body
+   Hero: 88px clamped · tight −0.03em tracking
+
+   Section language: consistent −2.5° angled cut at section
+   tops using clip-path. One language, committed to.
+============================================================ */
+
+:root{
+  --paper:#F0EBE3;
+  --ink:#111010;
+  --accent:#E8410A;
+  --accent-dk:#C73508;
+  --accent-lt:rgba(232,65,10,.09);
+  --slate:#1C1F2E;
+  --slate2:#252840;
+  --mist:#9B9186;
+  --edge:#DDD6CC;
+  --r:4px; /* intentionally tight — editorial, not bubbly */
+  --font-h:'Space Grotesk',sans-serif;
+  --font-b:'DM Sans',sans-serif;
+  --t:160ms ease;
+}
+
+/* Custom selection + scrollbar */
+::selection{background:var(--accent);color:#fff}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--paper)}
+::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--accent-dk)}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+
+body{
+  font-family:var(--font-b);
+  font-size:16px;
+  line-height:1.65;
+  color:var(--mist);
+  background:var(--paper);
+  -webkit-font-smoothing:antialiased;
+}
+
+/* micro-typography */
+h1,h2,h3,h4{
+  font-family:var(--font-h);
+  color:var(--ink);
+  line-height:1.08;
+  letter-spacing:-.025em;
+}
+h1{font-size:clamp(3rem,7vw,5.5rem);font-weight:800}
+h2{font-size:clamp(2rem,3.8vw,3rem);font-weight:700}
+h3{font-size:1.15rem;font-weight:700;letter-spacing:-.01em}
+p{max-width:58ch;font-size:.97rem}
+
+img{max-width:100%;display:block}
+a{text-decoration:none;color:inherit}
+.wrap{max-width:1160px;margin:0 auto;padding:0 32px}
+
+/* Animated underline for text links */
+.uline{
+  background-image:linear-gradient(var(--ink),var(--ink));
+  background-position:0 100%;
+  background-repeat:no-repeat;
+  background-size:0% 1.5px;
+  transition:background-size var(--t);
+}
+.uline:hover{background-size:100% 1.5px}
+
+/* ============================================================ BUTTONS */
+/* Wrapper needed for magnetic effect — the inner span moves */
+.btn-wrap{display:inline-block;position:relative}
+.btn{
+  display:inline-flex;align-items:center;gap:10px;
+  background:var(--accent);color:#fff;
+  font-family:var(--font-h);font-weight:700;font-size:.92rem;letter-spacing:-.01em;
+  padding:15px 32px;
+  border-radius:var(--r);
+  border:none;cursor:pointer;
+  position:relative;
+  transition:background var(--t),box-shadow var(--t);
+  transform:translate(0,0);
+  transition:transform var(--t);
+}
+.btn:hover{background:var(--accent-dk)}
+.btn .arr{
+  display:inline-block;
+  transition:transform 200ms ease;
+}
+.btn:hover .arr{transform:translateX(4px)}
+
+.btn-outline{
+  background:transparent;
+  color:var(--ink);
+  border:1.5px solid var(--ink);
+  font-family:var(--font-h);font-weight:700;font-size:.92rem;letter-spacing:-.01em;
+  padding:14px 32px;
+  border-radius:var(--r);
+  display:inline-flex;align-items:center;gap:10px;
+  cursor:pointer;
+  transition:background var(--t),color var(--t),transform var(--t);
+}
+.btn-outline:hover{background:var(--ink);color:var(--paper)}
+
+/* ============================================================ NAV */
+.nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(240,235,227,.92);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--edge);
+}
+.nav .wrap{
+  display:flex;align-items:center;justify-content:space-between;
+  height:72px;gap:24px;
+}
+.brand{
+  display:flex;align-items:center;gap:12px;
+  font-family:var(--font-h);font-weight:800;font-size:1.1rem;
+  color:var(--ink);letter-spacing:-.03em;
+  transition:opacity var(--t);
+}
+.brand:hover{opacity:.75}
+.brand-mark{
+  width:34px;height:34px;border-radius:6px;
+  background:var(--ink);
+  display:grid;place-items:center;flex-shrink:0;
+}
+.brand-mark svg{color:var(--paper)}
+.brand small{
+  display:block;font-weight:500;font-size:.62rem;
+  letter-spacing:.18em;text-transform:uppercase;
+  color:var(--mist);line-height:1;margin-top:2px;
+}
+.nav-links{display:none;gap:36px;list-style:none}
+.nav-links a{
+  font-size:.88rem;font-weight:500;color:var(--mist);
+  transition:color var(--t);
+}
+.nav-links a:hover{color:var(--ink)}
+@media(min-width:820px){.nav-links{display:flex}}
+.nav .btn{padding:11px 24px;font-size:.85rem}
+
+/* ============================================================ HERO */
+.hero{
+  padding:108px 0 0;
+  background:var(--paper);
+  position:relative;
+  overflow:visible;
+}
+.hero .wrap{
+  display:grid;
+  gap:0;
+  align-items:start;
+}
+.hero-text{padding-bottom:80px}
+
+/* Index tag */
+.idx-tag{
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:var(--font-h);font-size:.72rem;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:32px;
+}
+.idx-tag::before{content:"";width:28px;height:1.5px;background:var(--accent)}
+
+.hero h1{
+  margin-bottom:28px;
+  /* balanced rag */
+  text-wrap:balance;
+}
+.hero h1 .line-accent{color:var(--accent)}
+.hero h1 .line-ghost{
+  color:transparent;
+  -webkit-text-stroke:1.5px var(--edge);
+}
+
+.hero-sub{
+  font-size:1.05rem;line-height:1.75;
+  max-width:46ch;
+  margin-bottom:44px;
+}
+.hero-actions{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.hero-kpi{
+  margin-top:64px;
+  display:flex;flex-wrap:wrap;gap:0;
+  border-top:1px solid var(--edge);
+}
+.kpi{
+  padding:24px 0;
+  flex:1 1 140px;
+  border-right:1px solid var(--edge);
+  padding-right:28px;
+  margin-right:28px;
+}
+.kpi:last-child{border-right:none;margin-right:0;padding-right:0}
+.kpi-num{
+  font-family:var(--font-h);font-size:2.2rem;font-weight:800;
+  color:var(--ink);letter-spacing:-.04em;line-height:1;
+  margin-bottom:4px;
+}
+.kpi-num span{color:var(--accent)}
+.kpi-label{font-size:.78rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--mist)}
+
+/* Hero visual — breaks out of column to the right, overlaps proof bar */
+.hero-visual{
+  position:relative;
+  padding-bottom:80px;
+}
+.hero-frame{
+  border-radius:8px;
+  overflow:hidden;
+  border:1px solid var(--edge);
+  position:relative;
+  z-index:2;
+}
+.hero-frame img{width:100%;height:auto;display:block}
+
+/* Floating badge on image */
+.hero-badge{
+  position:absolute;
+  bottom:50px;left:-24px;
+  z-index:3;
+  background:var(--ink);
+  color:#fff;
+  padding:16px 20px;
+  border-radius:6px;
+  font-family:var(--font-h);
+}
+.hero-badge strong{display:block;font-size:1.4rem;font-weight:800;letter-spacing:-.03em;line-height:1}
+.hero-badge span{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-top:3px;display:block}
+
+@media(min-width:960px){
+  .hero .wrap{grid-template-columns:1.15fr 1fr;gap:72px}
+  .hero-visual{padding-bottom:0}
+  .hero-badge{left:-32px}
+}
+
+/* ============================================================ PROOF BAR
+   Angled divider language: section tops use
+   clip-path polygon(0 clamp(24px,3vw,48px), 100% 0, 100% 100%, 0 100%)
+   with negative margin to pull sections up and overlap.
+   Committed to this everywhere below. */
+.proof-bar{
+  background:var(--slate);
+  color:rgba(255,255,255,.5);
+  padding:56px 0 48px;
+  margin-top:0;
+  clip-path:polygon(0 clamp(24px,3vw,48px), 100% 0, 100% 100%, 0 100%);
+  padding-top:calc(56px + clamp(24px,3vw,48px));
+}
+.proof-bar .wrap{
+  display:flex;flex-wrap:wrap;
+  justify-content:space-between;
+  gap:24px;
+  align-items:center;
+}
+.proof-bar-label{
+  font-family:var(--font-h);font-size:.7rem;font-weight:700;
+  letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(255,255,255,.3);
+  white-space:nowrap;
+}
+.proof-logos{
+  display:flex;flex-wrap:wrap;gap:8px 32px;align-items:center;
+}
+.proof-logos span{
+  font-family:var(--font-h);font-weight:700;font-size:.85rem;
+  letter-spacing:-.01em;color:rgba(255,255,255,.35);
+  transition:color var(--t);
+}
+.proof-logos span:hover{color:rgba(255,255,255,.7)}
+
+/* ============================================================ FEATURES */
+.features{
+  background:var(--paper);
+  padding:48px 0 112px;
+  clip-path:polygon(0 clamp(24px,3vw,48px), 100% 0, 100% 100%, 0 100%);
+  padding-top:calc(80px + clamp(24px,3vw,48px));
+  margin-top:-2px;
+}
+.section-top{
+  display:flex;flex-wrap:wrap;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:32px;
+  margin-bottom:64px;
+}
+.section-eyebrow{
+  font-family:var(--font-h);font-size:.72rem;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:16px;
+}
+.section-aside{
+  max-width:30ch;
+  font-size:.92rem;
+  padding-bottom:6px;
+}
+
+/* Cards — hard-edge brutalist lift */
+.cards{display:grid;gap:2px;background:var(--edge)}
+.card{
+  background:var(--paper);
+  padding:36px 32px 32px;
+  position:relative;
+  transition:background var(--t);
+  cursor:default;
+}
+.card:hover{background:#fff}
+.card:hover .card-icon-wrap{background:var(--accent);border-color:var(--accent)}
+.card:hover .card-icon-wrap svg{color:#fff}
+.card-index{
+  position:absolute;top:28px;right:28px;
+  font-family:var(--font-h);font-weight:800;font-size:.72rem;
+  color:var(--edge);letter-spacing:.06em;
+  transition:color var(--t);
+}
+.card:hover .card-index{color:var(--accent)}
+.card-icon-wrap{
+  width:44px;height:44px;
+  border:1.5px solid var(--edge);
+  border-radius:var(--r);
+  display:grid;place-items:center;
+  margin-bottom:24px;
+  transition:background var(--t),border-color var(--t);
+}
+.card-icon-wrap svg{color:var(--ink);transition:color var(--t)}
+.card h3{margin-bottom:10px;color:var(--ink)}
+.card p{font-size:.9rem}
+@media(min-width:640px){.cards{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:960px){.cards{grid-template-columns:repeat(3,1fr)}}
+
+/* ============================================================ PROCESS */
+.process{
+  background:var(--slate);
+  padding:48px 0 96px;
+  clip-path:polygon(0 clamp(24px,3vw,48px), 100% 0, 100% 100%, 0 100%);
+  padding-top:calc(80px + clamp(24px,3vw,48px));
+  margin-top:-2px;
+  color:rgba(255,255,255,.6);
+}
+.process h2{color:#fff}
+.process .section-aside{color:rgba(255,255,255,.5)}
+.steps{
+  display:grid;
+  gap:2px;
+  margin-top:60px;
+  background:rgba(255,255,255,.06);
+}
+.step{
+  padding:36px 32px;
+  background:var(--slate);
+  transition:background var(--t);
+  position:relative;
+}
+.step:hover{background:var(--slate2)}
+.step-num{
+  font-family:var(--font-h);font-weight:800;font-size:3.5rem;
+  color:rgba(255,255,255,.07);
+  letter-spacing:-.04em;
+  line-height:1;
+  margin-bottom:16px;
+}
+.step h3{color:#fff;margin-bottom:10px}
+.step p{font-size:.9rem}
+@media(min-width:720px){.steps{grid-template-columns:repeat(4,1fr)}}
+
+/* ============================================================ TESTIMONIAL */
+.testimonial{
+  background:var(--paper);
+  padding:48px 0 104px;
+  clip-path:polygon(0 clamp(24px,3vw,48px), 100% 0, 100% 100%, 0 100%);
+  padding-top:calc(96px + clamp(24px,3vw,48px));
+  margin-top:-2px;
+  position:relative;
+}
+.testimonial .wrap{
+  display:grid;
+  gap:48px;
+  align-items:center;
+}
+.quote-mark{
+  font-family:var(--font-h);font-weight:800;
+  font-size:clamp(8rem,16vw,14rem);
+  color:var(--edge);
+  line-height:.7;
+  margin-bottom:-32px;
+  display:block;
+}
+.testimonial blockquote{
+  font-family:var(--font-h);
+  font-size:clamp(1.35rem,2.8vw,2rem);
+  font-weight:600;
+  color:var(--ink);
+  line-height:1.35;
+  letter-spacing:-.02em;
+  text-wrap:balance;
+}
+.testimonial-author{
+  margin-top:36px;
+  display:flex;align-items:center;gap:16px;
+  padding-top:28px;
+  border-top:1px solid var(--edge);
+}
+.author-avatar{
+  width:48px;height:48px;border-radius:50%;
+  background:var(--ink);
+  display:grid;place-items:center;
+  font-family:var(--font-h);font-weight:800;font-size:.85rem;color:var(--paper);
+  flex-shrink:0;
+}
+.author-name{font-family:var(--font-h);font-weight:700;color:var(--ink);font-size:.95rem;letter-spacing:-.01em}
+.author-role{font-size:.82rem}
+.testimonial-stat{align-self:center}
+.t-stat-num{
+  font-family:var(--font-h);font-size:clamp(3rem,6vw,5rem);
+  font-weight:800;letter-spacing:-.04em;color:var(--ink);
+  line-height:1;
+}
+.t-stat-num span{color:var(--accent)}
+.t-stat-desc{font-size:.85rem;margin-top:8px;max-width:18ch}
+@media(min-width:840px){.testimonial .wrap{grid-template-columns:1.4fr 1fr}}
+
+/* ============================================================ FINAL CTA */
+.final-cta{
+  background:var(--accent);
+  padding:48px 0 88px;
+  clip-path:polygon(0 clamp(24px,3vw,48px), 100% 0, 100% 100%, 0 100%);
+  padding-top:calc(80px + clamp(24px,3vw,48px));
+  margin-top:-2px;
+  color:rgba(255,255,255,.75);
+}
+.final-cta h2{
+  color:#fff;
+  font-size:clamp(2rem,5vw,3.8rem);
+  max-width:16ch;
+  text-wrap:balance;
+  margin-bottom:24px;
+}
+.final-cta p{max-width:44ch;margin-bottom:48px;font-size:1.05rem}
+.final-cta .wrap{
+  display:grid;gap:56px;align-items:center;
+}
+.btn-white{
+  background:#fff;color:var(--accent);
+  font-family:var(--font-h);font-weight:800;font-size:.96rem;letter-spacing:-.01em;
+  padding:16px 36px;border-radius:var(--r);
+  display:inline-flex;align-items:center;gap:10px;
+  cursor:pointer;border:none;
+  transition:transform var(--t),box-shadow var(--t);
+}
+.btn-white:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.2)}
+.btn-white .arr{transition:transform 200ms ease}
+.btn-white:hover .arr{transform:translateX(4px)}
+.cta-details{
+  display:flex;flex-direction:column;gap:18px;
+  font-size:.9rem;
+}
+.cta-details a{
+  display:flex;align-items:center;gap:12px;
+  color:rgba(255,255,255,.75);
+  transition:color var(--t);
+}
+.cta-details a:hover{color:#fff}
+.cta-details svg{flex-shrink:0;opacity:.6}
+@media(min-width:760px){.final-cta .wrap{grid-template-columns:1.2fr 1fr}}
+
+/* ============================================================ FOOTER */
+.footer{
+  background:var(--ink);
+  padding:36px 0;
+  clip-path:polygon(0 clamp(16px,2vw,32px), 100% 0, 100% 100%, 0 100%);
+  padding-top:calc(36px + clamp(16px,2vw,32px));
+  margin-top:-2px;
+}
+.footer .wrap{
+  display:flex;flex-wrap:wrap;
+  gap:12px 32px;
+  align-items:center;
+  justify-content:space-between;
+  font-size:.82rem;color:rgba(255,255,255,.3);
+}
+.footer a{color:rgba(255,255,255,.45);transition:color var(--t)}
+.footer a:hover{color:#fff}
+.footer-brand{
+  font-family:var(--font-h);font-weight:800;
+  color:rgba(255,255,255,.8);font-size:.95rem;letter-spacing:-.02em;
+}
+</style>
+</head>
+<body>
+
+<!-- ================================================================ NAV -->
+<header class="nav" id="top">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <span class="brand-mark">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="1" width="5.5" height="5.5" rx="1"/>
+          <rect x="9.5" y="1" width="5.5" height="5.5" rx="1"/>
+          <rect x="1" y="9.5" width="5.5" height="5.5" rx="1"/>
+          <rect x="9.5" y="9.5" width="5.5" height="5.5" rx="1"/>
+        </svg>
+      </span>
+      <span>TechSolve<small>IT Solutions PH</small></span>
+    </a>
+    <ul class="nav-links">
+      <li><a class="uline" href="#services">Services</a></li>
+      <li><a class="uline" href="#process">Process</a></li>
+      <li><a class="uline" href="#contact">Contact</a></li>
+    </ul>
+    <a class="btn" href="#contact">Free Consultation <span class="arr">→</span></a>
+  </div>
+</header>
+
+<!-- ================================================================ HERO -->
+<main>
+<section class="hero">
+  <div class="wrap">
+
+    <div class="hero-text">
+      <div class="idx-tag">Your Trusted IT Partner in the Philippines</div>
+      <h1>
+        Your Business<br>
+        Never Slows<br>
+        <span class="line-accent">Down.</span>
+      </h1>
+      <p class="hero-sub">We resolve IT problems before they cost you — managed support, cybersecurity, and cloud services built for Philippine businesses that can&rsquo;t afford downtime.</p>
+      <div class="hero-actions">
+        <a class="btn btn-magnetic" href="#contact">Get a Free Consultation <span class="arr">→</span></a>
+        <a class="btn-outline" href="#services">Our Services</a>
+      </div>
+      <div class="hero-kpi">
+        <div class="kpi">
+          <div class="kpi-num">99<span>.9%</span></div>
+          <div class="kpi-label">Uptime SLA</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-num">15<span>min</span></div>
+          <div class="kpi-label">Avg Response</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-num">200<span>+</span></div>
+          <div class="kpi-label">Businesses Served</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-frame">
+        <img src="assets/techsolve-hero.png" alt="IT operations command center — multiple dashboards monitored in real time" />
+      </div>
+      <div class="hero-badge">
+        <strong>24 / 7</strong>
+        <span>Proactive Monitoring</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================ PROOF BAR -->
+<div class="proof-bar">
+  <div class="wrap">
+    <span class="proof-bar-label">Trusted by</span>
+    <div class="proof-logos">
+      <span>Ayala Corp</span>
+      <span>SM Retail</span>
+      <span>BDO Unibank</span>
+      <span>Jollibee Group</span>
+      <span>Globe Telecom</span>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ FEATURES -->
+<section class="features" id="services">
+  <div class="wrap">
+    <div class="section-top">
+      <div>
+        <div class="section-eyebrow">[ 01 — Services ]</div>
+        <h2>Stop firefighting.<br>Start growing.</h2>
+      </div>
+      <p class="section-aside">Six specialised services. One accountable partner. Everything covered so you can focus on what you actually do.</p>
+    </div>
+
+    <div class="cards">
+
+      <div class="card">
+        <span class="card-index">01</span>
+        <div class="card-icon-wrap">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="1" y="3" width="18" height="13" rx="2"/>
+            <path d="M7 19h6M10 16v3"/>
+          </svg>
+        </div>
+        <h3>Managed IT Support</h3>
+        <p>24 / 7 monitoring and rapid response so downtime never turns into a disaster.</p>
+      </div>
+
+      <div class="card">
+        <span class="card-index">02</span>
+        <div class="card-icon-wrap">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 2L2 6v4c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6z"/>
+            <path d="M7 10l2 2 4-4"/>
+          </svg>
+        </div>
+        <h3>Cybersecurity</h3>
+        <p>Advanced threat detection that protects your data, your clients, and your reputation.</p>
+      </div>
+
+      <div class="card">
+        <span class="card-index">03</span>
+        <div class="card-icon-wrap">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16.5 13a4 4 0 0 0 0-8 6 6 0 0 0-11 0 4 4 0 0 0 0 8"/>
+            <path d="M10 13v6M7 17l3 2 3-2"/>
+          </svg>
+        </div>
+        <h3>Cloud Services</h3>
+        <p>Scalable infrastructure so you pay only for what you use — nothing more, nothing less.</p>
+      </div>
+
+      <div class="card">
+        <span class="card-index">04</span>
+        <div class="card-icon-wrap">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="10" cy="4" r="2"/>
+            <circle cx="4" cy="17" r="2"/>
+            <circle cx="16" cy="17" r="2"/>
+            <path d="M10 6v5M10 11l-4.5 4.5M10 11l4.5 4.5"/>
+          </svg>
+        </div>
+        <h3>Network &amp; Infrastructure</h3>
+        <p>Reliable networks designed to handle your peak load — built once, maintained always.</p>
+      </div>
+
+      <div class="card">
+        <span class="card-index">05</span>
+        <div class="card-icon-wrap">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="14 16 20 10 14 4"/>
+            <polyline points="6 4 0 10 6 16"/>
+            <line x1="12" y1="2" x2="8" y2="18"/>
+          </svg>
+        </div>
+        <h3>Software Development</h3>
+        <p>Custom software that automates the work your team shouldn&rsquo;t be doing manually.</p>
+      </div>
+
+      <div class="card">
+        <span class="card-index">06</span>
+        <div class="card-icon-wrap">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="10" cy="5" rx="8" ry="3"/>
+            <path d="M2 5v5c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/>
+            <path d="M2 10v5c0 1.66 3.58 3 8 3s8-1.34 8-3v-5"/>
+          </svg>
+        </div>
+        <h3>Data Backup &amp; Recovery</h3>
+        <p>Automated backups and rapid recovery so one bad day never becomes a catastrophe.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ PROCESS -->
+<section class="process" id="process">
+  <div class="wrap">
+    <div class="section-top">
+      <div>
+        <div class="section-eyebrow" style="color:rgba(255,255,255,.4)">[ 02 — How We Work ]</div>
+        <h2>From problem<br>to solved — fast.</h2>
+      </div>
+      <p class="section-aside" style="color:rgba(255,255,255,.5)">A clear, four-step process with no guesswork and no hidden steps. You know exactly what happens next.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3>Consult</h3>
+        <p>We listen first. No pitch, no pressure — just understanding your actual situation.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3>Assess</h3>
+        <p>We map your infrastructure, find the gaps, and design the right solution — not the most expensive one.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3>Implement</h3>
+        <p>We deploy cleanly and integrate with what you already have, with zero unnecessary disruption.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <h3>Support</h3>
+        <p>We monitor, optimise, and respond around the clock. You get one number to call for everything.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ TESTIMONIAL -->
+<section class="testimonial">
+  <div class="wrap">
+    <div>
+      <span class="quote-mark">&ldquo;</span>
+      <blockquote>TechSolve fixed in two days what had been causing downtime for months. It no longer feels like we have a vendor — it feels like we have our own IT department.</blockquote>
+      <div class="testimonial-author">
+        <div class="author-avatar">RC</div>
+        <div>
+          <div class="author-name">Ramon Cruz</div>
+          <div class="author-role">Operations Director &mdash; Manila-based retail group, 3 branches</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-stat">
+      <div class="t-stat-num">2<span>days</span></div>
+      <p class="t-stat-desc">to resolve a problem that had lasted months</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ FINAL CTA -->
+<section class="final-cta" id="contact">
+  <div class="wrap">
+    <div>
+      <div class="section-eyebrow" style="color:rgba(255,255,255,.5)">[ 03 — Get Started ]</div>
+      <h2>Tell us what&rsquo;s slowing you down.</h2>
+      <p>Free, no-obligation consultation. We&rsquo;ll identify the issue, propose a solution, and give you a clear timeline — usually within 24&nbsp;hours.</p>
+      <a class="btn-white btn-magnetic" href="mailto:info@techsolveph.com">Book a Free Consultation <span class="arr">→</span></a>
+    </div>
+    <div class="cta-details">
+      <a href="tel:+63281234567">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 12.5v2a1.5 1.5 0 0 1-1.7 1.5A14 14 0 0 1 1 2.7 1.5 1.5 0 0 1 2.5 1h2A1.5 1.5 0 0 1 6 2.3l.7 2.1a1.5 1.5 0 0 1-.4 1.6l-1 .9a11 11 0 0 0 3.8 3.8l.9-1a1.5 1.5 0 0 1 1.6-.4l2.1.7A1.5 1.5 0 0 1 15 11z"/></svg>
+        (02)&nbsp;8&nbsp;123&nbsp;4567
+      </a>
+      <a href="mailto:info@techsolveph.com">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="14" height="10" rx="2"/><path d="M2 6l7 4.5L16 6"/></svg>
+        info@techsolveph.com
+      </a>
+      <a href="https://www.techsolveph.com">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="7"/><path d="M9 2a11 11 0 0 1 0 14M9 2a11 11 0 0 0 0 14M2 9h14"/></svg>
+        www.techsolveph.com
+      </a>
+      <span style="display:flex;align-items:center;gap:12px;margin-top:4px">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="opacity:.6"><path d="M9 1.5L2 5v4.5c0 4 3 7.5 7 8 4-1 7-4 7-8V5z"/></svg>
+        Proudly serving businesses across the Philippines
+      </span>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ================================================================ FOOTER -->
+<footer class="footer">
+  <div class="wrap">
+    <span class="footer-brand">TechSolve</span>
+    <span>&copy; 2026 TechSolve IT Solutions PH. All rights reserved.</span>
+    <a href="#top">Back to top ↑</a>
+  </div>
+</footer>
+
+<!-- ============================================================ MAGNETIC BUTTONS + SMOOTH UNDERLINES -->
+<script>
+/* Magnetic button effect — moves toward cursor when hovering within ~80px radius */
+document.querySelectorAll('.btn-magnetic').forEach(el=>{
+  el.addEventListener('mousemove',e=>{
+    const r=el.getBoundingClientRect();
+    const cx=r.left+r.width/2, cy=r.top+r.height/2;
+    const dx=e.clientX-cx, dy=e.clientY-cy;
+    el.style.transform=`translate(${dx*.2}px,${dy*.25}px)`;
+  });
+  el.addEventListener('mouseleave',()=>{
+    el.style.transition='transform 400ms cubic-bezier(.23,1,.32,1)';
+    el.style.transform='translate(0,0)';
+    setTimeout(()=>el.style.transition='',400);
+  });
+  el.addEventListener('mouseenter',()=>{
+    el.style.transition='transform 160ms ease';
+  });
+});
+</script>
+
+</body>
+</html>

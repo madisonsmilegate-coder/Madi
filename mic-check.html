@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mic Check</title>
+<style>
+:root{
+  --bg:#0b0b0d; --panel:#141418; --panel2:#1c1c22; --line:#2a2a33;
+  --ink:#e9e9ee; --dim:#9a9aa8; --accent:#ffb020; --accent2:#ff4d5e;
+  --good:#4ade80; --bad:#f87171;
+}
+:root:not([data-theme="light"]) { }
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f4f2ee; --panel:#fffdf9; --panel2:#efece5; --line:#ddd8cd;
+    --ink:#1a1a1f; --dim:#65656f; --accent:#b5730a; --accent2:#c62a3a;
+  }
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  line-height:1.55; padding:0 16px;
+}
+.wrap{max-width:760px;margin:0 auto;padding:28px 0 80px}
+h1{font-size:clamp(26px,7vw,44px);margin:0;letter-spacing:-1px;line-height:1.05}
+h1 span{color:var(--accent)}
+.sub{color:var(--dim);font-size:13px;margin:6px 0 24px;text-transform:uppercase;letter-spacing:2px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;margin:14px 0}
+.card.op{border-left:3px solid var(--accent2)}
+.card.you{border-left:3px solid var(--accent)}
+.tag{display:inline-block;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.verse{white-space:pre-wrap;font-size:15px}
+.verse.op{color:var(--ink)}
+button{
+  font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;
+  background:var(--accent);color:#14140c;border:0;border-radius:8px;
+  padding:11px 20px;letter-spacing:.5px;
+}
+button:hover{filter:brightness(1.12)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.ghost{background:transparent;color:var(--dim);border:1px solid var(--line)}
+textarea{
+  width:100%;min-height:150px;background:var(--panel2);color:var(--ink);
+  border:1px solid var(--line);border-radius:8px;padding:12px;
+  font-family:inherit;font-size:15px;line-height:1.6;resize:vertical;
+}
+textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.count{color:var(--dim);font-size:12px}
+.count.warn{color:var(--bad)}
+.judge{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
+.judge h3{margin:0 0 4px;font-size:16px;color:var(--accent)}
+.judge .who{color:var(--dim);font-size:12px;margin-bottom:10px}
+.crit{font-size:14px;margin:8px 0}
+.quote{border-left:2px solid var(--line);padding-left:10px;color:var(--dim);font-style:italic;margin:6px 0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+th,td{border:1px solid var(--line);padding:7px 9px;text-align:left}
+th{background:var(--panel2);color:var(--dim);font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:1px}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+.win{font-size:clamp(20px,5vw,30px);font-weight:700;margin:18px 0 6px}
+.win.u{color:var(--good)} .win.o{color:var(--bad)} .win.d{color:var(--accent)}
+.hr{height:1px;background:var(--line);margin:26px 0}
+.crowd{color:var(--dim);font-size:13px;font-style:italic;margin:10px 0}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>MIC <span>CHECK</span></h1>
+  <div class="sub">Underground Rap Battles &middot; 3 Rounds</div>
+  <div id="stage"></div>
+</div>
+
+<script>
+"use strict";
+
+/* ---------------- opponents ---------------- */
+const OPPONENTS = [
+  {
+    name:"SYLLABLE SAINT", style:"Elite Lyrical", diff:3,
+    vibe:"Speaks barely above a whisper, stacks four rhymes inside one breath. Never raises his voice because he has never had to.",
+    verses:[
+`Understand the anatomy: I'm mapping out your catalog,
+Tragically you're rapping like a fragment of an analog
+Signal in a satellite that's lagging out of orbit —
+I'm a scalpel, you're a scab, I'm the album, you're the bootleg.
+Every syllable I slide is like a chisel on a monument,
+You recycle the familiar and you call the residue accomplishment.
+I don't punch down, I don't have to, gravity's already on it,
+You a rough draft of a rapper with a margin full of comments.
+They said study me — you studied and you still ain't understood it,
+'Cause the pattern ain't the point, it's the pressure underneath it.
+I could spell out how I beat you but I'd rather let you read it
+In the faces of the people who came out here to see it.`,
+`Precision is the religion, I've been fasting on the vowel,
+Every consonant a covenant, I sharpen 'em and file
+'Em into something surgical — you scribble, then you smile
+Like the effort is the outcome. Brother, effort ain't a style.
+You been chasing the aesthetic of a man who found a method,
+I don't borrow from the greats, I just remember what they left us.
+Your bars is a suggestion, mine arrive as a directive,
+You a question in a room where every answer is corrective.
+And I'm patient — I don't rush it, watch the tempo do the damage,
+I'll dismantle you in whispers and I'll never break the cadence.
+So the crowd think I went easy? Nah, they witnessed a dissection,
+The autopsy is finished. Here's your body. Here's the lesson.`,
+`Final movement, no crescendo, I don't need it, I'm the metronome,
+You a rapper renting relevance, I'm a landlord, this my metro zone.
+Every line you wrote tonight I heard the skeleton of it before,
+Recycled desperation with a better metaphor.
+I gave you three whole rounds to find a weapon in your arsenal,
+You came back with adjectives and volume — that's not marvelous.
+I'm the reason people study what a syllable can carry,
+You the reason people leave before the second act of every
+Battle that you enter. Nah, don't take that as an insult,
+Take it as a syllabus. The final grade is simple:
+You showed up. That's the compliment. That's all of it. That's it.
+Now hand the microphone back to the man who earned the grip.`]
+  },
+  {
+    name:"PASTOR VENOM", style:"Aggressive Battle Rapper", diff:2,
+    vibe:"Preaches like a pulpit prophet, punches like a debt collector. Every bar is a sermon and every sermon ends with your obituary.",
+    verses:[
+`Congregation gather 'round, I'm 'bout to preach a eulogy,
+This man walked in my house of pain expecting hospitality —
+Nah. I bury amateurs, it's basement-level burial,
+You brought a notebook full of nothing, that's a spiritual emergency.
+Look at him rehearsing in his head, I see the lips move,
+That's a prayer, not a punchline, and I'm here to disprove
+That God saves everybody, 'cause tonight He took a day off,
+Left you standing in my crosshairs while the whole room laughed you off.
+I don't need a stage name, my government's a warning label,
+You need a ghostwriter, a hype man, and a folding table
+To hold up all the confidence you borrowed at the door —
+When I'm done you gon' be crawling out the way you came: the floor.`,
+`You survived round one the way a cough survives a winter —
+Barely, loudly, and nobody was impressed, including the beginner
+Standing next to you who came here just to watch somebody lose.
+Congratulations, you the reason that he paid for his own booze.
+I been doing this since basements had no heat and no permission,
+You been doing this since somebody told you that you had a vision.
+Visions don't win battles. Volume don't win battles.
+Come in here with feelings, leave here with a rattle
+In your chest 'cause I ain't finished, I'm just pacing out the damage,
+I could end it in a bar but then the crowd don't get their average.
+So I'll stretch it, let 'em savor it, let everybody see —
+That ain't sweat up on your forehead, homie. That's the ceiling leaking.`,
+`Third round, and you still here? That's endurance, I'll admit it,
+But endurance ain't a talent, it's a symptom of committed
+Bad decisions, and you made 'em all in public, on a Friday,
+In a basement, in a city that will never learn your byline.
+I don't hate you — hate takes energy, and energy costs money,
+I just do this 'cause somebody's gotta tell you that it's funny
+When you rhyme "again" with "again" and act like that's a scheme,
+When you pause for a reaction and the room don't make a sound.
+Go home. Not defeated — go home educated, humbled,
+Tell 'em Pastor Venom preached and every pew in here was rumbled.
+And the next time that you step up in a circle like tonight,
+Bring a verse. Not a hope. Not a vibe. A verse. Goodnight.`]
+  },
+  {
+    name:"LIL BRACKET", style:"Ambitious Amateur", diff:1,
+    vibe:"Seventeen, hoodie up, hands shaking, absolutely fearless. Wrote his bars in the notes app on the bus over. You kind of want him to win.",
+    verses:[
+`Yo, my name is Lil Bracket and I'm here to win,
+I been practicing my flow since I don't know when.
+You look kinda scared and I can see the fear,
+That's why I got the crowd and you just got a beer.
+I'm nice with the pen, yeah I'm nice with the pad,
+You the worst that I seen and that's really really bad.
+I got bars for days and I got bars for nights,
+Step up to Lil Bracket, man, you gon' lose this fight.
+Boom. That's a punchline. Did you hear that one?
+I'ma do another one before this round is done:
+You a clown, you a joke, you a bozo, you a fool —
+Hold on, let me check my phone. Okay. That's cool.`,
+`Round two, here we go, I got more in the tank,
+All my homies in the back, yeah, they know what I'm bank-
+ing on, that's a multi, I been learning about those,
+My cousin said to use 'em so I put 'em in my flows.
+You been talking real tough but I'm not even mad,
+You remind me of my uncle and my uncle's kinda sad.
+I got hunger, I got heart, I got nothing else to lose,
+You got shoes that cost more than my whole entire shoes.
+Wait — that came out weird. Okay, forget that line,
+The next one's gonna hit though, just give it some time:
+You're old and I'm young and that's just how it goes,
+That's my verse. I'm done. That's it. Yo, respect though.`,
+`Last round, and honestly I'm hyped that I was here,
+I been watching this circle since my brother brought me near.
+But I still gotta beat you 'cause that's how this thing work,
+So I'ma say some mean stuff even though it kinda hurt.
+Your haircut is bad. Your jacket is worse.
+You probably got a job that you hate and you rehearse
+Your excuses in the mirror every morning 'fore you leave —
+Okay that one was real, I didn't mean to get deep.
+Anyway, I'm Lil Bracket and I came, and I said it,
+And whatever happens next, man, you gotta give me credit.
+I'm sixteen with a dream and a notes app full of pain,
+And I'm doing this again next week. And next week. Same.`]
+  },
+  {
+    name:"THE OMELETTE", style:"Wildcard / Joker", diff:2,
+    vibe:"Wears a bathrobe. Claims to be a licensed notary. Every metaphor arrives from a direction geometry does not recognize.",
+    verses:[
+`I emerged from a vending machine in a Denny's parking lot
+To inform you, personally, that your aura smells like parking lots.
+I am the Omelette. I contain multitudes and also cheese.
+I have never lost a battle, I have only lost my keys.
+You rhyme like a printer that's been asked to print a feeling,
+I rhyme like a raccoon that achieved a business degree and
+Immediately used it to acquire your childhood home —
+I'm evicting you emotionally. Please collect your garden gnome.
+They tested me for talent and the doctor said "unclear,"
+Then he wept, then he clapped, then he whispered "get him outta here."
+I don't know what I'm doing. That's the horror. That's the threat.
+A man who has no plan cannot be countered. Place your bets.`,
+`Round two: I have consumed a document and now I am the law.
+I notarized your verse. It was invalid. I saw flaws.
+Specifically the part where you existed. Struck it down.
+You may appeal in seven years, in writing, to a cloud.
+I fight like a ceiling fan that learned about revenge,
+I move in one direction but I do it without end.
+Your punchlines got the energy of unbuttered toast,
+I'm the guy your therapist describes but never quite to most
+People, 'cause they wouldn't get it, 'cause I don't get it either,
+I've been running on adrenaline and one enormous liter
+Of a beverage that was banned in several agreeable nations.
+You are losing to a bathrobe. Sit with that. No explanations.`,
+`FINAL ROUND. I have ascended. I am now a filing cabinet.
+Every drawer contains a version of you and I'm abandoning
+All of them at once — that's called a mass emotional eviction,
+It's a service that I offer and it comes with no restrictions.
+You came here with a strategy. I came here with a moth.
+The moth has been advising me. The moth says you are lost.
+I've been wrong about a lot of things: my taxes, and my father,
+But I've never been wrong twice about a man who wouldn't bother
+Writing something weird enough to make a stranger feel afraid.
+Normal is a coffin, friend. I dug it. You got laid
+In it gently, with your average little adequate approach.
+The Omelette has spoken. Someone please retrieve my coat.`]
+  }
+];
+
+/* ---------------- text analysis engine ---------------- */
+const VOWELS="aeiouy";
+const STOP=new Set("the a an and or but if of to in on at is are was were be been i you he she it we they my your his her its our their me him them that this so for with as not no nah yeah got get like just".split(" "));
+
+function words(s){return (s.toLowerCase().match(/[a-z']+/g)||[]);}
+function lines(s){return s.split("\n").map(l=>l.trim()).filter(Boolean);}
+
+function syllables(w){
+  w=w.toLowerCase().replace(/[^a-z]/g,"");
+  if(!w) return 0;
+  if(w.length<=3) return 1;
+  w=w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/,"").replace(/^y/,"");
+  const m=w.match(/[aeiouy]{1,2}/g);
+  return m?m.length:1;
+}
+/* Phonetics: a rhyme in battle rap is a TAIL of matching vowel sounds running
+   across the last few syllables of a line, not just the final word. We reduce
+   each line to its trailing vowel-sound sequence and measure how deep two
+   tails agree. Depth 1 = plain rhyme. Depth 2+ = a multisyllabic. */
+function norm(w){
+  w=w.toLowerCase().replace(/[^a-z]/g,"");
+  if(/[^aeiouy]e$/.test(w)) w=w.slice(0,-1);   // silent trailing e
+  return w;
+}
+const VMAP=[[/^(ee|ea|ie|y)$/,"E"],[/^(oo|ou|ue|ew)$/,"U"],[/^(ai|ay|ey|a)$/,"A"],
+            [/^(igh|ie|i)$/,"I"],[/^(oa|ow|o)$/,"O"],[/^(e)$/,"E"],[/^(u)$/,"U"]];
+function vsound(v){
+  for(const[re,c] of VMAP) if(re.test(v)) return c;
+  return v[0].toUpperCase();
+}
+// Trailing vowel sounds of a line, last -> first. Crucially, unstressed vowels
+// in English all reduce to schwa, which spelling hides: "narrative" and
+// "terrible" share no vowel letters but rhyme as (schwa, schwa). We approximate
+// stress as the final full syllable of the last long word, and reduce the rest.
+function tailSounds(line){
+  const ws=(line.toLowerCase().match(/[a-z']+/g)||[]).map(norm).filter(Boolean);
+  if(!ws.length) return {v:[],c:""};
+  const out=[];
+  for(let wi=ws.length-1; wi>=0 && out.length<6; wi--){
+    const w=ws[wi];
+    const vs=w.match(/[aeiouy]+/g)||[];
+    const nSyl=vs.length;
+    for(let k=vs.length-1;k>=0;k--){
+      const v=vs[k];
+      // a monosyllable that is a content word keeps its full value;
+      // in a polysyllable only the first syllable carries stress reliably
+      const stressed = (nSyl===1 && !STOP.has(w)) || (nSyl>1 && k===0);
+      out.push(stressed ? vsound(v) : (v.length===1 ? "@" : vsound(v)));
+    }
+  }
+  const cm=ws[ws.length-1].match(/[^aeiouy]*$/);
+  return {v:out.slice(0,6), c:(cm?cm[0]:"").slice(-2)};
+}
+function lineTail(line){ return tailSounds(line); }
+// how many trailing syllables two line-tails share
+function rhymeDepth(a,b){
+  if(!a.v.length||!b.v.length) return 0;
+  let d=0;
+  while(d<a.v.length && d<b.v.length && a.v[d]===b.v[d]) d++;
+  if(!d) return 0;
+  const cMatch = a.c===b.c || a.c.endsWith(b.c) || b.c.endsWith(a.c);
+  if(d===1 && !cMatch) return 0;   // one vowel + clashing consonant is not a rhyme
+  return d;
+}
+function rhymeKey(w){
+  w=norm(w); if(!w) return "";
+  const m=w.match(/[aeiouy]+[^aeiouy]*$/);
+  if(!m) return w.slice(-2);
+  const vm=m[0].match(/^[aeiouy]+/);
+  return vsound(vm[0])+m[0].replace(/^[aeiouy]+/,"").slice(0,2);
+}
+function rhymes(a,b){
+  if(!a||!b) return false;
+  const ka=rhymeKey(a),kb=rhymeKey(b);
+  return !!ka&&ka===kb;
+}
+
+function analyze(text){
+  const L=lines(text), W=words(text);
+  const r={ lineCount:L.length, wordCount:W.length, lines:L };
+
+  // end rhymes, measured by how deep the line tails agree
+  const tails=L.map(lineTail);
+  const ends=L.map(l=>{const w=words(l);return w[w.length-1]||"";});
+  let endRhyme=0, multi=0, depthSum=0;
+  const paired=new Array(L.length).fill(false);
+  for(let i=0;i<L.length;i++){
+    if(paired[i]) continue;
+    for(let j=i+1;j<Math.min(L.length,i+4);j++){
+      if(paired[j]) continue;
+      const d=rhymeDepth(tails[i],tails[j]);
+      if(d>=1){
+        endRhyme++; depthSum+=d; paired[i]=paired[j]=true;
+        if(d>=2) multi++;   // vowel run across 2+ syllables
+        break;
+      }
+    }
+  }
+  r.endRhyme=endRhyme; r.multiRhyme=multi;
+  r.avgDepth = endRhyme? depthSum/endRhyme : 0;
+  r.rhymeRate = L.length>1 ? endRhyme/Math.floor(L.length/2) : 0;
+
+  // internal rhyme: within-line word-tail repeats
+  let internal=0;
+  L.forEach(l=>{
+    const ws=words(l).filter(w=>w.length>2);
+    const seen={};
+    ws.forEach(w=>{const k=rhymeKey(w); if(!k)return; seen[k]=(seen[k]||0)+1;});
+    Object.values(seen).forEach(c=>{ if(c>1) internal+=c-1; });
+  });
+  r.internal=internal;
+
+  // cadence: syllable counts per line, lower stddev = tighter
+  const syl=L.map(l=>words(l).reduce((a,w)=>a+syllables(w),0));
+  r.syl=syl;
+  const avg=syl.reduce((a,b)=>a+b,0)/(syl.length||1);
+  const varc=syl.reduce((a,b)=>a+(b-avg)**2,0)/(syl.length||1);
+  r.avgSyl=avg; r.sylDev=Math.sqrt(varc);
+
+  // vocabulary richness (non-stopword uniqueness)
+  const content=W.filter(w=>!STOP.has(w));
+  r.unique = content.length? new Set(content).size/content.length : 0;
+  r.contentCount=content.length;
+
+  // imagery / comparison devices
+  r.similes=(text.match(/\b(like|as)\s+(a|an|the|my|your|some)\b/gi)||[]).length;
+  r.imAWordYoureA=(text.match(/\b(i'?m|i am|you'?re|you are)\s+(a|an|the)\b/gi)||[]).length;
+  // direct address = engagement
+  r.youRefs=(text.match(/\byou\b|\byour\b|\byou'?re\b/gi)||[]).length;
+  // wordplay markers: repeated root with different suffix
+  let play=0; const roots={};
+  content.forEach(w=>{ if(w.length>4){const rt=w.slice(0,4); roots[rt]=(roots[rt]||0)+1;} });
+  Object.values(roots).forEach(c=>{if(c>1)play+=c-1;});
+  r.wordplay=play;
+  // filler / corny tells
+  r.filler=(text.match(/\b(yo|uh|like|umm?|basically|really really|very very)\b/gi)||[]).length;
+  // rhyming a word with itself
+  let selfRhyme=0;
+  for(let i=0;i<ends.length-1;i++) for(let j=i+1;j<Math.min(ends.length,i+4);j++) if(ends[i]&&ends[i]===ends[j]) selfRhyme++;
+  r.selfRhyme=selfRhyme;
+  // copy-paste padding: identical or near-identical repeated bars
+  const norml=L.map(l=>words(l).join(" "));
+  r.dupLines=norml.length-new Set(norml).size;
+
+  r.longestLine=L.reduce((a,l)=>Math.max(a,words(l).length),0);
+
+  // normalize raw counts to a 12-bar basis: length alone must not buy points
+  const k = L.length? Math.min(1, 12/L.length) : 0;
+  r.multiRhyme *= k; r.internal *= k; r.wordplay *= k;
+  r.youRefs *= k; r.similes *= k; r.imAWordYoureA *= k;
+  r.contentCount *= k; r.filler *= k; r.selfRhyme *= k; r.dupLines *= k;
+  return r;
+}
+
+const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
+
+function scoreRound(a){
+  // Lyricism: rhyming at all is table stakes; depth, density and diction separate.
+  let lyr = 1.5;
+  lyr += clamp(a.rhymeRate,0,1)*1.5;
+  lyr += clamp(a.multiRhyme*0.5,0,2.2);
+  lyr += clamp((a.avgDepth-1)*2.2,0,2.4);
+  lyr += clamp(a.internal*0.22,0,1.5);
+  lyr += clamp((a.unique-0.55)*6,0,1.8);
+  lyr += clamp((a.similes+a.imAWordYoureA)*0.3,0,1.2);
+  lyr += clamp(a.wordplay*0.2,0,0.8);
+  lyr -= clamp(a.selfRhyme*0.6,0,2);
+  lyr -= clamp(a.filler*0.35,0,1.8);
+  lyr -= clamp(a.dupLines*0.8,0,4);
+  if(a.lineCount<4) lyr-=2.2; else if(a.lineCount<8) lyr-=0.9;
+
+  // Flow: cadence consistency, line length sanity, rhyme landing
+  let flo = 2.0;
+  flo += clamp(4 - a.sylDev*0.75, 0, 3.4);          // tight = good
+  flo += clamp(a.rhymeRate,0,1)*1.8;
+  flo += (a.avgSyl>=7&&a.avgSyl<=17)?1.5:0.2;        // battle-length bars
+  flo += clamp(a.internal*0.15,0,1.0);
+  flo -= clamp(a.filler*0.3,0,1.6);
+  flo -= clamp(a.dupLines*0.5,0,3);
+  if(a.longestLine>22) flo-=1.0;                     // runaway bar
+  if(a.lineCount<4) flo-=2.0;
+
+  // Punchlines: aggression, direct address, setup/turn structure, imagery
+  let pun = 1.8;
+  pun += clamp(a.youRefs*0.42,0,2.8);
+  pun += clamp((a.similes+a.imAWordYoureA)*0.62,0,2.6);
+  pun += clamp(a.contentCount*0.035,0,1.6);
+  pun += clamp(a.multiRhyme*0.28,0,1.0);
+  pun -= clamp(a.filler*0.28,0,1.3);
+  pun -= clamp(a.dupLines*0.7,0,4);
+  if(a.youRefs===0) pun-=1.6;                        // never addressed opponent
+  if(a.lineCount<4) pun-=2.0;
+
+  return {
+    lyricism: clamp(Math.round(lyr*10)/10,1,10),
+    flow:     clamp(Math.round(flo*10)/10,1,10),
+    punch:    clamp(Math.round(pun*10)/10,1,10)
+  };
+}
+
+/* opponent scores: derived from their own text, nudged by difficulty */
+function scoreOpponent(text,diff){
+  const s=scoreRound(analyze(text));
+  const bump={1:-3.4,2:-1.2,3:-1.2}[diff]||0;
+  return {
+    lyricism:clamp(Math.round((s.lyricism+bump)*10)/10,1,10),
+    flow:clamp(Math.round((s.flow+bump*0.8)*10)/10,1,10),
+    punch:clamp(Math.round((s.punch+bump*0.9)*10)/10,1,10)
+  };
+}
+
+/* ---------------- judge commentary ---------------- */
+function bestLine(a,text){
+  const L=a.lines; if(!L.length) return "";
+  let best=L[0],bs=-1;
+  L.forEach(l=>{
+    const w=words(l);
+    const s=w.length*0.5 + (l.match(/\b(like|as)\s+(a|an|the)\b/i)?4:0) + new Set(w.map(rhymeKey)).size*0.3;
+    if(s>bs){bs=s;best=l;}
+  });
+  return best;
+}
+function worstLine(a){
+  const L=a.lines; if(!L.length) return "";
+  let worst=L[0],ws=1e9;
+  L.forEach(l=>{
+    const w=words(l);
+    const s=w.length + (w.filter(x=>!STOP.has(x)).length)*1.5 - (l.match(/\b(yo|uh|like)\b/i)?3:0);
+    if(s<ws){ws=s;worst=l;}
+  });
+  return worst;
+}
+
+function purist(a,s,opName){
+  const out=[];
+  if(a.lineCount===0) return ["You submitted air. I judge text. There was none."];
+  out.push(a.multiRhyme>=3
+    ? `You stacked ${a.multiRhyme} multisyllabic landings. That is craft, not accident — I heard the scheme hold across the couplet.`
+    : a.multiRhyme>0
+      ? `${a.multiRhyme} multi${a.multiRhyme>1?"s":""}. A gesture toward a scheme, not a scheme. You rhymed the last syllable and called it architecture.`
+      : `Not one multisyllabic rhyme. Every landing was a single beat on a single vowel. That is a nursery structure with adult vocabulary on top.`);
+  out.push(a.internal>=4
+    ? `Internal rhyme count sits at ${a.internal} — the bars are woven, not just capped.`
+    : `Internal rhyme was nearly absent (${a.internal}). Everything waited for the end of the line. The middle of your bars is dead space.`);
+  if(a.selfRhyme>0) out.push(`You rhymed a word with itself ${a.selfRhyme} time${a.selfRhyme>1?"s":""}. That is not a rhyme. That is a repeat with confidence.`);
+  out.push(a.similes+a.imAWordYoureA>=3
+    ? `The figurative work was present — ${a.similes+a.imAWordYoureA} constructed comparisons. Some landed; comparison is still the cheapest door into a metaphor, and you used it often.`
+    : `Almost no metaphor. You told me things about ${opName}. You never made me see one.`);
+  out.push(`Diction density: ${(a.unique*100).toFixed(0)}% of your content words were unrepeated. ${a.unique>0.72?"Wide vocabulary, well spent.":a.unique>0.6?"Serviceable. You leaned on a small word pool.":"Narrow. You circled the same six ideas in different clothes."}`);
+  return out;
+}
+function crowd(a,s){
+  const out=[];
+  if(a.lineCount===0) return ["Dead air. The room emptied. Next."];
+  out.push(a.sylDev<2.2
+    ? `Cadence was locked — syllable variance of ${a.sylDev.toFixed(1)} across ${a.lineCount} bars. You could ride any beat in this room with that.`
+    : a.sylDev<4
+      ? `Variance of ${a.sylDev.toFixed(1)}. Mostly on time, but a few bars ran long and you had to swallow words to fit them back in.`
+      : `Syllable variance of ${a.sylDev.toFixed(1)} — that is not a pocket, that is a pothole. Some bars were ${Math.min(...a.syl)} syllables, some were ${Math.max(...a.syl)}. The crowd cannot nod to that.`);
+  out.push(`Average bar length: ${a.avgSyl.toFixed(1)} syllables. ${a.avgSyl<7?"Too short — you kept ending before the bar finished. Sounds nervous.":a.avgSyl>17?"Too long — you are writing paragraphs and hoping they breathe. They do not.":"Right in the battle pocket."}`);
+  out.push(a.youRefs>=5
+    ? `You addressed your opponent ${a.youRefs} times. The room felt attacked on your behalf. That is what this is.`
+    : a.youRefs>0
+      ? `Only ${a.youRefs} direct hit${a.youRefs>1?"s":""} at the man in front of you. The rest was about yourself. Nobody paid to hear your résumé.`
+      : `You never once addressed him. This was a poem performed near a battle.`);
+  if(a.filler>2) out.push(`I counted ${a.filler} filler syllables — "yo", "uh", "like". Every one of those is a beat you gave away for free.`);
+  return out;
+}
+function sid(a,s,text,opName){
+  const out=[];
+  if(a.lineCount===0) return ["Nothing. You typed nothing and expected a verdict. Here it is: no."];
+  if(a.lineCount<8) out.push(`${a.lineCount} bars. The format said eight to sixteen. You didn't lose on quality first — you lost on showing up short.`);
+  const w=worstLine(a);
+  if(w) out.push({q:w, t:`That right there. Read it back out loud. ${a.filler>0?"You put filler in a written line — nobody was rushing you.":"It's a line that exists because the next one needed a runway."} Cut it and the verse gets better immediately.`});
+  const b=bestLine(a);
+  if(b) out.push({q:b, t:`That one I'll give you. ${s.punch>6?"It had a setup and it had a turn, which is more than most people manage down here.":"It's the best thing in the verse, which tells you more about the verse than the line."}`});
+  if(a.selfRhyme>0) out.push(`Rhyming a word with itself is the oldest tell in the building. I heard it ${a.selfRhyme} time${a.selfRhyme>1?"s":""} and so did everybody behind me.`);
+  if(a.similes+a.imAWordYoureA===0) out.push(`Zero comparisons. No "you're a", no "like a". You had ${a.lineCount} chances to make ${opName} into an image and you described him literally every time. Literal is not a punchline.`);
+  const avgS=(s.lyricism+s.flow+s.punch)/3;
+  out.push(avgS>7.5?`I'm not going to pretend. That was good. I hate that it was good.`
+    :avgS>5.5?`It was competent. Competent doesn't get quoted on the way out of the building.`
+    :`It was survivable. Barely. You didn't embarrass yourself and that is the entire compliment.`);
+  return out;
+}
+
+/* ---------------- game state ---------------- */
+const state={ op:null, first:null, round:0, userVerses:[], userScores:[], opScores:[] };
+const stage=document.getElementById("stage");
+
+function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+function el(html){const d=document.createElement("div");d.innerHTML=html;return d.firstElementChild;}
+function push(node){stage.appendChild(node);node.scrollIntoView({behavior:"smooth",block:"start"});}
+
+function start(){
+  stage.innerHTML="";
+  state.op=Object.assign({},OPPONENTS[Math.floor(Math.random()*OPPONENTS.length)]);
+  // the Wildcard's difficulty is genuinely rolled each match
+  if(state.op.style==="Wildcard / Joker") state.op.diff=1+Math.floor(Math.random()*3);
+  state.first=Math.random()<0.5?"opponent":"user";
+  state.round=0; state.userVerses=[]; state.userScores=[]; state.opScores=[];
+  push(el(`<div class="card">
+    <div class="tag">The Boiler Room &middot; Sublevel 3</div>
+    <div>Sweat on the pipes. One bulb swinging. Forty heads pressed shoulder to shoulder.
+    The beat cuts. The host points at the circle.</div>
+    <div class="hr"></div>
+    <div class="tag">Tonight's opponent</div>
+    <h2 style="margin:0 0 4px">${state.op.name}</h2>
+    <div style="color:var(--accent)">${state.op.style}</div>
+    <div class="crowd">${state.op.vibe}</div>
+    <div class="hr"></div>
+    <div class="tag">Coin flip</div>
+    <div><strong>${state.first==="opponent"?"TAILS — "+state.op.name+" goes first.":"HEADS — you go first. No warm-up, no example. Set the tone."}</strong></div>
+  </div>`));
+  nextRound();
+}
+
+function nextRound(){
+  state.round++;
+  if(state.round>3) return judge();
+  if(state.first==="opponent"){ dropOpponent(); promptUser(); }
+  else { promptUser(); }
+}
+
+function dropOpponent(){
+  const v=state.op.verses[state.round-1];
+  state.opScores.push(scoreOpponent(v,state.op.diff));
+  push(el(`<div class="card op">
+    <div class="tag">Round ${state.round}/3 &middot; ${state.op.name}</div>
+    <div class="verse op">${esc(v)}</div>
+  </div>`));
+}
+
+function promptUser(){
+  const box=el(`<div class="card you">
+    <div class="tag">🎤 Your turn &mdash; Round ${state.round}/3</div>
+    <div style="margin-bottom:10px">Write your own bars. 8&ndash;16 lines, one bar per line. Nobody is writing them for you.</div>
+    <textarea id="ta" placeholder="Type your verse here. One bar per line."></textarea>
+    <div class="bar">
+      <button id="send">SPIT IT</button>
+      <span class="count" id="cnt">0 bars</span>
+    </div>
+  </div>`);
+  push(box);
+  const ta=box.querySelector("#ta"), cnt=box.querySelector("#cnt"), btn=box.querySelector("#send");
+  const upd=()=>{
+    const n=lines(ta.value).length;
+    cnt.textContent=`${n} bar${n===1?"":"s"}` + (n<8?" — format says 8–16":n>16?" — over 16, judges will notice":" ✓");
+    cnt.className="count"+((n<8||n>16)?" warn":"");
+    btn.disabled=n<1;
+  };
+  ta.addEventListener("input",upd); upd(); ta.focus();
+  btn.addEventListener("click",()=>{
+    const text=ta.value.trim();
+    if(!text) return;
+    state.userVerses.push(text);
+    const a=analyze(text);
+    state.userScores.push(scoreRound(a));
+    box.innerHTML=`<div class="tag">Round ${state.round}/3 &middot; YOU</div><div class="verse">${esc(text)}</div>
+      <div class="crowd">${reaction(state.userScores[state.userScores.length-1])}</div>`;
+    if(state.first==="user" && state.round<=3) dropOpponent();
+    setTimeout(nextRound,120);
+  });
+}
+
+function reaction(s){
+  const avg=(s.lyricism+s.flow+s.punch)/3;
+  if(avg>8) return "The room detonates. Somebody's hat is on the floor. Three people are holding their heads.";
+  if(avg>6.5) return "Solid reaction — a wave of \"ohhh\" rolls through the back of the room.";
+  if(avg>5) return "Scattered nods. A couple of people react. The rest are waiting to see round two.";
+  if(avg>3.5) return "Polite. Somebody in the front says \"okay\" without much behind it.";
+  return "Silence. Someone coughs. The host looks at his shoes.";
+}
+
+function judge(){
+  const sum=arr=>arr.reduce((a,s)=>({lyricism:a.lyricism+s.lyricism,flow:a.flow+s.flow,punch:a.punch+s.punch}),{lyricism:0,flow:0,punch:0});
+  const U=sum(state.userScores), O=sum(state.opScores);
+  const ut=U.lyricism+U.flow+U.punch, ot=O.lyricism+O.flow+O.punch;
+  const allText=state.userVerses.join("\n");
+  const A=analyze(allText), S={lyricism:U.lyricism/3,flow:U.flow/3,punch:U.punch/3};
+
+  let rows="";
+  for(let i=0;i<3;i++){
+    const u=state.userScores[i]||{lyricism:0,flow:0,punch:0}, o=state.opScores[i]||{lyricism:0,flow:0,punch:0};
+    rows+=`<tr><td>Round ${i+1}</td>
+      <td class="n">${u.lyricism.toFixed(1)}</td><td class="n">${u.flow.toFixed(1)}</td><td class="n">${u.punch.toFixed(1)}</td>
+      <td class="n"><strong>${(u.lyricism+u.flow+u.punch).toFixed(1)}</strong></td>
+      <td class="n">${o.lyricism.toFixed(1)}</td><td class="n">${o.flow.toFixed(1)}</td><td class="n">${o.punch.toFixed(1)}</td>
+      <td class="n"><strong>${(o.lyricism+o.flow+o.punch).toFixed(1)}</strong></td></tr>`;
+  }
+
+  const fmt=items=>items.map(x=>typeof x==="string"
+    ? `<div class="crit">${esc(x)}</div>`
+    : `<div class="quote">${esc(x.q)}</div><div class="crit">${esc(x.t)}</div>`).join("");
+
+  const opA=analyze(state.op.verses.join("\n"));
+  const opBest=bestLine(opA);
+
+  const diff=ut-ot;
+  const verdict = Math.abs(diff)<0.9
+    ? `<div class="win d">DRAW — ${ut.toFixed(1)} to ${ot.toFixed(1)}</div><div>Nobody hands out a belt for this. Run it back.</div>`
+    : diff>0
+      ? `<div class="win u">WINNER: YOU — ${ut.toFixed(1)} to ${ot.toFixed(1)}</div><div>You took ${state.op.name} in his own basement. The host is already asking who you came with.</div>`
+      : `<div class="win o">WINNER: ${state.op.name} — ${ot.toFixed(1)} to ${ut.toFixed(1)}</div><div>You lost by ${Math.abs(diff).toFixed(1)} points. That's not a blowout — that's a gap you can close with a pen.</div>`;
+
+  push(el(`<div class="card">
+    <div class="tag">Final Judgment</div>
+    <div class="crowd">The host waves the crowd down. Three figures step out of the dark by the stairwell.</div>
+
+    <div class="judge">
+      <h3>THE PURIST</h3>
+      <div class="who">Wordplay &middot; internal schemes &middot; metaphor complexity</div>
+      ${fmt(purist(A,S,state.op.name))}
+      <div class="crit" style="color:var(--dim)">On ${esc(state.op.name)}: he ran ${opA.multiRhyme} multis and ${opA.internal} internal rhymes across three rounds. Whatever else he is, he was structurally sound.</div>
+    </div>
+
+    <div class="judge">
+      <h3>THE CROWD CONTROLLER</h3>
+      <div class="who">Cadence &middot; delivery &middot; insult effectiveness &middot; rhythm</div>
+      ${fmt(crowd(A,S))}
+      <div class="crit" style="color:var(--dim)">On ${esc(state.op.name)}: variance ${opA.sylDev.toFixed(1)}, ${opA.youRefs} direct shots at you. He never stopped talking to you. Learn that.</div>
+    </div>
+
+    <div class="judge">
+      <h3>SAVAGE SID</h3>
+      <div class="who">Harsh feedback &middot; corny bars &middot; exposed weaknesses</div>
+      ${fmt(sid(A,S,allText,state.op.name))}
+      <div class="quote">${esc(opBest)}</div>
+      <div class="crit">That was his best bar of the night. Ask yourself honestly whether you wrote anything that beats it.</div>
+    </div>
+
+    <div class="hr"></div>
+    <div class="tag">Score matrix</div>
+    <table>
+      <tr><th></th><th>You Lyr</th><th>You Flow</th><th>You Punch</th><th>You Tot</th>
+          <th>Opp Lyr</th><th>Opp Flow</th><th>Opp Punch</th><th>Opp Tot</th></tr>
+      ${rows}
+      <tr><th>TOTAL</th>
+        <td class="n">${U.lyricism.toFixed(1)}</td><td class="n">${U.flow.toFixed(1)}</td><td class="n">${U.punch.toFixed(1)}</td>
+        <td class="n"><strong>${ut.toFixed(1)}</strong></td>
+        <td class="n">${O.lyricism.toFixed(1)}</td><td class="n">${O.flow.toFixed(1)}</td><td class="n">${O.punch.toFixed(1)}</td>
+        <td class="n"><strong>${ot.toFixed(1)}</strong></td></tr>
+    </table>
+
+    ${verdict}
+    <div class="bar" style="margin-top:18px"><button id="again">NEW BATTLE</button></div>
+  </div>`));
+  document.getElementById("again").addEventListener("click",start);
+}
+
+start();
+</script>
+</body>
+</html>

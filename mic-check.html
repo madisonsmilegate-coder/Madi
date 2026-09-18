@@ -64,6 +64,36 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
 .hr{height:1px;background:var(--line);margin:26px 0}
 .crowd{color:var(--dim);font-size:13px;font-style:italic;margin:10px 0}
 .hidden{display:none}
+.verse{white-space:normal}
+.bar-line{
+  opacity:0;transform:translateY(7px);
+  transition:opacity .34s ease,transform .34s ease;
+  margin:2px 0;white-space:pre-wrap;
+}
+.bar-line.in{opacity:1;transform:none}
+.pop{
+  font-size:13px;letter-spacing:.5px;margin:7px 0 9px;
+  animation:pop .3s ease both;
+}
+@keyframes pop{from{opacity:0;transform:scale(.96) translateY(4px)}to{opacity:1;transform:none}}
+.pop.huge{color:var(--accent2);font-weight:700;font-size:15px;letter-spacing:1px}
+.pop.good{color:var(--accent);font-weight:600}
+.pop.mild{color:var(--dim);font-style:italic}
+.pop.dead{color:var(--dim);font-style:italic;opacity:.75}
+.pop.adlib{color:var(--dim);font-style:italic;opacity:.8}
+.meter{
+  position:sticky;top:0;z-index:5;background:var(--bg);
+  padding:10px 0 12px;margin:6px 0;
+}
+.meter .mrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.meter .track{height:7px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.meter .track>div{height:100%;background:var(--accent);border-radius:99px;transition:width .5s ease,background .5s ease}
+.judge{opacity:0;transform:translateY(8px);transition:opacity .45s ease,transform .45s ease}
+.judge.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  .bar-line,.judge{transition:none}
+  .pop{animation:none}
+}
 </style>
 </head>
 <body>
@@ -530,20 +560,107 @@ function sid(a,s,text,opName){
 }
 
 /* ---------------- game state ---------------- */
-const state={ op:null, first:null, round:0, userVerses:[], userScores:[], opScores:[] };
+/* ---------------- crowd ---------------- */
+const CROWD={
+  huge:["OHHHHHH!!","THE ROOM IS GONE. Hats on the floor.","Somebody just fell into the wall.","AYYYY! Rewind that! REWIND THAT!","Three people are holding their heads.","The whole back row stood up.","Somebody threw a cup. Not in anger. In joy.","A man is pointing at the ceiling and screaming."],
+  good:["Ohhh!","A wave of \"ohhh\" rolls through the back.","Heads nodding. That landed.","Somebody goes \"okay, okay!\"","A few people react. That one had weight.","The circle tightens up a little."],
+  mild:["Scattered nods.","A couple people react.","Somebody says \"aight\" without much behind it.","Polite. The room is still waiting.","Mild murmur."],
+  dead:["Silence.","Someone coughs.","Nobody moves.","A phone screen lights up in the back. Somebody's checking the time.","The host looks at his shoes.","You can hear the box fan."],
+  ambient:["Somebody in the back yells \"TAKE YOUR TIME!\"","The box fan rattles.","A bottle rolls across the floor.","Somebody's filming on a cracked phone.","The circle shifts, waiting.","Someone whispers \"he cooked him last week too.\"","A guy near the stairs keeps saying \"ooh\" at nothing.","The pipes knock twice.","Somebody yells \"WE WAITING!\""],
+  adlib:["*grins*","*steps closer*","*points at you*","*shakes his head, smiling*","*turns to the crowd*","*taps his temple*","*paces the circle*","*opens his arms*"]
+};
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+
+/* How hard a single bar hits: rhyme link to the bar before it, length, and
+   whether it actually swings at somebody. Drives the live crowd. */
+function lineHeat(line, prev){
+  const w=words(line); if(!w.length) return 0;
+  let h=0.18;
+  if(prev){
+    const d=rhymeDepth(lineTail(prev),lineTail(line));
+    h += d>=3?0.42 : d===2?0.30 : d===1?0.15 : 0;
+  }
+  const syl=w.reduce((a,x)=>a+syllables(x),0);
+  if(syl>=8&&syl<=18) h+=0.12;
+  if(/\b(like|as)\s+(a|an|the|my|your)\b/i.test(line)) h+=0.14;
+  if(/\b(you|your|you're)\b/i.test(line)) h+=0.12;
+  const content=w.filter(x=>!STOP.has(x));
+  h += clamp(content.length*0.016,0,0.16);
+  if(/\b(yo|uh|umm?)\b/i.test(line)) h-=0.12;
+  if(w.length<4) h-=0.14;
+  return clamp(h,0,1);
+}
+function heatTier(h){ return h>0.72?"huge":h>0.52?"good":h>0.32?"mild":"dead"; }
+
+/* ---------------- state & pacing ---------------- */
+const state={ op:null, first:null, round:0, userVerses:[], userScores:[], opScores:[], skip:false, heat:50 };
 const stage=document.getElementById("stage");
 
 function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
 function el(html){const d=document.createElement("div");d.innerHTML=html;return d.firstElementChild;}
-function push(node){stage.appendChild(node);node.scrollIntoView({behavior:"smooth",block:"start"});}
+function push(node){stage.appendChild(node);node.scrollIntoView({behavior:"smooth",block:"end"});return node;}
+const sleep=ms=>new Promise(r=>setTimeout(r,state.skip?0:ms));
+
+/* the heat meter reacts to every bar and decays between them */
+function bumpHeat(delta){
+  state.heat=clamp(state.heat+delta,0,100);
+  const f=document.getElementById("heatfill"), l=document.getElementById("heatlab");
+  if(f){ f.style.width=state.heat+"%";
+    f.style.background = state.heat>75?"var(--accent2)" : state.heat>45?"var(--accent)" : "var(--line)"; }
+  if(l) l.textContent = state.heat>85?"ROOM IS GONE" : state.heat>70?"CROWD IS LOUD"
+      : state.heat>45?"ROOM IS WARM" : state.heat>25?"ROOM IS QUIET" : "CROWD IS DEAD";
+}
+function crowdPop(text,tier){
+  const d=document.createElement("div");
+  d.className="pop "+tier; d.textContent=text;
+  return d;
+}
+
+/* reveal a verse one bar at a time, with the crowd reacting in between */
+async function performVerse(container, text, who){
+  const L=lines(text);
+  const body=container.querySelector(".verse");
+  let prev=null, best={h:-1,line:""};
+  for(let i=0;i<L.length;i++){
+    const line=L[i];
+    const bar=document.createElement("div");
+    bar.className="bar-line"; bar.textContent=line;
+    body.appendChild(bar);
+    requestAnimationFrame(()=>bar.classList.add("in"));
+    if(!state.skip) bar.scrollIntoView({behavior:"smooth",block:"center"});
+
+    const h=lineHeat(line,prev);
+    if(h>best.h) best={h,line};
+    bumpHeat((h-0.45)*16);
+
+    // pause on the bar itself, longer for longer bars
+    await sleep(clamp(430+words(line).length*58,520,1700));
+
+    // the crowd only interrupts when a bar earns it, or when it truly dies
+    const tier=heatTier(h);
+    const speak = tier==="huge" ? 0.95 : tier==="good" ? 0.45 : tier==="dead" ? 0.3 : 0.12;
+    if(Math.random()<speak && i<L.length-1){
+      body.appendChild(crowdPop(pick(CROWD[tier]),tier));
+      await sleep(tier==="huge"?900:520);
+    }
+    // opponent ad-libs mid-verse
+    if(who==="op" && Math.random()<0.13 && i<L.length-1){
+      body.appendChild(crowdPop(pick(CROWD.adlib),"adlib"));
+      await sleep(420);
+    }
+    prev=line;
+  }
+  return best;
+}
 
 function start(){
   stage.innerHTML="";
   state.op=Object.assign({},OPPONENTS[Math.floor(Math.random()*OPPONENTS.length)]);
-  // the Wildcard's difficulty is genuinely rolled each match
   if(state.op.style==="Wildcard / Joker") state.op.diff=1+Math.floor(Math.random()*3);
   state.first=Math.random()<0.5?"opponent":"user";
   state.round=0; state.userVerses=[]; state.userScores=[]; state.opScores=[];
+  state.skip=false; state.heat=50;
+
   push(el(`<div class="card">
     <div class="tag">The Boiler Room &middot; Sublevel 3</div>
     <div>Sweat on the pipes. One bulb swinging. Forty heads pressed shoulder to shoulder.
@@ -555,56 +672,93 @@ function start(){
     <div class="crowd">${state.op.vibe}</div>
     <div class="hr"></div>
     <div class="tag">Coin flip</div>
-    <div><strong>${state.first==="opponent"?"TAILS — "+state.op.name+" goes first.":"HEADS — you go first. No warm-up, no example. Set the tone."}</strong></div>
+    <div><strong>${state.first==="opponent"?"TAILS &mdash; "+state.op.name+" goes first.":"HEADS &mdash; you go first. No warm-up, no example. Set the tone."}</strong></div>
   </div>`));
+
+  // persistent crowd meter
+  push(el(`<div class="meter">
+     <div class="mrow"><span class="tag" style="margin:0">Crowd</span><span class="tag" id="heatlab" style="margin:0">ROOM IS WARM</span></div>
+     <div class="track"><div id="heatfill" style="width:50%"></div></div>
+   </div>`));
+  bumpHeat(0);
   nextRound();
 }
 
-function nextRound(){
+async function nextRound(){
   state.round++;
   if(state.round>3) return judge();
-  if(state.first==="opponent"){ dropOpponent(); promptUser(); }
-  else { promptUser(); }
+  state.skip=false;
+  if(state.first==="opponent"){ await dropOpponent(); promptUser(); }
+  else promptUser();
 }
 
-function dropOpponent(){
+async function dropOpponent(){
   const v=state.op.verses[state.round-1];
   state.opScores.push(scoreOpponent(v,state.op.diff));
-  push(el(`<div class="card op">
+  const card=push(el(`<div class="card op">
     <div class="tag">Round ${state.round}/3 &middot; ${state.op.name}</div>
-    <div class="verse op">${esc(v)}</div>
+    <div class="verse op"></div>
+    <div class="bar"><button class="ghost skip">SKIP AHEAD &raquo;</button></div>
   </div>`));
+  const sk=card.querySelector(".skip");
+  sk.addEventListener("click",()=>{state.skip=true;sk.remove();});
+  await sleep(700);
+  await performVerse(card,v,"op");
+  if(sk.isConnected) sk.remove();
+  const s=state.opScores[state.opScores.length-1];
+  const avg=(s.lyricism+s.flow+s.punch)/3;
+  card.appendChild(el(`<div class="crowd">${avg>7.5?"The room erupts. He lets it ring before he steps back.":avg>6?"Solid reaction. He nods once, unbothered.":"He steps back. The room takes a second to decide how it felt."}</div>`));
+  await sleep(600);
 }
 
 function promptUser(){
-  const box=el(`<div class="card you">
-    <div class="tag">🎤 Your turn &mdash; Round ${state.round}/3</div>
+  const box=push(el(`<div class="card you">
+    <div class="tag">&#127908; Your turn &mdash; Round ${state.round}/3</div>
     <div style="margin-bottom:10px">Write your own bars. 8&ndash;16 lines, one bar per line. Nobody is writing them for you.</div>
     <textarea id="ta" placeholder="Type your verse here. One bar per line."></textarea>
     <div class="bar">
       <button id="send">SPIT IT</button>
       <span class="count" id="cnt">0 bars</span>
     </div>
-  </div>`);
-  push(box);
+  </div>`));
   const ta=box.querySelector("#ta"), cnt=box.querySelector("#cnt"), btn=box.querySelector("#send");
+
+  // the room does not sit in silence while you write
+  const amb=setInterval(()=>{
+    if(!box.isConnected) return clearInterval(amb);
+    const n=crowdPop(pick(CROWD.ambient),"mild");
+    box.insertBefore(n,box.querySelector(".bar"));
+    setTimeout(()=>n.remove(),6500);
+    bumpHeat(-2);
+  },7000);
+
   const upd=()=>{
     const n=lines(ta.value).length;
-    cnt.textContent=`${n} bar${n===1?"":"s"}` + (n<8?" — format says 8–16":n>16?" — over 16, judges will notice":" ✓");
+    cnt.textContent=`${n} bar${n===1?"":"s"}`+(n<8?" — format says 8–16":n>16?" — over 16, judges will notice":" ✓");
     cnt.className="count"+((n<8||n>16)?" warn":"");
     btn.disabled=n<1;
   };
   ta.addEventListener("input",upd); upd(); ta.focus();
-  btn.addEventListener("click",()=>{
-    const text=ta.value.trim();
-    if(!text) return;
+
+  btn.addEventListener("click",async()=>{
+    const text=ta.value.trim(); if(!text) return;
+    clearInterval(amb);
     state.userVerses.push(text);
-    const a=analyze(text);
-    state.userScores.push(scoreRound(a));
-    box.innerHTML=`<div class="tag">Round ${state.round}/3 &middot; YOU</div><div class="verse">${esc(text)}</div>
-      <div class="crowd">${reaction(state.userScores[state.userScores.length-1])}</div>`;
-    if(state.first==="user" && state.round<=3) dropOpponent();
-    setTimeout(nextRound,120);
+    state.userScores.push(scoreRound(analyze(text)));
+    state.skip=false;
+    box.innerHTML=`<div class="tag">Round ${state.round}/3 &middot; YOU</div><div class="verse"></div>
+      <div class="bar"><button class="ghost skip">SKIP AHEAD &raquo;</button></div>`;
+    const sk=box.querySelector(".skip");
+    sk.addEventListener("click",()=>{state.skip=true;sk.remove();});
+    await sleep(500);
+    const best=await performVerse(box,text,"you");
+    if(sk.isConnected) sk.remove();
+    const s=state.userScores[state.userScores.length-1];
+    box.appendChild(el(`<div class="crowd">${reaction(s)}</div>`));
+    if(best.line && best.h>0.6) box.appendChild(el(`<div class="crowd">Your hardest bar that round: &ldquo;${esc(best.line)}&rdquo;</div>`));
+    await sleep(900);
+    if(state.first==="user") await dropOpponent();
+    nextRound();
   });
 }
 
@@ -617,7 +771,7 @@ function reaction(s){
   return "Silence. Someone coughs. The host looks at his shoes.";
 }
 
-function judge(){
+async function judge(){
   const sum=arr=>arr.reduce((a,s)=>({lyricism:a.lyricism+s.lyricism,flow:a.flow+s.flow,punch:a.punch+s.punch}),{lyricism:0,flow:0,punch:0});
   const U=sum(state.userScores), O=sum(state.opScores);
   const ut=U.lyricism+U.flow+U.punch, ot=O.lyricism+O.flow+O.punch;
@@ -648,34 +802,38 @@ function judge(){
       ? `<div class="win u">WINNER: YOU — ${ut.toFixed(1)} to ${ot.toFixed(1)}</div><div>You took ${state.op.name} in his own basement. The host is already asking who you came with.</div>`
       : `<div class="win o">WINNER: ${state.op.name} — ${ot.toFixed(1)} to ${ut.toFixed(1)}</div><div>You lost by ${Math.abs(diff).toFixed(1)} points. That's not a blowout — that's a gap you can close with a pen.</div>`;
 
-  push(el(`<div class="card">
+  const card=push(el(`<div class="card">
     <div class="tag">Final Judgment</div>
     <div class="crowd">The host waves the crowd down. Three figures step out of the dark by the stairwell.</div>
+    <div id="judges"></div>
+    <div id="final"></div>
+  </div>`));
 
-    <div class="judge">
-      <h3>THE PURIST</h3>
+  const panel=card.querySelector("#judges");
+  const blocks=[
+    `<div class="judge"><h3>THE PURIST</h3>
       <div class="who">Wordplay &middot; internal schemes &middot; metaphor complexity</div>
       ${fmt(purist(A,S,state.op.name))}
-      <div class="crit" style="color:var(--dim)">On ${esc(state.op.name)}: he ran ${opA.multiRhyme} multis and ${opA.internal} internal rhymes across three rounds. Whatever else he is, he was structurally sound.</div>
-    </div>
-
-    <div class="judge">
-      <h3>THE CROWD CONTROLLER</h3>
+      <div class="crit" style="color:var(--dim)">On ${esc(state.op.name)}: he ran ${opA.multiRhyme.toFixed(1)} multis and ${opA.internal.toFixed(1)} internal rhymes per twelve bars. Whatever else he is, he was structurally sound.</div></div>`,
+    `<div class="judge"><h3>THE CROWD CONTROLLER</h3>
       <div class="who">Cadence &middot; delivery &middot; insult effectiveness &middot; rhythm</div>
       ${fmt(crowd(A,S))}
-      <div class="crit" style="color:var(--dim)">On ${esc(state.op.name)}: variance ${opA.sylDev.toFixed(1)}, ${opA.youRefs} direct shots at you. He never stopped talking to you. Learn that.</div>
-    </div>
-
-    <div class="judge">
-      <h3>SAVAGE SID</h3>
+      <div class="crit" style="color:var(--dim)">On ${esc(state.op.name)}: variance ${opA.sylDev.toFixed(1)}, and he never stopped talking directly to you. Learn that.</div></div>`,
+    `<div class="judge"><h3>SAVAGE SID</h3>
       <div class="who">Harsh feedback &middot; corny bars &middot; exposed weaknesses</div>
       ${fmt(sid(A,S,allText,state.op.name))}
       <div class="quote">${esc(opBest)}</div>
-      <div class="crit">That was his best bar of the night. Ask yourself honestly whether you wrote anything that beats it.</div>
-    </div>
+      <div class="crit">That was his best bar of the night. Ask yourself honestly whether you wrote anything that beats it.</div></div>`
+  ];
+  for(const b of blocks){
+    const n=el(b); panel.appendChild(n);
+    requestAnimationFrame(()=>n.classList.add("in"));
+    n.scrollIntoView({behavior:"smooth",block:"center"});
+    await sleep(2200);
+  }
 
-    <div class="hr"></div>
-    <div class="tag">Score matrix</div>
+  const fin=card.querySelector("#final");
+  fin.innerHTML=`<div class="hr"></div><div class="tag">Score matrix</div>
     <table>
       <tr><th></th><th>You Lyr</th><th>You Flow</th><th>You Punch</th><th>You Tot</th>
           <th>Opp Lyr</th><th>Opp Flow</th><th>Opp Punch</th><th>Opp Tot</th></tr>
@@ -685,11 +843,15 @@ function judge(){
         <td class="n"><strong>${ut.toFixed(1)}</strong></td>
         <td class="n">${O.lyricism.toFixed(1)}</td><td class="n">${O.flow.toFixed(1)}</td><td class="n">${O.punch.toFixed(1)}</td>
         <td class="n"><strong>${ot.toFixed(1)}</strong></td></tr>
-    </table>
-
-    ${verdict}
-    <div class="bar" style="margin-top:18px"><button id="again">NEW BATTLE</button></div>
-  </div>`));
+    </table>`;
+  fin.scrollIntoView({behavior:"smooth",block:"center"});
+  await sleep(1800);
+  fin.appendChild(el(`<div class="crowd">The judges lean in to each other. The room goes quiet.</div>`));
+  await sleep(1600);
+  bumpHeat(diff>0?40:-20);
+  fin.appendChild(el(`<div>${verdict}</div>`));
+  fin.appendChild(el(`<div class="bar" style="margin-top:18px"><button id="again">NEW BATTLE</button></div>`));
+  fin.scrollIntoView({behavior:"smooth",block:"center"});
   document.getElementById("again").addEventListener("click",start);
 }
 

@@ -88,6 +88,64 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
 .meter .mrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .meter .track{height:7px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;overflow:hidden}
 .meter .track>div{height:100%;background:var(--accent);border-radius:99px;transition:width .5s ease,background .5s ease}
+/* ---- avatars & identity ---- */
+.avatar{
+  width:54px;height:54px;border-radius:12px;flex:0 0 auto;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:19px;letter-spacing:.5px;
+  color:hsl(var(--h) 70% 12%);
+  background:linear-gradient(140deg,hsl(var(--h) 72% 62%),hsl(var(--h) 62% 44%));
+}
+.avatar.sm{width:24px;height:24px;border-radius:6px;font-size:10px;margin-right:8px;vertical-align:-7px}
+.phead{display:flex;gap:14px;align-items:center;margin-bottom:16px}
+.prof .statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:10px}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+.stat b{display:block;font-size:20px;line-height:1.2}
+.stat span{font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:1px;
+  padding:3px 8px;border-radius:99px;background:var(--panel2);border:1px solid var(--line)}
+.chip.w{color:var(--good);border-color:color-mix(in srgb,var(--good) 45%,transparent)}
+.chip.l{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 45%,transparent)}
+.chip.d{color:var(--dim)}
+.flink{color:var(--ink);border-bottom:1px dotted var(--line);cursor:pointer}
+.flink:hover{color:var(--accent);border-bottom-color:var(--accent)}
+table.hist td.r{width:40px;color:var(--dim);font-variant-numeric:tabular-nums}
+.rk tr[data-f]{cursor:pointer}
+.rk tr[data-f]:hover td{background:var(--panel2)}
+
+/* ---- battle tv ---- */
+.thumb{position:relative;display:flex;align-items:stretch;height:118px;border-radius:10px;overflow:hidden;
+  background:var(--panel2);border:1px solid var(--line)}
+.thumb .tside{flex:1;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(150deg,hsl(var(--h) 60% 34%),hsl(var(--h) 55% 20%))}
+.thumb .tside span{font-size:30px;font-weight:800;color:#fff;opacity:.92;letter-spacing:1px}
+.thumb .tvs{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  background:var(--bg);color:var(--ink);font-weight:800;font-size:12px;letter-spacing:1px;
+  padding:5px 9px;border-radius:99px;border:1px solid var(--line)}
+.thumb .tbadge{position:absolute;left:8px;top:8px;background:var(--accent);color:#14140c;
+  font-size:9.5px;font-weight:800;letter-spacing:1.2px;padding:3px 7px;border-radius:4px}
+.thumb .tdur{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.78);color:#fff;
+  font-size:11px;padding:2px 6px;border-radius:4px;font-variant-numeric:tabular-nums}
+.vod{cursor:pointer;margin:12px 0}
+.vod:hover .vtitle{color:var(--accent)}
+.vod.feat .thumb{height:190px}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:16px}
+.vgrid .thumb{height:104px}
+.vmeta{padding-top:9px}
+.vtitle{font-weight:700;font-size:15.5px;line-height:1.35}
+.vtitle.sm{font-size:13.5px}
+.vsub{color:var(--dim);font-size:12px;margin-top:3px}
+.player .thumb{height:230px}
+.vturn{margin:10px 0;padding:11px 13px;border-radius:8px;background:var(--panel2)}
+.vturn.op{border-left:3px solid var(--accent2)}
+.vturn.you{border-left:3px solid var(--accent)}
+.vturn b{font-size:12px;letter-spacing:1px;color:var(--dim)}
+.vturn .verse{white-space:pre-wrap;margin-top:6px;font-size:14px}
+.cmt{border-top:1px solid var(--line);padding:10px 0}
+.cmt b{font-size:12.5px;color:var(--accent)}
+.searchbox{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line);
+  border-radius:8px;padding:10px 12px;font-family:inherit;font-size:14px;margin-bottom:10px}
 .tabs{display:flex;gap:6px;margin:0 0 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .tab{background:none;color:var(--dim);border:0;border-bottom:2px solid transparent;border-radius:0;
   padding:9px 13px;font-size:12px;letter-spacing:1.5px;font-weight:700}
@@ -145,10 +203,12 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
   <nav class="tabs" role="tablist">
     <button class="tab on" data-p="stage">BATTLE</button>
     <button class="tab" data-p="feed">BARZ <span class="dot" id="feeddot"></span></button>
+    <button class="tab" data-p="tv">TV <span class="dot" id="tvdot"></span></button>
     <button class="tab" data-p="ranks">RANKINGS</button>
   </nav>
   <div id="stage" class="panel on"></div>
   <div id="feed" class="panel"></div>
+  <div id="tv" class="panel"></div>
   <div id="ranks" class="panel"></div>
 </div>
 
@@ -646,6 +706,7 @@ function heatTier(h){ return h>0.72?"huge":h>0.52?"good":h>0.32?"mild":"dead"; }
    (private windows, blocked site data), so every access is guarded and the
    game runs identically without it. */
 const REC_KEY="miccheck.save.v2";
+const HIST_CAP=40;          // bouts kept per fighter (declared before buildLeague runs)
 
 /* ---------------- the league ---------------- */
 /* A ladder of exactly 65: you, the four you can face, and 60 who battle each
@@ -674,17 +735,33 @@ function buildLeague(){
     const bouts=8+Math.floor(rnd()*26);
     const wr=clamp(0.18+(pow/10)*0.62+(rnd()-0.5)*0.14,0.08,0.93);
     const w=Math.round(bouts*wr), d=rnd()<0.25?1:0;
-    return {name:n,w,l:Math.max(0,bouts-w-d),d,pow:Math.round(pow*10)/10,npc:true};
+    return {name:n,w,l:Math.max(0,bouts-w-d),d,pow:Math.round(pow*10)/10,npc:true,hist:[]};
   });
   // the four you can actually face join the same ladder
-  OPPONENTS.forEach(o=>list.push({name:o.name,...o.rec,pow:[0,4.5,7,8.8][o.diff]||6,npc:false}));
+  OPPONENTS.forEach(o=>list.push({name:o.name,...o.rec,pow:[0,4.5,7,8.8][o.diff]||6,npc:false,hist:[]}));
+
+  /* Back-fill a career so a profile opened on day one is not blank. The
+     generated bouts add up to exactly the record the fighter already carries,
+     against real names from this same league, dated backwards in time. */
+  const roster=list.map(f=>f.name);
+  list.forEach(f=>{
+    const seq=[...Array(f.w).fill("w"),...Array(f.l).fill("l"),...Array(f.d).fill("d")];
+    for(let i=seq.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [seq[i],seq[j]]=[seq[j],seq[i]]; }
+    let t=Date.now();
+    f.hist=seq.slice(0,HIST_CAP).map(res=>{
+      t-= (1+Math.floor(rnd()*6))*86400000;          // a few days between bouts
+      let vs=roster[Math.floor(rnd()*roster.length)];
+      if(vs===f.name) vs=roster[(roster.indexOf(vs)+1)%roster.length];
+      return {res, vs, ts:t, ev:"card"};
+    });
+  });
   return list;
 }
 
 const SEED=()=>({
-  user:{name:"YOU",w:0,l:0,d:0,streak:0,best:0,form:[]},
+  user:{name:"YOU",w:0,l:0,d:0,streak:0,best:0,form:[],hist:[]},
   ops:Object.fromEntries(OPPONENTS.map(o=>[o.name,{...o.rec}])),
-  league:buildLeague(), feed:[], clips:0, named:false
+  league:buildLeague(), feed:[], vods:[], clips:0, named:false
 });
 function loadRecords(){
   try{
@@ -694,6 +771,7 @@ function loadRecords(){
     if(!p||typeof p!=="object") return base;
     base.user={...base.user,...(p.user||{})};
     if(!Array.isArray(base.user.form)) base.user.form=[];
+    if(!Array.isArray(base.user.hist)) base.user.hist=[];
     for(const n in base.ops) if(p.ops&&p.ops[n]) base.ops[n]={...base.ops[n],...p.ops[n]};
     // a save from an earlier league size is rebuilt, keeping the records it held
     if(Array.isArray(p.league)&&p.league.length===base.league.length) base.league=p.league;
@@ -702,6 +780,7 @@ function loadRecords(){
       base.league.forEach(f=>{ const o=old[f.name]; if(o){f.w=o.w;f.l=o.l;f.d=o.d;} });
     }
     if(Array.isArray(p.feed)) base.feed=p.feed.slice(0,150);
+    if(Array.isArray(p.vods)) base.vods=p.vods.slice(0,60);
     base.clips=p.clips||0; base.named=!!p.named;
     return base;
   }catch(e){ return SEED(); }
@@ -785,9 +864,20 @@ function fighterRow(name){ return RECORDS.league.find(f=>f.name===name); }
 
 /* the four faceable opponents keep a second copy of their record for the
    battle screens, so any change has to land on both */
-function creditResult(f,key){
+function logBout(holder,res,vs,ev){
+  if(!Array.isArray(holder.hist)) holder.hist=[];
+  holder.hist.unshift({res,vs,ts:nowStamp(),ev:ev||"card"});
+  holder.hist=holder.hist.slice(0,HIST_CAP);
+}
+function creditResult(f,key,vs,ev){
   f[key]++;
   if(!f.npc && RECORDS.ops[f.name]) RECORDS.ops[f.name][key]++;
+  if(vs) logBout(f,key,vs,ev);
+}
+function creditUser(res,vs,ev){
+  RECORDS.user[res]++;
+  RECORDS.user.streak = res==="w" ? (RECORDS.user.streak||0)+1 : 0;
+  logBout(RECORDS.user,res,vs,ev);
 }
 
 function simLeagueNight(){
@@ -803,12 +893,12 @@ function simLeagueNight(){
     const pa=a.pow/(a.pow+b.pow);
     const r=Math.random();
     if(r<0.06){
-      creditResult(a,"d"); creditResult(b,"d");
+      creditResult(a,"d",b.name); creditResult(b,"d",a.name);
       results.push({draw:true,a,b});
     } else {
       const aWins = r < 0.06+0.94*pa;
       const win=aWins?a:b, lose=aWins?b:a;
-      creditResult(win,"w"); creditResult(lose,"l");
+      creditResult(win,"w",lose.name); creditResult(lose,"l",win.name);
       // an upset is the weaker fighter taking it
       results.push({draw:false,win,lose,upset:win.pow < lose.pow-1.6});
     }
@@ -824,11 +914,197 @@ function simLeagueNight(){
   results.filter(r=>r.draw).slice(0,1).forEach(r=>post({kind:"result",who:pick(PRESS),
     text:`DRAW — ${r.a.name} and ${r.b.name} go the distance. Panel split. Crowd not happy.`}));
 
+  feature.slice(0,3).forEach(r=>uploadVOD({a:r.win.name,b:r.lose.name,win:r.win.name,
+    main:false, close:r.upset, note:r.upset?"Upset on the undercard.":""}));
   post({kind:"press",who:"@SublevelStats",
     text:`TONIGHT'S CARD (${results.length} battles) — `+results.map(r=>r.draw
       ? `${r.a.name} drew ${r.b.name}`
       : `${r.win.name} def. ${r.lose.name}`).join(" · ")});
   return results;
+}
+
+/* ---------------- fighter profiles ---------------- */
+function profileOf(name){
+  if(name===RECORDS.user.name) return {...RECORDS.user, you:true, pow:null};
+  return fighterRow(name);
+}
+// head to head between you and them, read off your own bout log
+function headToHead(name){
+  const h=(RECORDS.user.hist||[]).filter(b=>b.vs===name);
+  return {w:h.filter(b=>b.res==="w").length, l:h.filter(b=>b.res==="l").length,
+          d:h.filter(b=>b.res==="d").length, n:h.length};
+}
+const formChips=hist=>(hist||[]).slice(0,6).map(b=>
+  `<span class="chip ${b.res}">${b.res.toUpperCase()}</span>`).join("")||`<span class="vsub">no bouts logged yet</span>`;
+
+function openProfile(name){
+  const f=profileOf(name); if(!f) return;
+  const rows=ladder(), me=rows.find(r=>r.name===name||(r.you&&name===RECORDS.user.name));
+  const h2h=f.you?null:headToHead(name);
+  const champ=rows[0] && (rows[0].name===name || (rows[0].you&&f.you));
+  const hist=f.hist||[];
+  const streak=(()=>{ if(!hist.length) return null;
+    const r=hist[0].res; let n=0; for(const b of hist){ if(b.res===r) n++; else break; }
+    return {res:r,n}; })();
+
+  const panel=document.getElementById("ranks");
+  panel.dataset.prev="1";
+  panel.innerHTML=`
+    <button class="ghost" id="pback">&laquo; BACK TO RANKINGS</button>
+    <div class="card prof">
+      <div class="phead">
+        <div class="avatar" style="--h:${hueOf(name)}">${esc(initials(name))}</div>
+        <div style="min-width:0">
+          <h2 style="margin:0 0 3px;font-size:22px">${esc(name)}${f.you?` <span class="vsub">(you)</span>`:""}</h2>
+          <div class="vsub">Rank #${me?me.rank:"?"} of ${rows.length}${champ?` &middot; <b style="color:var(--accent)">CHAMPION</b>`:""}</div>
+        </div>
+      </div>
+      <div class="statgrid">
+        <div class="stat"><b>${recStr(f)}</b><span>Record</span></div>
+        <div class="stat"><b>${(skillOf(f)*100).toFixed(0)}</b><span>Skill</span></div>
+        <div class="stat"><b>${bouts(f)?(winPct(f)*100).toFixed(0)+"%":"&mdash;"}</b><span>Win rate</span></div>
+        <div class="stat"><b>${streak?streak.n+streak.res.toUpperCase():"&mdash;"}</b><span>Current run</span></div>
+      </div>
+      <div class="tag" style="margin-top:14px">Recent form</div>
+      <div class="chips">${formChips(hist)}</div>
+      ${h2h&&h2h.n?`<div class="tag" style="margin-top:14px">Head to head with you</div>
+        <div class="rec"><span>You lead <b>${h2h.w}-${h2h.l}${h2h.d?"-"+h2h.d:""}</b> over ${h2h.n} battle${h2h.n===1?"":"s"}</span></div>`:""}
+    </div>
+    <div class="card">
+      <div class="tag">Bout history &mdash; newest first</div>
+      ${hist.length?`<table class="hist">
+        <tr><th>#</th><th>Result</th><th>Opponent</th><th>Card</th><th>When</th></tr>
+        ${hist.map((b,i)=>`<tr>
+          <td class="r">${hist.length-i}</td>
+          <td><span class="chip ${b.res}">${b.res==="w"?"WIN":b.res==="l"?"LOSS":"DRAW"}</span></td>
+          <td>${b.vs?`<a class="flink" data-f="${esc(b.vs)}">${esc(b.vs)}</a>`:"&mdash;"}</td>
+          <td class="vsub">${b.ev==="main"?"Main event":b.ev==="sim"?"Simulated":"Undercard"}</td>
+          <td class="vsub">${ago(b.ts)} ago</td></tr>`).join("")}
+       </table>`
+      :`<div class="empty">No bouts logged yet. History starts recording from the fighter's next battle.</div>`}
+    </div>`;
+  document.getElementById("pback").addEventListener("click",renderRanks);
+  panel.querySelectorAll(".flink").forEach(a=>a.addEventListener("click",()=>openProfile(a.dataset.f)));
+  panel.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+/* ---------------- BATTLE TV (the VOD channel) ---------------- */
+/* Every battle in the building gets uploaded. Your own battles keep their
+   verses so they can be rewatched bar by bar; background card battles are
+   stored as listings only. */
+const VOD_CAP=60;           // how many uploads the channel keeps
+const VOD_FULL_CAP=8;       // how many of yours keep their full verses
+
+const COMMENTS=[
+  "who else keeps coming back to this","the crowd reaction at 2:14 is insane",
+  "algorithm blessed me tonight","bro really said that with his whole chest",
+  "first","this whole card was stacked","rewatching this in 2027",
+  "the third round changed the whole thing","nah the host was SCARED",
+  "somebody get the panel a lie detector","this is why i love the underground",
+  "quality is potato but the bars is 4K","i was there. it was louder in person.",
+  "replay value crazy","not the bathrobe 😭","chat we found the clip"];
+
+function vodTitle(a,b,main){
+  return `${a} vs ${b}${main?" | MIC CHECK MAIN EVENT":" | MIC CHECK UNDERCARD"}`;
+}
+function uploadVOD(o){
+  const heat=o.main?1:0.22;
+  const views=Math.round((800+Math.random()*9000)*heat*(1+(o.close?1.6:0)) + Math.random()*1500);
+  const v={
+    id:Math.random().toString(36).slice(2,9),
+    a:o.a, b:o.b, win:o.win, main:!!o.main, ts:nowStamp(),
+    views:Math.max(120,views), likes:Math.round(views*(0.04+Math.random()*0.09)),
+    dur:`${8+Math.floor(Math.random()*7)}:${String(Math.floor(Math.random()*60)).padStart(2,"0")}`,
+    note:o.note||"", scoreLine:o.scoreLine||"",
+    comments:Array.from({length:2+Math.floor(Math.random()*3)},()=>({
+      who:pick(FANS), text:pick(COMMENTS), likes:Math.floor(Math.random()*400)})),
+    rounds:o.rounds||null
+  };
+  RECORDS.vods.unshift(v);
+  // only the newest few of yours keep their verses, so saves stay small
+  let kept=0;
+  RECORDS.vods.forEach(x=>{ if(x.rounds){ kept++; if(kept>VOD_FULL_CAP) x.rounds=null; } });
+  RECORDS.vods=RECORDS.vods.slice(0,VOD_CAP);
+  return v;
+}
+const initials=n=>String(n).split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
+// a stable colour per fighter, so the same MC always looks the same
+function hueOf(name){ let h=0; for(const c of String(name)) h=(h*31+c.charCodeAt(0))%360; return h; }
+
+function thumb(v){
+  return `<div class="thumb">
+    <div class="tside" style="--h:${hueOf(v.a)}"><span>${esc(initials(v.a))}</span></div>
+    <div class="tvs">VS</div>
+    <div class="tside" style="--h:${hueOf(v.b)}"><span>${esc(initials(v.b))}</span></div>
+    ${v.main?`<div class="tbadge">MAIN EVENT</div>`:""}
+    <div class="tdur">${v.dur}</div>
+  </div>`;
+}
+
+function renderTV(){
+  const el2=document.getElementById("tv");
+  if(!RECORDS.vods.length){
+    el2.innerHTML=`<div class="empty">No uploads yet. Battle somebody and the channel will have something to post.</div>`;
+    return;
+  }
+  const [feat,...rest]=RECORDS.vods;
+  el2.innerHTML=`
+    <div class="tag">Latest upload</div>
+    <div class="vod feat" data-v="${feat.id}">
+      ${thumb(feat)}
+      <div class="vmeta">
+        <div class="vtitle">${esc(vodTitle(feat.a,feat.b,feat.main))}</div>
+        <div class="vsub">BATTLE TV &middot; ${fmtViews(feat.views)} views &middot; ${ago(feat.ts)} ago</div>
+        ${feat.scoreLine?`<div class="vsub">${esc(feat.scoreLine)}</div>`:""}
+      </div>
+    </div>
+    <div class="hr"></div>
+    <div class="tag">All uploads (${RECORDS.vods.length})</div>
+    <div class="vgrid">
+      ${rest.map(v=>`<div class="vod" data-v="${v.id}">
+        ${thumb(v)}
+        <div class="vmeta">
+          <div class="vtitle sm">${esc(vodTitle(v.a,v.b,v.main))}</div>
+          <div class="vsub">${fmtViews(v.views)} views &middot; ${ago(v.ts)} ago</div>
+        </div></div>`).join("")}
+    </div>`;
+  el2.querySelectorAll(".vod").forEach(n=>n.addEventListener("click",()=>openVOD(n.dataset.v)));
+}
+
+function openVOD(id){
+  const v=RECORDS.vods.find(x=>x.id===id); if(!v) return;
+  v.views+=Math.floor(1+Math.random()*4);          // you watching counts
+  saveRecords(RECORDS);
+  const el2=document.getElementById("tv");
+  el2.innerHTML=`
+    <button class="ghost" id="vback">&laquo; BACK TO CHANNEL</button>
+    <div class="player">${thumb(v)}</div>
+    <h2 style="margin:14px 0 4px;font-size:20px">${esc(vodTitle(v.a,v.b,v.main))}</h2>
+    <div class="vsub">${fmtViews(v.views)} views &middot; ${ago(v.ts)} ago &middot; &#9829; ${fmtViews(v.likes)}</div>
+    <div class="card" style="margin-top:14px">
+      <div class="tag">Description</div>
+      <div>${esc(v.win)} takes it.${v.scoreLine?" "+esc(v.scoreLine):""}${v.note?" "+esc(v.note):""}</div>
+      <div class="rec" style="margin-top:8px">
+        <span>${esc(v.a)} <b>${recStr(recOf(v.a))}</b></span>
+        <span>${esc(v.b)} <b>${recStr(recOf(v.b))}</b></span></div>
+    </div>
+    ${v.rounds?`<div class="card"><div class="tag">Full battle &mdash; every bar</div>
+      ${v.rounds.map((r,i)=>`<div class="hr"></div><div class="tag">Round ${i+1}</div>
+        ${r.op?`<div class="vturn op"><b>${esc(v.main?(v.a===RECORDS.user.name?v.b:v.a):v.b)}</b><div class="verse">${esc(r.op)}</div></div>`:""}
+        ${r.you?`<div class="vturn you"><b>${esc(RECORDS.user.name)}</b><div class="verse">${esc(r.you)}</div></div>`:""}`).join("")}
+      </div>`
+     :`<div class="card"><div class="crowd">No footage kept for this one &mdash; the channel only stores full verses for your most recent battles.</div></div>`}
+    <div class="card">
+      <div class="tag">${v.comments.length} comments</div>
+      ${v.comments.map(c=>`<div class="cmt"><b>${esc(c.who)}</b>
+        <div>${esc(c.text)}</div><div class="vsub">&#9829; ${c.likes}</div></div>`).join("")}
+    </div>`;
+  document.getElementById("vback").addEventListener("click",renderTV);
+  el2.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function recOf(name){
+  if(name===RECORDS.user.name) return RECORDS.user;
+  return fighterRow(name)||{w:0,l:0,d:0};
 }
 
 /* ---------------- the simulator ---------------- */
@@ -909,9 +1185,8 @@ function simOneMatch(opp){
   // evaluated per battle, because both records move during a run
   const o=oddsFor(opp);
   const res=Math.random()<o.p ? "w" : "l";
-  RECORDS.user[res]++;
-  RECORDS.user.streak = res==="w" ? (RECORDS.user.streak||0)+1 : 0;
-  creditResult(opp, res==="w"?"l":"w");
+  creditUser(res,opp.name,"sim");
+  creditResult(opp, res==="w"?"l":"w", RECORDS.user.name, "sim");
   return {opp:opp.name, res, chance:o.p, oppRec:recStr(opp),
           mySkill:o.mine, theirSkill:o.theirs, favoured:o.favoured};
 }
@@ -1075,7 +1350,7 @@ async function crowdWindow(container,tier){
 
 /* ---------------- state & pacing ---------------- */
 const state={ op:null, first:null, round:0, userVerses:[], userScores:[], opScores:[],
-               skip:false, heat:50, userTimes:[], opTimes:[], userOT:[], opOT:[] };
+               skip:false, heat:50, userTimes:[], opTimes:[], userOT:[], opOT:[], tape:[] };
 const stage=document.getElementById("stage");
 
 function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
@@ -1159,7 +1434,20 @@ function renderRanks(){
       <div class="rec"><span>Record: <b>${recStr(RECORDS.user)}</b></span>
         <span>Clips: <b>${RECORDS.clips}</b></span>
         <span>Streak: <b>${RECORDS.user.streak||0}</b></span></div>
-      <div class="crowd">Names in red are fighters you can actually face tonight. Beat ranked opponents to climb.</div>
+      <div class="crowd">Names in red are fighters you can face tonight. Tap any fighter to open their profile and full bout history.</div>
+    </div>
+    <div class="card">
+      <div class="tag">Career</div>
+      <div class="statgrid">
+        <div class="stat"><b>${recStr(RECORDS.user)}</b><span>Record</span></div>
+        <div class="stat"><b>${(skillOf(RECORDS.user)*100).toFixed(0)}</b><span>Skill</span></div>
+        <div class="stat"><b>${RECORDS.user.streak||0}</b><span>Win streak</span></div>
+        <div class="stat"><b>${RECORDS.clips}</b><span>Clips</span></div>
+        <div class="stat"><b>${(RECORDS.user.best||0).toFixed(0)}</b><span>Best match</span></div>
+        <div class="stat"><b>${RECORDS.vods.filter(v=>v.main).length}</b><span>VODs</span></div>
+      </div>
+      <div class="tag" style="margin-top:14px">Recent form</div>
+      <div class="chips">${formChips(RECORDS.user.hist)}</div>
     </div>
     <div class="card">
       <div class="tag">Simulate battles</div>
@@ -1185,12 +1473,26 @@ function renderRanks(){
       <div class="bar" style="margin-top:10px"><button id="resetbtn" class="ghost">RESET PROGRESS</button></div>
       <div id="resetzone"></div>
     </div>
+    <input class="searchbox" id="rksearch" placeholder="Search the ladder by name...">
     <table class="rk">
       <tr><th>#</th><th>Fighter</th><th>W</th><th>L</th><th>D</th><th>Pts</th></tr>
-      ${rows.map(r=>`<tr class="${r.you?"me":""}${faceable.has(r.name)?" faceable":""}">
-        <td class="r">${r.rank}</td><td>${esc(r.name)}${r.you?" (you)":""}</td>
+      ${rows.map(r=>`<tr class="${r.you?"me":""}${faceable.has(r.name)?" faceable":""}" data-f="${esc(r.name)}">
+        <td class="r">${r.rank===1?"&#9818;":""}${r.rank}</td>
+        <td><span class="avatar sm" style="--h:${hueOf(r.name)}">${esc(initials(r.name))}</span>
+            <a class="flink">${esc(r.name)}</a>${r.you?" (you)":""}</td>
         <td class="n">${r.w}</td><td class="n">${r.l}</td><td class="n">${r.d}</td><td class="n">${r.pts}</td></tr>`).join("")}
     </table>`;
+
+  document.querySelectorAll("#ranks .rk tr[data-f]").forEach(tr=>
+    tr.addEventListener("click",()=>openProfile(tr.dataset.f)));
+
+  const sb=document.getElementById("rksearch");
+  if(sb) sb.addEventListener("input",()=>{
+    const q=sb.value.trim().toLowerCase();
+    document.querySelectorAll("#ranks .rk tr[data-f]").forEach(tr=>{
+      tr.style.display = !q || tr.dataset.f.toLowerCase().includes(q) ? "" : "none";
+    });
+  });
 
   const {rating,n}=userRating();
   const mySkill=skillOf(RECORDS.user), b=bouts(RECORDS.user);
@@ -1245,10 +1547,12 @@ function renderRanks(){
 }
 let unseen=0;
 function markFeed(n){ unseen+=n; const d=document.getElementById("feeddot"); if(d) d.classList.toggle("show",unseen>0); }
+function markTV(){ const d=document.getElementById("tvdot"); if(d) d.classList.add("show"); }
 function showPanel(id){
   document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("on",p.id===id));
   document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.p===id));
   if(id==="feed"){ renderFeed(); unseen=0; document.getElementById("feeddot").classList.remove("show"); }
+  if(id==="tv"){ renderTV(); const d=document.getElementById("tvdot"); if(d) d.classList.remove("show"); }
   if(id==="ranks") renderRanks();
 }
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>showPanel(t.dataset.p)));
@@ -1285,7 +1589,7 @@ async function start(){
   if(state.op.style==="Wildcard / Joker") state.op.diff=1+Math.floor(Math.random()*3);
   state.first=Math.random()<0.5?"opponent":"user";
   state.round=0; state.userVerses=[]; state.userScores=[]; state.opScores=[];
-  state.skip=false; state.heat=50;
+  state.skip=false; state.heat=50; state.tape=[];
 
   push(el(`<div class="card">
     <div class="tag">The Boiler Room &middot; Sublevel 3</div>
@@ -1299,6 +1603,9 @@ async function start(){
     <div class="rec"><span>Career record &mdash; <b>${state.op.name}</b>: <b>${recStr(RECORDS.ops[state.op.name])}</b>
         (#${ladder().find(f=>f.name===state.op.name).rank})</span>
       <span><b>${esc(RECORDS.user.name)}</b>: <b>${recStr(RECORDS.user)}</b> (#${myRank()} of ${ladder().length})</span></div>
+    <div class="hr"></div>
+    <div class="tag">Champion</div>
+    <div>&#9818; <b>${esc(ladder()[0].name)}</b> holds the #1 spot at ${recStr(ladder()[0])}.</div>
     <div class="hr"></div>
     <div class="tag">Format</div>
     <div>Three rounds. <strong>3:00 each.</strong> Past the clock is overtime &mdash; allowed, but the judges dock for it.
@@ -1332,6 +1639,7 @@ async function nextRound(){
 async function dropOpponent(){
   const v=state.op.verses[state.round-1];
   state.opScores.push(scoreOpponent(v,state.op.diff));
+  (state.tape[state.round-1]=state.tape[state.round-1]||{}).op=v;
   // rolled before he opens his mouth: does he run long this round?
   const goesOT=Math.random()<state.op.otRate;
   const clock=makeOpponentClock(goesOT);
@@ -1376,9 +1684,8 @@ async function resolveBySim(){
   const startRank=myRank();
   const res=Math.random()<chance?"w":"l";
 
-  RECORDS.user[res]++;
-  RECORDS.user.streak = res==="w" ? (RECORDS.user.streak||0)+1 : 0;
-  if(opp) creditResult(opp,res==="w"?"l":"w");
+  creditUser(res,state.op.name,"sim");
+  if(opp) creditResult(opp,res==="w"?"l":"w",RECORDS.user.name,"sim");
   if(RECORDS.ops[state.op.name] && !opp) RECORDS.ops[state.op.name][res==="w"?"l":"w"]++;
 
   // the rounds you did write were judged for real, so they still rate you
@@ -1388,6 +1695,10 @@ async function resolveBySim(){
     RECORDS.user.form=RECORDS.user.form.slice(-10);
   }
 
+  uploadVOD({a:RECORDS.user.name,b:state.op.name,
+    win:res==="w"?RECORDS.user.name:state.op.name, main:true, close:true,
+    rounds:written.length?state.tape.slice(0,written.length):null,
+    note:written.length?`${RECORDS.user.name} wrote ${written.length} of 3 rounds; the rest was called.`:"Resolved without a written round."});
   post({kind:"result",who:pick(PRESS),
     text:`${res==="w"?RECORDS.user.name+" def. "+state.op.name:state.op.name+" def. "+RECORDS.user.name}. `+
          `${written.length?`${RECORDS.user.name} wrote ${written.length} of 3 rounds before the panel called it.`:"Walkover - no rounds written."}`});
@@ -1473,6 +1784,7 @@ function promptUser(){
     const over=Math.max(0,used-ROUND_LIMIT);
     state.userTimes.push(used); state.userOT.push(over);
     state.userVerses.push(text);
+    (state.tape[state.round-1]=state.tape[state.round-1]||{}).you=text;
 
     // Fliptop docks for running long: the penalty lands on delivery.
     const sc=scoreRound(analyze(text));
@@ -1598,20 +1910,26 @@ async function judge(){
 
   // commit the result to both career records
   const res = Math.abs(diff)<0.9 ? "d" : diff>0 ? "w" : "l";
-  RECORDS.user[res]++;
-  RECORDS.user.streak = res==="w" ? (RECORDS.user.streak||0)+1 : 0;
+  creditUser(res,state.op.name,"main");
   RECORDS.user.best = Math.max(RECORDS.user.best||0, ut);
   // your per-round average from this match feeds the rating the simulator uses
   RECORDS.user.form.push(Math.round((ut/3)*10)/10);
   RECORDS.user.form=RECORDS.user.form.slice(-10);
-  const opRec=RECORDS.ops[state.op.name];
-  opRec[res==="d"?"d":res==="w"?"l":"w"]++;
-  // the same result on the shared ladder
-  const lrow=RECORDS.league.find(f=>f.name===state.op.name);
-  if(lrow) lrow[res==="d"?"d":res==="w"?"l":"w"]++;
+  const oppKey = res==="d"?"d":res==="w"?"l":"w";
+  const lrow=fighterRow(state.op.name);
+  if(lrow) creditResult(lrow,oppKey,RECORDS.user.name,"main");
+  else if(RECORDS.ops[state.op.name]) RECORDS.ops[state.op.name][oppKey]++;
+  const opRec=RECORDS.ops[state.op.name]||lrow;
   postMatchResult(res,state.op.name,ut,uOT,diff);
   const before=Object.fromEntries(ladder().map(f=>[f.name,f.rank]));
   simLeagueNight();
+  // uploaded last so the main event sits at the top of the channel
+  uploadVOD({a:RECORDS.user.name, b:state.op.name,
+    win: res==="w"?RECORDS.user.name : res==="l"?state.op.name : "Nobody - drawn",
+    main:true, close:Math.abs(diff)<6, rounds:state.tape.slice(0,3),
+    scoreLine:`Final ${ut.toFixed(1)} - ${ot.toFixed(1)}.`,
+    note:uOT?`${RECORDS.user.name} ran ${fmtClock(uOT)} into overtime.`:""});
+
   // what the night did to the board
   const movers=ladder().filter(f=>!f.you)
     .map(f=>({name:f.name,rank:f.rank,move:(before[f.name]||f.rank)-f.rank}))
@@ -1620,7 +1938,7 @@ async function judge(){
   if(up||down) post({kind:"press",who:"@SublevelStats",
     text:`LADDER MOVES — ${up?`${up.name} up ${up.move} to #${up.rank}`:""}${up&&down?". ":""}${
       down?`${down.name} down ${-down.move} to #${down.rank}`:""}.`});
-  markFeed(4);
+  markFeed(4); markTV();
   saveRecords(RECORDS);
 
   const fin=card.querySelector("#final");

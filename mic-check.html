@@ -682,7 +682,7 @@ function buildLeague(){
 }
 
 const SEED=()=>({
-  user:{name:"YOU",w:0,l:0,d:0,streak:0,best:0},
+  user:{name:"YOU",w:0,l:0,d:0,streak:0,best:0,form:[]},
   ops:Object.fromEntries(OPPONENTS.map(o=>[o.name,{...o.rec}])),
   league:buildLeague(), feed:[], clips:0, named:false
 });
@@ -693,6 +693,7 @@ function loadRecords(){
     const p=JSON.parse(raw), base=SEED();
     if(!p||typeof p!=="object") return base;
     base.user={...base.user,...(p.user||{})};
+    if(!Array.isArray(base.user.form)) base.user.form=[];
     for(const n in base.ops) if(p.ops&&p.ops[n]) base.ops[n]={...base.ops[n],...p.ops[n]};
     // a save from an earlier league size is rebuilt, keeping the records it held
     if(Array.isArray(p.league)&&p.league.length===base.league.length) base.league=p.league;
@@ -828,6 +829,90 @@ function simLeagueNight(){
       ? `${r.a.name} drew ${r.b.name}`
       : `${r.win.name} def. ${r.lose.name}`).join(" · ")});
   return results;
+}
+
+/* ---------------- the simulator ---------------- */
+/* Simulated battles are decided by how well you have actually been writing.
+   Your rating is the rolling average of your real per-round scores, so the
+   only way to sim better results is to go and write better verses. Until you
+   have played a real match the rating is provisional and says so. */
+const PROVISIONAL=17.5;
+
+function userRating(){
+  const f=RECORDS.user.form||[];
+  if(!f.length) return {rating:PROVISIONAL, provisional:true, n:0};
+  const r=f.reduce((a,b)=>a+b,0)/f.length;
+  return {rating:Math.round(r*10)/10, provisional:f.length<2, n:f.length};
+}
+// an NPC's writing strength on the same per-round scale the judges use
+// mapped onto the band real verses actually score in: a weak fighter is
+// beatable but not free, the very top needs a genuinely strong pen
+const powToScore=pow=>15.2+(clamp(pow,1,10)/10)*8.6;
+function fighterScore(f){
+  if(!f.npc){
+    const o=OPPONENTS.find(x=>x.name===f.name);
+    if(o){ const v=o.verses.map(t=>scoreOpponent(t,o.diff));
+      return v.reduce((a,x)=>a+x.lyricism+x.flow+x.punch,0)/v.length; }
+  }
+  return powToScore(f.pow);
+}
+// normal-ish noise: nobody writes the same every night
+const jitter=sd=>((Math.random()+Math.random()+Math.random()-1.5)/1.5)*sd;
+
+function simOneMatch(opp){
+  const {rating}=userRating();
+  // three rounds, each written on its own night-form, so one bad round can
+  // cost a match you were favoured in - the band players actually sit in
+  // (roughly 17 to 23) has to stay competitive rather than decided in advance
+  const base=fighterScore(opp);
+  let mine=0, theirs=0;
+  for(let r=0;r<3;r++){ mine+=rating+jitter(3.6); theirs+=base+jitter(3.1); }
+  const diff=mine-theirs;
+  const res=Math.abs(diff)<1.6?"d":diff>0?"w":"l";
+  RECORDS.user[res]++;
+  RECORDS.user.streak = res==="w" ? (RECORDS.user.streak||0)+1 : 0;
+  creditResult(opp, res==="d"?"d":res==="w"?"l":"w");
+  return {opp:opp.name, res, mine, theirs};
+}
+
+/* who you face: fighters around your own rank, so simming is a real climb */
+function nextChallengers(n){
+  const rows=ladder(), me=rows.findIndex(f=>f.you);
+  const near=rows.filter((f,i)=>!f.you && Math.abs(i-me)<=9);
+  const pool=near.length?near:rows.filter(f=>!f.you);
+  const out=[];
+  for(let i=0;i<n;i++){
+    const pickRow=pool[Math.floor(Math.random()*pool.length)];
+    const f=fighterRow(pickRow.name);
+    if(f) out.push(f);
+  }
+  return out;
+}
+
+function runSim(n){
+  const startRank=myRank(), log=[];
+  for(let i=0;i<n;i++){
+    const opp=nextChallengers(1)[0];
+    if(!opp) break;
+    log.push(simOneMatch(opp));
+    if(i%3===2) simLeagueNight();          // the rest of the card runs too
+  }
+  const w=log.filter(r=>r.res==="w").length,
+        l=log.filter(r=>r.res==="l").length,
+        d=log.filter(r=>r.res==="d").length;
+  const endRank=myRank(), move=startRank-endRank;
+  post({kind:"press",who:"@SublevelStats",
+    text:`${RECORDS.user.name} ran a ${n}-battle stretch: ${w}-${l}${d?"-"+d:""}. ${
+      move>0?`Up ${move} to #${endRank}.`:move<0?`Down ${-move} to #${endRank}.`:`Still #${endRank}.`}`});
+  const bigW=log.filter(r=>r.res==="w");
+  if(bigW.length) post({kind:"fan",who:pick(FANS),
+    text:pick([`${RECORDS.user.name} been taking everybody. ${bigW[0].opp} was on that list.`,
+               `whole run and ${RECORDS.user.name} still standing. respect.`,
+               `${RECORDS.user.name} vs ${bigW[bigW.length-1].opp} was not close btw`])});
+  if(l>w) post({kind:"fan",who:pick(FANS),
+    text:`${RECORDS.user.name} took some losses on that run. the pen needs work, not the schedule.`});
+  markFeed(2); saveRecords(RECORDS);
+  return {log,w,l,d,startRank,endRank,move};
 }
 
 /* posts generated from your match */
@@ -1035,12 +1120,52 @@ function renderRanks(){
         <span>Streak: <b>${RECORDS.user.streak||0}</b></span></div>
       <div class="crowd">Names in red are fighters you can actually face tonight. Beat ranked opponents to climb.</div>
     </div>
+    <div class="card">
+      <div class="tag">Simulate battles</div>
+      <div>Run battles against fighters around your rank without writing every verse.
+      Results are decided by your <strong>pen rating</strong> &mdash; the rolling average of the scores you
+      earned in real battles &mdash; so the way to sim better is to go and write better.</div>
+      <div class="rec" id="ratingline"></div>
+      <div class="bar" style="margin-top:10px">
+        <button class="sim" data-n="1">SIM 1</button>
+        <button class="sim" data-n="5">SIM 5</button>
+        <button class="sim" data-n="10">SIM 10</button>
+        <button class="sim ghost" data-n="25">SIM 25</button>
+      </div>
+      <div id="simout"></div>
+    </div>
     <table class="rk">
       <tr><th>#</th><th>Fighter</th><th>W</th><th>L</th><th>D</th><th>Pts</th></tr>
       ${rows.map(r=>`<tr class="${r.you?"me":""}${faceable.has(r.name)?" faceable":""}">
         <td class="r">${r.rank}</td><td>${esc(r.name)}${r.you?" (you)":""}</td>
         <td class="n">${r.w}</td><td class="n">${r.l}</td><td class="n">${r.d}</td><td class="n">${r.pts}</td></tr>`).join("")}
     </table>`;
+
+  const {rating,provisional,n}=userRating();
+  document.getElementById("ratingline").innerHTML=
+    `<span>Pen rating: <b>${rating.toFixed(1)}</b>/30 per round</span>`+
+    (provisional
+      ? `<span style="color:var(--accent2)">Provisional &mdash; based on ${n||"no"} real battle${n===1?"":"s"}. Play one and this becomes yours.</span>`
+      : `<span>From your last <b>${n}</b> real battle${n===1?"":"s"}.</span>`);
+
+  document.querySelectorAll(".sim").forEach(btn=>btn.addEventListener("click",()=>{
+    const out=runSim(+btn.dataset.n);
+    renderRanks();                                  // board moved, redraw it
+    const o=document.getElementById("simout");
+    o.innerHTML=`<div class="hr"></div>
+      <div class="tag">Run complete &mdash; ${out.w}-${out.l}${out.d?"-"+out.d:""}</div>
+      <div class="rec"><span>Rank: <b>#${out.startRank} &rarr; #${out.endRank}</b></span>
+        <span>${out.move>0?`<b style="color:var(--good)">Up ${out.move}</b>`:out.move<0?`<b style="color:var(--bad)">Down ${-out.move}</b>`:"No movement"}</span></div>
+      <table style="margin-top:10px">
+        <tr><th>Opponent</th><th>Result</th><th>Score</th></tr>
+        ${out.log.map(r=>`<tr><td>${esc(r.opp)}</td>
+          <td style="color:${r.res==="w"?"var(--good)":r.res==="l"?"var(--bad)":"var(--dim)"}">
+            ${r.res==="w"?"WIN":r.res==="l"?"LOSS":"DRAW"}</td>
+          <td class="n">${r.mine.toFixed(1)} - ${r.theirs.toFixed(1)}</td></tr>`).join("")}
+      </table>
+      <div class="crowd">Simulated battles produce no clips &mdash; only verses you actually write get clipped.</div>`;
+    o.scrollIntoView({behavior:"smooth",block:"nearest"});
+  }));
 }
 let unseen=0;
 function markFeed(n){ unseen+=n; const d=document.getElementById("feeddot"); if(d) d.classList.toggle("show",unseen>0); }
@@ -1334,6 +1459,9 @@ async function judge(){
   RECORDS.user[res]++;
   RECORDS.user.streak = res==="w" ? (RECORDS.user.streak||0)+1 : 0;
   RECORDS.user.best = Math.max(RECORDS.user.best||0, ut);
+  // your per-round average from this match feeds the rating the simulator uses
+  RECORDS.user.form.push(Math.round((ut/3)*10)/10);
+  RECORDS.user.form=RECORDS.user.form.slice(-10);
   const opRec=RECORDS.ops[state.op.name];
   opRec[res==="d"?"d":res==="w"?"l":"w"]++;
   // the same result on the shared ladder

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Career records, ladder and VODs live in the WebView's localStorage,
+     so backing up that directory carries a player's progress to a new device. -->
+<full-backup-content>
+    <include domain="database" path="." />
+    <include domain="file" path="app_webview" />
+</full-backup-content>

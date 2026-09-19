@@ -1147,6 +1147,13 @@ function renderRanks(){
       </div>
       <div id="simout"></div>
     </div>
+    <div class="card">
+      <div class="tag">Danger zone</div>
+      <div>Wipe your record, pen rating, clips, the ladder and the whole timeline, and start over from your debut.
+      This cannot be undone.</div>
+      <div class="bar" style="margin-top:10px"><button id="resetbtn" class="ghost">RESET PROGRESS</button></div>
+      <div id="resetzone"></div>
+    </div>
     <table class="rk">
       <tr><th>#</th><th>Fighter</th><th>W</th><th>L</th><th>D</th><th>Pts</th></tr>
       ${rows.map(r=>`<tr class="${r.you?"me":""}${faceable.has(r.name)?" faceable":""}">
@@ -1163,6 +1170,27 @@ function renderRanks(){
       :`<span>No real battles yet.</span>`)+
     `<span style="color:var(--dim)">Your pen rating is what the judges gave you in real battles. It does not affect simulated odds.</span>`+
     `<span>High-win fighters on the ladder: <b>${RECORDS.league.filter(f=>isHighWin(f,mark)).length}</b> of ${RECORDS.league.length}</span>`;
+
+  const rb=document.getElementById("resetbtn"), rz=document.getElementById("resetzone");
+  rb.addEventListener("click",()=>{
+    if(rz.dataset.armed) return;
+    rz.dataset.armed="1";
+    rz.innerHTML=`<div class="timing ot" style="margin-top:12px">
+        This erases <b>${recStr(RECORDS.user)}</b>, ${RECORDS.clips} clip${RECORDS.clips===1?"":"s"},
+        your pen rating, the 65-fighter ladder and every post on BARZ. There is no undo.</div>
+      <div class="bar"><button id="resetyes">YES, WIPE IT</button>
+        <button id="resetno" class="ghost">CANCEL</button></div>`;
+    rz.querySelector("#resetno").addEventListener("click",()=>{ rz.dataset.armed=""; rz.innerHTML=""; });
+    rz.querySelector("#resetyes").addEventListener("click",()=>{
+      try{ localStorage.removeItem(REC_KEY); }catch(e){}
+      RECORDS=SEED();            // fresh league, empty feed, no record
+      unseen=0;
+      const d=document.getElementById("feeddot"); if(d) d.classList.remove("show");
+      saveRecords(RECORDS);
+      showPanel("stage");
+      start();                   // straight back to the name prompt and a debut
+    });
+  });
 
   document.querySelectorAll(".sim").forEach(btn=>btn.addEventListener("click",()=>{
     const out=runSim(+btn.dataset.n);

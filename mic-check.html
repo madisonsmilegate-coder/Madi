@@ -88,6 +88,24 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
 .meter .mrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .meter .track{height:7px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;overflow:hidden}
 .meter .track>div{height:100%;background:var(--accent);border-radius:99px;transition:width .5s ease,background .5s ease}
+.clockwrap{display:flex;align-items:center;gap:10px;justify-content:space-between;
+  border:1px solid var(--line);border-radius:8px;padding:7px 12px;background:var(--panel);margin-bottom:8px}
+.clockwrap #clock{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:1px}
+.clockwrap.warn{border-color:var(--accent)} .clockwrap.warn #clock{color:var(--accent)}
+.clockwrap.over{border-color:var(--accent2);animation:pulse 1s ease-in-out infinite}
+.clockwrap.over #clock,.clockwrap.over #clocklab{color:var(--accent2)}
+.clockwrap.idle{opacity:.5}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.62}}
+.timing{font-size:13px;color:var(--dim);margin:10px 0;letter-spacing:.5px}
+.timing.ot{color:var(--accent2);font-weight:600}
+.card.overtime{border-left-color:var(--accent2)}
+.react{border:1px dashed var(--line);border-radius:8px;padding:10px 12px;margin:12px 0;background:var(--panel2)}
+.react .mrow{display:flex;justify-content:space-between;align-items:center}
+.rtrack{height:4px;background:var(--line);border-radius:99px;overflow:hidden;margin:7px 0}
+.rfill{height:100%;width:0;background:var(--accent);border-radius:99px}
+.rpops{min-height:22px}
+.rec{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--dim);margin-top:8px}
+.rec b{color:var(--ink)}
 .judge{opacity:0;transform:translateY(8px);transition:opacity .45s ease,transform .45s ease}
 .judge.in{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){
@@ -109,7 +127,7 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
 /* ---------------- opponents ---------------- */
 const OPPONENTS = [
   {
-    name:"SYLLABLE SAINT", style:"Elite Lyrical", diff:3,
+    name:"SYLLABLE SAINT", style:"Elite Lyrical", diff:3, rec:{w:14,l:2,d:1}, otRate:0.12,
     vibe:"Speaks barely above a whisper, stacks four rhymes inside one breath. Never raises his voice because he has never had to.",
     verses:[
 `Understand the anatomy: I'm mapping out your catalog,
@@ -150,7 +168,7 @@ You showed up. That's the compliment. That's all of it. That's it.
 Now hand the microphone back to the man who earned the grip.`]
   },
   {
-    name:"PASTOR VENOM", style:"Aggressive Battle Rapper", diff:2,
+    name:"PASTOR VENOM", style:"Aggressive Battle Rapper", diff:2, rec:{w:21,l:6,d:2}, otRate:0.45,
     vibe:"Preaches like a pulpit prophet, punches like a debt collector. Every bar is a sermon and every sermon ends with your obituary.",
     verses:[
 `Congregation gather 'round, I'm 'bout to preach a eulogy,
@@ -191,7 +209,7 @@ And the next time that you step up in a circle like tonight,
 Bring a verse. Not a hope. Not a vibe. A verse. Goodnight.`]
   },
   {
-    name:"LIL BRACKET", style:"Ambitious Amateur", diff:1,
+    name:"LIL BRACKET", style:"Ambitious Amateur", diff:1, rec:{w:2,l:9,d:0}, otRate:0.6,
     vibe:"Seventeen, hoodie up, hands shaking, absolutely fearless. Wrote his bars in the notes app on the bus over. You kind of want him to win.",
     verses:[
 `Yo, my name is Lil Bracket and I'm here to win,
@@ -232,7 +250,7 @@ I'm sixteen with a dream and a notes app full of pain,
 And I'm doing this again next week. And next week. Same.`]
   },
   {
-    name:"THE OMELETTE", style:"Wildcard / Joker", diff:2,
+    name:"THE OMELETTE", style:"Wildcard / Joker", diff:2, rec:{w:8,l:8,d:1}, otRate:0.5,
     vibe:"Wears a bathrobe. Claims to be a licensed notary. Every metaphor arrives from a direction geometry does not recognize.",
     verses:[
 `I emerged from a vending machine in a Denny's parking lot
@@ -592,8 +610,118 @@ function lineHeat(line, prev){
 }
 function heatTier(h){ return h>0.72?"huge":h>0.52?"good":h>0.32?"mild":"dead"; }
 
+/* ---------------- records ---------------- */
+/* Career records persist per browser. Storage can throw or come back empty
+   (private windows, blocked site data), so every access is guarded and the
+   game runs identically without it. */
+const REC_KEY="miccheck.records.v1";
+const SEED=()=>({user:{w:0,l:0,d:0},ops:Object.fromEntries(OPPONENTS.map(o=>[o.name,{...o.rec}]))});
+function loadRecords(){
+  try{
+    const raw=localStorage.getItem(REC_KEY);
+    if(!raw) return SEED();
+    const p=JSON.parse(raw), base=SEED();
+    if(!p||typeof p!=="object") return base;
+    base.user={...base.user,...(p.user||{})};
+    for(const n in base.ops) if(p.ops&&p.ops[n]) base.ops[n]={...base.ops[n],...p.ops[n]};
+    return base;
+  }catch(e){ return SEED(); }
+}
+function saveRecords(r){ try{ localStorage.setItem(REC_KEY,JSON.stringify(r)); }catch(e){} }
+let RECORDS=loadRecords();
+const recStr=r=>`${r.w}-${r.l}${r.d?"-"+r.d:""}`;
+
+/* ---------------- the round clock ---------------- */
+/* Fliptop format: 3:00 a round. Going past it is allowed - the battle does not
+   stop - but it is called as OVERTIME and the judges dock for it. */
+const ROUND_LIMIT=180;      // seconds per round
+const REACTION_TIME=20;     // seconds the crowd gets to react after a verse
+
+function fmtClock(sec){
+  sec=Math.max(0,Math.round(sec));
+  return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0");
+}
+function setClock(sec,label){
+  const c=document.getElementById("clock"), w=document.getElementById("clockwrap"),
+        l=document.getElementById("clocklab");
+  if(!c) return;
+  const over=sec>ROUND_LIMIT;
+  c.textContent = over ? "+"+fmtClock(sec-ROUND_LIMIT) : fmtClock(ROUND_LIMIT-sec);
+  w.className="clockwrap"+(over?" over":sec>ROUND_LIMIT-30?" warn":"");
+  if(l) l.textContent = over ? "OVERTIME" : (label||"ON THE CLOCK");
+}
+function clearClock(){
+  const w=document.getElementById("clockwrap");
+  if(w){ w.className="clockwrap idle";
+    document.getElementById("clock").textContent="3:00";
+    document.getElementById("clocklab").textContent="STANDBY"; }
+}
+
+/* A live countdown the user races. Returns a handle; elapsed is read on submit. */
+function startUserClock(onOvertime){
+  const t0=Date.now(); let warned=false;
+  const id=setInterval(()=>{
+    const el2=Math.floor((Date.now()-t0)/1000);
+    setClock(el2,"YOUR TIME");
+    if(el2>ROUND_LIMIT&&!warned){ warned=true; onOvertime&&onOvertime(); }
+  },250);
+  setClock(0,"YOUR TIME");
+  return { stop(){ clearInterval(id); return Math.floor((Date.now()-t0)/1000); } };
+}
+
+/* The opponent's clock. Their verse plays in ~20s of real time, so the round
+   clock is driven by how far through the verse they are rather than by the
+   wall clock - that way the displayed time reads like a real 3-minute round
+   and lands where the pre-rolled result says it should. */
+function makeOpponentClock(goesOvertime){
+  const target = goesOvertime
+    ? ROUND_LIMIT + 8 + Math.floor(Math.random()*40)   // 3:08 - 3:48
+    : 120 + Math.floor(Math.random()*55);              // 2:00 - 2:55
+  return {
+    target,
+    tick(progress){ setClock(target*progress,"OPPONENT"); },
+    finish(){ setClock(target,"OPPONENT"); return target; }
+  };
+}
+
+/* Crowd reaction window: the room gets a fixed stretch to react, on its own
+   visible countdown, before the battle moves on. */
+async function crowdWindow(container,tier){
+  const box=el(`<div class="react">
+      <div class="mrow"><span class="tag" style="margin:0">Crowd reaction</span>
+        <span class="tag react-t" style="margin:0">0:${String(REACTION_TIME).padStart(2,"0")}</span></div>
+      <div class="rtrack"><div class="rfill"></div></div>
+      <div class="rpops"></div>
+      <div class="bar"><button class="ghost cut">CUT IT SHORT &raquo;</button></div>
+    </div>`);
+  container.appendChild(box);
+  const tEl=box.querySelector(".react-t"), fill=box.querySelector(".rfill"),
+        pops=box.querySelector(".rpops"), cut=box.querySelector(".cut");
+  let done=false;
+  cut.addEventListener("click",()=>{done=true;});
+  box.scrollIntoView({behavior:"smooth",block:"center"});
+
+  const t0=Date.now();
+  while(!done && !state.skip){
+    const el2=(Date.now()-t0)/1000, left=REACTION_TIME-el2;
+    if(left<=0) break;
+    tEl.textContent="0:"+String(Math.ceil(left)).padStart(2,"0");
+    fill.style.width=(100-(left/REACTION_TIME)*100)+"%";
+    if(Math.random()<0.055){
+      const n=crowdPop(pick(CROWD[tier]),tier);
+      pops.appendChild(n);
+      while(pops.children.length>3) pops.firstChild.remove();
+      bumpHeat(tier==="huge"?3:tier==="dead"?-3:1);
+    }
+    await new Promise(r=>setTimeout(r,120));
+  }
+  cut.remove(); tEl.textContent="TIME";
+  fill.style.width="100%";
+}
+
 /* ---------------- state & pacing ---------------- */
-const state={ op:null, first:null, round:0, userVerses:[], userScores:[], opScores:[], skip:false, heat:50 };
+const state={ op:null, first:null, round:0, userVerses:[], userScores:[], opScores:[],
+               skip:false, heat:50, userTimes:[], opTimes:[], userOT:[], opOT:[] };
 const stage=document.getElementById("stage");
 
 function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
@@ -617,7 +745,7 @@ function crowdPop(text,tier){
 }
 
 /* reveal a verse one bar at a time, with the crowd reacting in between */
-async function performVerse(container, text, who){
+async function performVerse(container, text, who, clock){
   const L=lines(text);
   const body=container.querySelector(".verse");
   let prev=null, best={h:-1,line:""};
@@ -632,6 +760,7 @@ async function performVerse(container, text, who){
     const h=lineHeat(line,prev);
     if(h>best.h) best={h,line};
     bumpHeat((h-0.45)*16);
+    if(clock) clock.tick((i+1)/L.length);
 
     // pause on the bar itself, longer for longer bars
     await sleep(clamp(430+words(line).length*58,520,1700));
@@ -670,6 +799,12 @@ function start(){
     <h2 style="margin:0 0 4px">${state.op.name}</h2>
     <div style="color:var(--accent)">${state.op.style}</div>
     <div class="crowd">${state.op.vibe}</div>
+    <div class="rec"><span>Career record &mdash; <b>${state.op.name}</b>: <b>${recStr(RECORDS.ops[state.op.name])}</b></span>
+      <span>You: <b>${recStr(RECORDS.user)}</b></span></div>
+    <div class="hr"></div>
+    <div class="tag">Format</div>
+    <div>Three rounds. <strong>3:00 each.</strong> Past the clock is overtime &mdash; allowed, but the judges dock for it.
+    The crowd gets ${REACTION_TIME} seconds to react after every verse.</div>
     <div class="hr"></div>
     <div class="tag">Coin flip</div>
     <div><strong>${state.first==="opponent"?"TAILS &mdash; "+state.op.name+" goes first.":"HEADS &mdash; you go first. No warm-up, no example. Set the tone."}</strong></div>
@@ -677,6 +812,10 @@ function start(){
 
   // persistent crowd meter
   push(el(`<div class="meter">
+     <div class="clockwrap idle" id="clockwrap">
+       <span class="tag" id="clocklab" style="margin:0">STANDBY</span>
+       <span id="clock">3:00</span>
+     </div>
      <div class="mrow"><span class="tag" style="margin:0">Crowd</span><span class="tag" id="heatlab" style="margin:0">ROOM IS WARM</span></div>
      <div class="track"><div id="heatfill" style="width:50%"></div></div>
    </div>`));
@@ -695,26 +834,42 @@ async function nextRound(){
 async function dropOpponent(){
   const v=state.op.verses[state.round-1];
   state.opScores.push(scoreOpponent(v,state.op.diff));
+  // rolled before he opens his mouth: does he run long this round?
+  const goesOT=Math.random()<state.op.otRate;
+  const clock=makeOpponentClock(goesOT);
+
   const card=push(el(`<div class="card op">
-    <div class="tag">Round ${state.round}/3 &middot; ${state.op.name}</div>
+    <div class="tag">Round ${state.round}/3 &middot; ${state.op.name} &middot; ${recStr(RECORDS.ops[state.op.name])}</div>
     <div class="verse op"></div>
     <div class="bar"><button class="ghost skip">SKIP AHEAD &raquo;</button></div>
   </div>`));
   const sk=card.querySelector(".skip");
   sk.addEventListener("click",()=>{state.skip=true;sk.remove();});
+  setClock(0,"OPPONENT");
   await sleep(700);
-  await performVerse(card,v,"op");
+  await performVerse(card,v,"op",clock);
+  state.skip=false;              // skip covers that verse only
   if(sk.isConnected) sk.remove();
-  const s=state.opScores[state.opScores.length-1];
-  const avg=(s.lyricism+s.flow+s.punch)/3;
-  card.appendChild(el(`<div class="crowd">${avg>7.5?"The room erupts. He lets it ring before he steps back.":avg>6?"Solid reaction. He nods once, unbothered.":"He steps back. The room takes a second to decide how it felt."}</div>`));
-  await sleep(600);
+
+  const used=clock.finish();
+  const over=used>ROUND_LIMIT;
+  state.opTimes.push(used); state.opOT.push(over?used-ROUND_LIMIT:0);
+  card.appendChild(el(`<div class="timing${over?" ot":""}">${over
+      ? "&#9201; OVERTIME &mdash; "+fmtClock(used)+" (+"+fmtClock(used-ROUND_LIMIT)+" over). The host is waving at him. The judges noted it."
+      : "&#9201; "+fmtClock(used)+" &mdash; inside the three."}</div>`));
+
+  const s0=state.opScores[state.opScores.length-1];
+  const avg=(s0.lyricism+s0.flow+s0.punch)/3;
+  await crowdWindow(card, avg>7.5?"huge":avg>6?"good":avg>4.5?"mild":"dead");
+  clearClock();
+  await sleep(400);
 }
 
 function promptUser(){
   const box=push(el(`<div class="card you">
-    <div class="tag">&#127908; Your turn &mdash; Round ${state.round}/3</div>
-    <div style="margin-bottom:10px">Write your own bars. 8&ndash;16 lines, one bar per line. Nobody is writing them for you.</div>
+    <div class="tag">&#127908; Your turn &mdash; Round ${state.round}/3 &middot; YOU &middot; ${recStr(RECORDS.user)}</div>
+    <div style="margin-bottom:10px">You have <strong>3:00</strong>. Write your own bars, 8&ndash;16 lines, one per line.
+    Run past the clock and it is called overtime &mdash; you can keep going, but the judges dock you for it.</div>
     <textarea id="ta" placeholder="Type your verse here. One bar per line."></textarea>
     <div class="bar">
       <button id="send">SPIT IT</button>
@@ -722,6 +877,13 @@ function promptUser(){
     </div>
   </div>`));
   const ta=box.querySelector("#ta"), cnt=box.querySelector("#cnt"), btn=box.querySelector("#send");
+
+  const timer=startUserClock(()=>{
+    box.classList.add("overtime");
+    const n=el(`<div class="timing ot">&#9201; OVERTIME &mdash; you are past three minutes. Finish it.</div>`);
+    box.insertBefore(n,box.querySelector(".bar"));
+    bumpHeat(-8);
+  });
 
   // the room does not sit in silence while you write
   const amb=setInterval(()=>{
@@ -734,7 +896,7 @@ function promptUser(){
 
   const upd=()=>{
     const n=lines(ta.value).length;
-    cnt.textContent=`${n} bar${n===1?"":"s"}`+(n<8?" — format says 8–16":n>16?" — over 16, judges will notice":" ✓");
+    cnt.textContent=`${n} bar${n===1?"":"s"}`+(n<8?" \u2014 format says 8\u201316":n>16?" \u2014 over 16, judges will notice":" \u2713");
     cnt.className="count"+((n<8||n>16)?" warn":"");
     btn.disabled=n<1;
   };
@@ -743,20 +905,37 @@ function promptUser(){
   btn.addEventListener("click",async()=>{
     const text=ta.value.trim(); if(!text) return;
     clearInterval(amb);
+    const used=timer.stop();
+    const over=Math.max(0,used-ROUND_LIMIT);
+    state.userTimes.push(used); state.userOT.push(over);
     state.userVerses.push(text);
-    state.userScores.push(scoreRound(analyze(text)));
+
+    // Fliptop docks for running long: the penalty lands on delivery.
+    const sc=scoreRound(analyze(text));
+    if(over>0) sc.flow=clamp(Math.round((sc.flow-clamp(over/30*0.9,0,2.5))*10)/10,1,10);
+    state.userScores.push(sc);
+
     state.skip=false;
+    box.classList.remove("overtime");
     box.innerHTML=`<div class="tag">Round ${state.round}/3 &middot; YOU</div><div class="verse"></div>
       <div class="bar"><button class="ghost skip">SKIP AHEAD &raquo;</button></div>`;
     const sk=box.querySelector(".skip");
     sk.addEventListener("click",()=>{state.skip=true;sk.remove();});
     await sleep(500);
     const best=await performVerse(box,text,"you");
+    state.skip=false;            // skip covers that verse only
     if(sk.isConnected) sk.remove();
-    const s=state.userScores[state.userScores.length-1];
-    box.appendChild(el(`<div class="crowd">${reaction(s)}</div>`));
+
+    box.appendChild(el(`<div class="timing${over?" ot":""}">${over
+      ? "&#9201; OVERTIME &mdash; "+fmtClock(used)+" (+"+fmtClock(over)+" over). Delivery docked."
+      : "&#9201; "+fmtClock(used)+" &mdash; inside the three."}</div>`));
+    box.appendChild(el(`<div class="crowd">${reaction(sc)}</div>`));
     if(best.line && best.h>0.6) box.appendChild(el(`<div class="crowd">Your hardest bar that round: &ldquo;${esc(best.line)}&rdquo;</div>`));
-    await sleep(900);
+
+    const avg=(sc.lyricism+sc.flow+sc.punch)/3;
+    await crowdWindow(box, avg>7.5?"huge":avg>6?"good":avg>4.5?"mild":"dead");
+    clearClock();
+    await sleep(400);
     if(state.first==="user") await dropOpponent();
     nextRound();
   });
@@ -781,7 +960,8 @@ async function judge(){
   let rows="";
   for(let i=0;i<3;i++){
     const u=state.userScores[i]||{lyricism:0,flow:0,punch:0}, o=state.opScores[i]||{lyricism:0,flow:0,punch:0};
-    rows+=`<tr><td>Round ${i+1}</td>
+    const ut2=state.userTimes[i], ot2=state.opTimes[i];
+    rows+=`<tr><td>Round ${i+1}<br><span style="color:var(--dim);font-size:11px">${ut2!=null?fmtClock(ut2):"-"}${state.userOT[i]>0?" OT":""} vs ${ot2!=null?fmtClock(ot2):"-"}${state.opOT[i]>0?" OT":""}</span></td>
       <td class="n">${u.lyricism.toFixed(1)}</td><td class="n">${u.flow.toFixed(1)}</td><td class="n">${u.punch.toFixed(1)}</td>
       <td class="n"><strong>${(u.lyricism+u.flow+u.punch).toFixed(1)}</strong></td>
       <td class="n">${o.lyricism.toFixed(1)}</td><td class="n">${o.flow.toFixed(1)}</td><td class="n">${o.punch.toFixed(1)}</td>
@@ -832,6 +1012,25 @@ async function judge(){
     await sleep(2200);
   }
 
+  // the clock is part of the verdict in this format
+  const uOT=state.userOT.reduce((a,b)=>a+b,0), oOT=state.opOT.reduce((a,b)=>a+b,0);
+  if(uOT||oOT){
+    const n=el(`<div class="judge"><h3>THE CLOCK</h3>
+      <div class="who">Round length &middot; overtime penalties</div>
+      <div class="crit">${uOT?`You ran over in ${state.userOT.filter(x=>x>0).length} round(s), ${fmtClock(uOT)} past the limit in total. That came straight off your delivery score — the format is three minutes and the format does not care how good the bar was.`:`You stayed inside three minutes every round. Nothing docked.`}</div>
+      <div class="crit">${oOT?`${esc(state.op.name)} also ran long — ${fmtClock(oOT)} over across the match. The host waved at him and the panel saw it.`:`${esc(state.op.name)} never went over. He finished clean every round.`}</div></div>`);
+    panel.appendChild(n); requestAnimationFrame(()=>n.classList.add("in"));
+    n.scrollIntoView({behavior:"smooth",block:"center"});
+    await sleep(2000);
+  }
+
+  // commit the result to both career records
+  const res = Math.abs(diff)<0.9 ? "d" : diff>0 ? "w" : "l";
+  RECORDS.user[res]++;
+  const opRec=RECORDS.ops[state.op.name];
+  opRec[res==="d"?"d":res==="w"?"l":"w"]++;
+  saveRecords(RECORDS);
+
   const fin=card.querySelector("#final");
   fin.innerHTML=`<div class="hr"></div><div class="tag">Score matrix</div>
     <table>
@@ -850,6 +1049,14 @@ async function judge(){
   await sleep(1600);
   bumpHeat(diff>0?40:-20);
   fin.appendChild(el(`<div>${verdict}</div>`));
+  fin.appendChild(el(`<div class="hr"></div><div class="tag">Records after this battle</div>
+    <div class="rec"><span>You: <b>${recStr(RECORDS.user)}</b></span>
+      <span>${esc(state.op.name)}: <b>${recStr(opRec)}</b></span></div>
+    <table style="margin-top:10px">
+      <tr><th>Fighter</th><th>Record</th></tr>
+      <tr><td><strong>YOU</strong></td><td>${recStr(RECORDS.user)}</td></tr>
+      ${OPPONENTS.map(o=>`<tr><td>${esc(o.name)}</td><td>${recStr(RECORDS.ops[o.name])}</td></tr>`).join("")}
+    </table>`));
   fin.appendChild(el(`<div class="bar" style="margin-top:18px"><button id="again">NEW BATTLE</button></div>`));
   fin.scrollIntoView({behavior:"smooth",block:"center"});
   document.getElementById("again").addEventListener("click",start);

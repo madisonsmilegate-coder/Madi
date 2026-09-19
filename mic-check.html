@@ -143,6 +143,9 @@ table.hist td.r{width:40px;color:var(--dim);font-variant-numeric:tabular-nums}
 .vturn b{font-size:12px;letter-spacing:1px;color:var(--dim)}
 .vturn .verse{white-space:pre-wrap;margin-top:6px;font-size:14px}
 .cmt{border-top:1px solid var(--line);padding:10px 0}
+.reply{margin:9px 0 0 16px;padding-left:12px;border-left:2px solid var(--line)}
+.reply b{font-size:12px;color:var(--accent)}
+.reply div{font-size:13.5px}
 .cmt b{font-size:12.5px;color:var(--accent)}
 .searchbox{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line);
   border-radius:8px;padding:10px 12px;font-family:inherit;font-size:14px;margin-bottom:10px}
@@ -708,6 +711,23 @@ function heatTier(h){ return h>0.72?"huge":h>0.52?"good":h>0.32?"mild":"dead"; }
 const REC_KEY="miccheck.save.v2";
 const HIST_CAP=40;          // bouts kept per fighter (declared before buildLeague runs)
 
+/* Every bout is scored by a panel of five. How lopsided the card reads
+   follows how dominant the win actually was, so a blowout comes back 5-0 and
+   a battle decided by a hair comes back 3-2. */
+function decisionFor(dominance,rnd2){
+  const r=(rnd2||Math.random)();
+  const d=clamp(dominance,0,1);
+  const pUnan=0.10+d*0.62, pMaj=pUnan+0.25+d*0.12;
+  if(r<pUnan)  return {tally:"5-0", label:"Unanimous Decision"};
+  if(r<pMaj)   return {tally:"4-1", label:"Majority Decision"};
+  return {tally:"3-2", label:"Split Decision"};
+}
+const DRAW_DEC={tally:"3-3", label:"Draw"};
+// "MADI vs LIL BRACKET | 3-2 Split Decision MADI"
+function decLine(a,b,dec,winner){
+  return `${a} vs ${b} | ${dec.tally} ${dec.label}${winner?" "+winner:""}`;
+}
+
 /* ---------------- the league ---------------- */
 /* A ladder of exactly 65: you, the four you can face, and 60 who battle each
    other in the background so the rankings and the feed keep moving. */
@@ -718,6 +738,30 @@ const FN2=["VERSE","MALICE","CIPHER","GRAVEL","SERMON","STATIC","MARROW","THESAU
 const SOLO=["PAPERCUT","DEADWEIGHT","NO COMMENT","HANDWRITING","CHALK OUTLINE","BUS FARE","LOOSE TOOTH",
             "WET CEMENT","SECOND OPINION","THE LANDLORD","COLD PIZZA","STAIRWELL","JURY DUTY","MOTH BALL",
             "LOW BATTERY","THE DENTIST","FIRE EXIT","SPARE KEY","TAX SEASON","QUIET STORM","BROKEN ESCALATOR"];
+
+/* Back-fill a career for any fighter carrying a record but no bout log, so a
+   profile opened on day one is not blank - and so saves made before histories
+   existed get one too. The generated bouts add up to exactly the record the
+   fighter already holds, against real names from the same league, each with
+   its own decision, dated backwards in time. */
+function backfillHistories(list,rnd){
+  rnd=rnd||Math.random;
+  const roster=list.map(f=>f.name);
+  list.forEach(f=>{
+    const total=(f.w||0)+(f.l||0)+(f.d||0);
+    if(Array.isArray(f.hist) && f.hist.length>=Math.min(total,HIST_CAP)) return;   // already has one
+    const seq=[...Array(f.w||0).fill("w"),...Array(f.l||0).fill("l"),...Array(f.d||0).fill("d")];
+    for(let i=seq.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [seq[i],seq[j]]=[seq[j],seq[i]]; }
+    let t=Date.now();
+    f.hist=seq.slice(0,HIST_CAP).map(res=>{
+      t-=(1+Math.floor(rnd()*6))*86400000;
+      let vs=roster[Math.floor(rnd()*roster.length)];
+      if(vs===f.name) vs=roster[(roster.indexOf(vs)+1)%roster.length];
+      const dec = res==="d" ? DRAW_DEC : decisionFor(rnd()*0.9,rnd);
+      return {res, vs, ts:t, ev:"card", dec:dec.tally, lab:dec.label};
+    });
+  });
+}
 
 // small deterministic RNG so a league generated once looks intentional
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
@@ -743,18 +787,7 @@ function buildLeague(){
   /* Back-fill a career so a profile opened on day one is not blank. The
      generated bouts add up to exactly the record the fighter already carries,
      against real names from this same league, dated backwards in time. */
-  const roster=list.map(f=>f.name);
-  list.forEach(f=>{
-    const seq=[...Array(f.w).fill("w"),...Array(f.l).fill("l"),...Array(f.d).fill("d")];
-    for(let i=seq.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [seq[i],seq[j]]=[seq[j],seq[i]]; }
-    let t=Date.now();
-    f.hist=seq.slice(0,HIST_CAP).map(res=>{
-      t-= (1+Math.floor(rnd()*6))*86400000;          // a few days between bouts
-      let vs=roster[Math.floor(rnd()*roster.length)];
-      if(vs===f.name) vs=roster[(roster.indexOf(vs)+1)%roster.length];
-      return {res, vs, ts:t, ev:"card"};
-    });
-  });
+  backfillHistories(list,rnd);
   return list;
 }
 
@@ -777,8 +810,12 @@ function loadRecords(){
     if(Array.isArray(p.league)&&p.league.length===base.league.length) base.league=p.league;
     else if(Array.isArray(p.league)){
       const old=Object.fromEntries(p.league.map(f=>[f.name,f]));
-      base.league.forEach(f=>{ const o=old[f.name]; if(o){f.w=o.w;f.l=o.l;f.d=o.d;} });
+      base.league.forEach(f=>{ const o=old[f.name]; if(o){f.w=o.w;f.l=o.l;f.d=o.d;f.hist=o.hist;} });
     }
+    // saves written before bout logs existed carry records with no history
+    backfillHistories(base.league);
+    const played=(base.user.w||0)+(base.user.l||0)+(base.user.d||0);   // inline: bouts() is declared later
+    if(played>base.user.hist.length) backfillHistories([base.user]);
     if(Array.isArray(p.feed)) base.feed=p.feed.slice(0,150);
     if(Array.isArray(p.vods)) base.vods=p.vods.slice(0,60);
     base.clips=p.clips||0; base.named=!!p.named;
@@ -808,10 +845,78 @@ const recStr=r=>`${r.w}-${r.l}${r.d?"-"+r.d:""}`;
 /* ---------------- BARZ (the social feed) ---------------- */
 /* Every post here is generated from something that actually happened in a
    match: a result, a bar you really wrote, a time you ran over the clock. */
-const FANS=["@cipherhead","@basement_dwella","@barsonly","@notaryfan92","@the_ohh_guy","@penlord",
-  "@rewindthat","@auntiewiththephone","@quotableclips","@sublevel3","@boothrat","@mic_forensics",
-  "@doubletime","@thecrowdwas","@wordplaywatch","@nosleepbars","@clipfarmer","@venomstan","@bracketdefender"];
+/* The timeline is written by people, not a results ticker. Each handle has a
+   temperament, and posts are built from what actually happened - the decision,
+   the names, the scoreline, your bars - then argued over in the replies. */
+const VOICES=[
+  {h:"@cipherhead",       t:"analyst"}, {h:"@basement_dwella", t:"casual"},
+  {h:"@barsonly",         t:"purist"},  {h:"@notaryfan92",     t:"stan"},
+  {h:"@the_ohh_guy",      t:"hype"},    {h:"@penlord",         t:"purist"},
+  {h:"@rewindthat",       t:"hype"},    {h:"@auntiewiththephone",t:"casual"},
+  {h:"@quotableclips",    t:"hype"},    {h:"@sublevel3",       t:"analyst"},
+  {h:"@boothrat",         t:"purist"},  {h:"@mic_forensics",   t:"analyst"},
+  {h:"@doubletime",       t:"hype"},    {h:"@thecrowdwas",     t:"casual"},
+  {h:"@wordplaywatch",    t:"purist"},  {h:"@nosleepbars",     t:"stan"},
+  {h:"@clipfarmer",       t:"hype"},    {h:"@venomstan",       t:"stan"},
+  {h:"@bracketdefender",  t:"stan"},    {h:"@judgewatch",      t:"hater"},
+  {h:"@coldtakes_only",   t:"hater"},   {h:"@thirdrowseats",   t:"casual"},
+  {h:"@barcounter",       t:"analyst"}, {h:"@nofilterfan",     t:"hater"}];
+const FANS=VOICES.map(v=>v.h);
 const PRESS=["@BoilerRoomTV","@UndergroundWire","@BarReport","@TheCircleMag","@SublevelStats"];
+const voiceOf=h=>(VOICES.find(v=>v.h===h)||{t:"casual"}).t;
+
+/* things people say about a decision, by temperament */
+const TAKES={
+  analyst:[ w=>`${w.win} took rounds 1 and 3. that's the whole battle. ${w.dec} is right.`,
+            w=>`people sleeping on how ${w.lose} adjusted in round 2. still lost but it was closer than the card says.`,
+            w=>`${w.dec} feels generous. i had it a round wider.`,
+            w=>`the scheme density gap between these two was the story tonight.` ],
+  purist:[  w=>`${w.win} won on pen. every rhyme landed somewhere on purpose.`,
+            w=>`${w.lose} was louder. ${w.win} was better written. those are different things.`,
+            w=>`can we talk about how nobody in this building uses internals anymore. except ${w.win}.`,
+            w=>`i don't care about the crowd reaction, i care about the bars. ${w.win} by a mile.` ],
+  hype:[    w=>`${w.win.toUpperCase()} DID WHAT?? REWIND IT`,
+            w=>`the room was SHAKING. you had to be there.`,
+            w=>`${w.dec}?! that was a BODY. put some respect on it.`,
+            w=>`i have watched this three times and i'm going again` ],
+  stan:[    w=>`told everybody ${w.win} was next. nobody listened.`,
+            w=>`${w.lose} will run it back and win. screenshot this.`,
+            w=>`${w.win} is the most underrated writer in this city and it's not close`,
+            w=>`been following ${w.win} since the parking lot days. deserved.` ],
+  hater:[   w=>`${w.dec}? the judges watched a different battle.`,
+            w=>`this whole ladder is politics. ${w.lose} won that.`,
+            w=>`underground fell off. neither of them said anything quotable.`,
+            w=>`${w.win} gets favours from that panel every single time.` ],
+  casual:[  w=>`ok that was actually entertaining`,
+            w=>`i don't know rap but the short one was funny`,
+            w=>`why is it always so hot in that basement`,
+            w=>`who won i was getting a drink` ]
+};
+const REPLIES={
+  analyst:["respectfully, rewatch round two.","the numbers don't support that.","fair, but the cadence gap was real."],
+  purist: ["bars over volume. always.","this is the only correct take here.","nah the writing was the difference."],
+  hype:   ["SAY IT LOUDER","exactly this","nah you cooked with this comment"],
+  stan:   ["finally somebody said it","we been knew","protect this man at all costs"],
+  hater:  ["cope","this aged badly already","every time with you people"],
+  casual: ["lol","i was just gonna say","wait really?"]
+};
+const pickVoice=t=>pick(VOICES.filter(v=>v.t===t)).h;
+
+/* a post plus a small argument underneath it */
+function chatter(ctx,n){
+  const types=["analyst","purist","hype","stan","hater","casual"];
+  for(let i=0;i<(n||3);i++){
+    const t=pick(types), who=pickVoice(t);
+    const body=pick(TAKES[t])(ctx);
+    const replies=[];
+    const rn=Math.random()<0.55?1+Math.floor(Math.random()*2):0;
+    for(let k=0;k<rn;k++){
+      const rt=pick(types);
+      replies.push({who:pickVoice(rt), text:pick(REPLIES[rt]), likes:Math.floor(Math.random()*90)});
+    }
+    post({kind:"fan",who,text:body,likes:Math.floor(Math.random()*600),replies});
+  }
+}
 
 function nowStamp(){ return Date.now(); }
 function ago(ts){
@@ -821,7 +926,8 @@ function ago(ts){
   return Math.floor(h/24)+"d";
 }
 function post(o){
-  RECORDS.feed.unshift({id:Math.random().toString(36).slice(2),ts:nowStamp(),likes:0,...o});
+  RECORDS.feed.unshift({id:Math.random().toString(36).slice(2),ts:nowStamp(),
+                        likes:Math.floor(Math.random()*40),...o});
   RECORDS.feed=RECORDS.feed.slice(0,150);
 }
 const fmtViews=n=> n>=1e6?(n/1e6).toFixed(1)+"M" : n>=1e3?(n/1e3).toFixed(1)+"K" : String(n);
@@ -864,20 +970,21 @@ function fighterRow(name){ return RECORDS.league.find(f=>f.name===name); }
 
 /* the four faceable opponents keep a second copy of their record for the
    battle screens, so any change has to land on both */
-function logBout(holder,res,vs,ev){
+function logBout(holder,res,vs,ev,dec){
   if(!Array.isArray(holder.hist)) holder.hist=[];
-  holder.hist.unshift({res,vs,ts:nowStamp(),ev:ev||"card"});
+  holder.hist.unshift({res,vs,ts:nowStamp(),ev:ev||"card",
+                       dec:(dec||DRAW_DEC).tally, lab:(dec||DRAW_DEC).label});
   holder.hist=holder.hist.slice(0,HIST_CAP);
 }
-function creditResult(f,key,vs,ev){
+function creditResult(f,key,vs,ev,dec){
   f[key]++;
   if(!f.npc && RECORDS.ops[f.name]) RECORDS.ops[f.name][key]++;
-  if(vs) logBout(f,key,vs,ev);
+  if(vs) logBout(f,key,vs,ev,dec);
 }
-function creditUser(res,vs,ev){
+function creditUser(res,vs,ev,dec){
   RECORDS.user[res]++;
   RECORDS.user.streak = res==="w" ? (RECORDS.user.streak||0)+1 : 0;
-  logBout(RECORDS.user,res,vs,ev);
+  logBout(RECORDS.user,res,vs,ev,dec);
 }
 
 function simLeagueNight(){
@@ -893,14 +1000,15 @@ function simLeagueNight(){
     const pa=a.pow/(a.pow+b.pow);
     const r=Math.random();
     if(r<0.06){
-      creditResult(a,"d",b.name); creditResult(b,"d",a.name);
-      results.push({draw:true,a,b});
+      creditResult(a,"d",b.name,"card",DRAW_DEC); creditResult(b,"d",a.name,"card",DRAW_DEC);
+      results.push({draw:true,a,b,dec:DRAW_DEC});
     } else {
       const aWins = r < 0.06+0.94*pa;
       const win=aWins?a:b, lose=aWins?b:a;
-      creditResult(win,"w",lose.name); creditResult(lose,"l",win.name);
+      const dec=decisionFor(Math.abs(skillOf(win)-skillOf(lose))*2.4);
+      creditResult(win,"w",lose.name,"card",dec); creditResult(lose,"l",win.name,"card",dec);
       // an upset is the weaker fighter taking it
-      results.push({draw:false,win,lose,upset:win.pow < lose.pow-1.6});
+      results.push({draw:false,win,lose,dec,upset:win.pow < lose.pow-1.6});
     }
   }
 
@@ -908,18 +1016,20 @@ function simLeagueNight(){
   const feature=results.filter(r=>!r.draw);
   const upsets=feature.filter(r=>r.upset);
   upsets.slice(0,2).forEach(r=>post({kind:"result",who:pick(PRESS),
-    text:`UPSET — ${r.win.name} def. ${r.lose.name}. ${pick(["Nobody saw it coming.","The ladder moves tonight.","Crowd stormed the circle.","He was not supposed to be here."])}`}));
+    text:`UPSET — ${decLine(r.win.name,r.lose.name,r.dec,r.win.name)}. ${pick(["Nobody saw it coming.","The ladder moves tonight.","Crowd stormed the circle.","He was not supposed to be here."])}`}));
   feature.filter(r=>!r.upset).slice(0,2).forEach(r=>post({kind:"result",who:pick(PRESS),
-    text:`${r.win.name} def. ${r.lose.name}. ${pick(["Unanimous.","2-1 split.","Judges took four minutes.","Stopped it in round three.","Never in doubt."])}`}));
+    text:`${decLine(r.win.name,r.lose.name,r.dec,r.win.name)}. ${pick(["Judges took four minutes.","Never in doubt.","The room agreed.","Panel barely argued."])}`}));
   results.filter(r=>r.draw).slice(0,1).forEach(r=>post({kind:"result",who:pick(PRESS),
-    text:`DRAW — ${r.a.name} and ${r.b.name} go the distance. Panel split. Crowd not happy.`}));
+    text:`DRAW — ${r.a.name} vs ${r.b.name} | 3-3, nobody moves. Crowd not happy.`}));
 
   feature.slice(0,3).forEach(r=>uploadVOD({a:r.win.name,b:r.lose.name,win:r.win.name,
     main:false, close:r.upset, note:r.upset?"Upset on the undercard.":""}));
+  if(feature.length) chatter({win:feature[0].win.name, lose:feature[0].lose.name,
+    dec:feature[0].dec.tally+" "+feature[0].dec.label}, 1+Math.floor(Math.random()*2));
   post({kind:"press",who:"@SublevelStats",
     text:`TONIGHT'S CARD (${results.length} battles) — `+results.map(r=>r.draw
-      ? `${r.a.name} drew ${r.b.name}`
-      : `${r.win.name} def. ${r.lose.name}`).join(" · ")});
+      ? `${r.a.name} drew ${r.b.name} (3-3)`
+      : `${r.win.name} def. ${r.lose.name} (${r.dec.tally})`).join(" · ")});
   return results;
 }
 
@@ -973,11 +1083,12 @@ function openProfile(name){
     <div class="card">
       <div class="tag">Bout history &mdash; newest first</div>
       ${hist.length?`<table class="hist">
-        <tr><th>#</th><th>Result</th><th>Opponent</th><th>Card</th><th>When</th></tr>
+        <tr><th>#</th><th>Result</th><th>Opponent</th><th>Decision</th><th>Card</th><th>When</th></tr>
         ${hist.map((b,i)=>`<tr>
           <td class="r">${hist.length-i}</td>
           <td><span class="chip ${b.res}">${b.res==="w"?"WIN":b.res==="l"?"LOSS":"DRAW"}</span></td>
           <td>${b.vs?`<a class="flink" data-f="${esc(b.vs)}">${esc(b.vs)}</a>`:"&mdash;"}</td>
+          <td class="vsub">${b.dec?`<b>${b.dec}</b> ${esc(b.lab||"")}`:"&mdash;"}</td>
           <td class="vsub">${b.ev==="main"?"Main event":b.ev==="sim"?"Simulated":"Undercard"}</td>
           <td class="vsub">${ago(b.ts)} ago</td></tr>`).join("")}
        </table>`
@@ -1185,9 +1296,10 @@ function simOneMatch(opp){
   // evaluated per battle, because both records move during a run
   const o=oddsFor(opp);
   const res=Math.random()<o.p ? "w" : "l";
-  creditUser(res,opp.name,"sim");
-  creditResult(opp, res==="w"?"l":"w", RECORDS.user.name, "sim");
-  return {opp:opp.name, res, chance:o.p, oppRec:recStr(opp),
+  const dec=decisionFor(Math.abs(o.p-0.5)*2);
+  creditUser(res,opp.name,"sim",dec);
+  creditResult(opp, res==="w"?"l":"w", RECORDS.user.name, "sim", dec);
+  return {opp:opp.name, res, chance:o.p, oppRec:recStr(opp), dec,
           mySkill:o.mine, theirSkill:o.theirs, favoured:o.favoured};
 }
 
@@ -1220,6 +1332,9 @@ function runSim(n){
   post({kind:"press",who:"@SublevelStats",
     text:`${RECORDS.user.name} ran a ${n}-battle stretch: ${w}-${l}${d?"-"+d:""}. ${
       move>0?`Up ${move} to #${endRank}.`:move<0?`Down ${-move} to #${endRank}.`:`Still #${endRank}.`}`});
+  if(log.length) chatter({win:w>=l?RECORDS.user.name:log[log.length-1].opp,
+    lose:w>=l?log[log.length-1].opp:RECORDS.user.name,
+    dec:`${w}-${l} over the stretch`}, 2);
   const bigW=log.filter(r=>r.res==="w");
   if(bigW.length) post({kind:"fan",who:pick(FANS),
     text:pick([`${RECORDS.user.name} been taking everybody. ${bigW[0].opp} was on that list.`,
@@ -1232,7 +1347,10 @@ function runSim(n){
 }
 
 /* posts generated from your match */
-function postMatchResult(res,opName,ut,ot,diff){
+function postMatchResult(res,opName,ut,ot,diff,dec){
+  const ctx={win:res==="w"?RECORDS.user.name:opName,
+             lose:res==="w"?opName:RECORDS.user.name,
+             dec:(dec||DRAW_DEC).tally+" "+(dec||DRAW_DEC).label};
   const me="@"+handle(RECORDS.user.name);
   const rank=myRank();
   if(res==="w"){
@@ -1244,7 +1362,7 @@ function postMatchResult(res,opName,ut,ot,diff){
     if(RECORDS.user.streak>=2) post({kind:"press",who:pick(PRESS),
       text:`${RECORDS.user.name} on a ${RECORDS.user.streak}-battle run. The ladder is taking notice.`});
   } else if(res==="l"){
-    post({kind:"result",who:pick(PRESS),text:`${opName} def. ${RECORDS.user.name}. ${RECORDS.user.name} falls to #${rank} of ${ladder().length}.`});
+    post({kind:"result",who:pick(PRESS),text:`${decLine(opName,RECORDS.user.name,dec||DRAW_DEC,opName)}. ${RECORDS.user.name} falls to #${rank} of ${ladder().length}.`});
     post({kind:"fan",who:pick(FANS),text:pick([
       `${RECORDS.user.name} had moments tho. the pen is there, the clock wasn't.`,
       `respectfully ${RECORDS.user.name} got cooked but he showed up. that counts.`,
@@ -1254,6 +1372,7 @@ function postMatchResult(res,opName,ut,ot,diff){
   }
   if(ot>0) post({kind:"fan",who:pick(FANS),
     text:`${RECORDS.user.name} went ${fmtClock(ot)} over the clock. love the bars, respect the format 😭`});
+  chatter(ctx, 3+Math.floor(Math.random()*3));
   // the opponent talks back
   post({kind:"beef",who:"@"+handle(opName),text:res==="w"
     ? pick([`Take it. I'll see you again and it won't read the same.`,`One night. One. Enjoy it.`,`He caught me. Next one I'm not warming up.`])
@@ -1421,7 +1540,10 @@ function renderFeed(){
       <div class="body">${esc(p.text)}</div>
       <div class="q">&ldquo;${esc(p.quote)}&rdquo;</div>
       <div class="views">&#9654; ${fmtViews(p.views)} views</div></div>`;
-    return `<div class="post ${p.kind}">${head}<div class="body">${esc(p.text)}</div></div>`;
+    const rep=(p.replies||[]).map(r=>`<div class="reply"><b>${esc(r.who)}</b>
+        <div>${esc(r.text)}</div><div class="vsub">&#9829; ${r.likes}</div></div>`).join("");
+    return `<div class="post ${p.kind}">${head}<div class="body">${esc(p.text)}</div>
+      ${p.likes?`<div class="vsub">&#9829; ${p.likes}</div>`:""}${rep}</div>`;
   }).join("");
 }
 function renderRanks(){
@@ -1534,11 +1656,12 @@ function renderRanks(){
       <div class="rec"><span>Rank: <b>#${out.startRank} &rarr; #${out.endRank}</b></span>
         <span>${out.move>0?`<b style="color:var(--good)">Up ${out.move}</b>`:out.move<0?`<b style="color:var(--bad)">Down ${-out.move}</b>`:"No movement"}</span></div>
       <table style="margin-top:10px">
-        <tr><th>Opponent</th><th>Their record</th><th>Skill</th><th>Your odds</th><th>Result</th></tr>
+        <tr><th>Opponent</th><th>Their record</th><th>Skill</th><th>Your odds</th><th>Card</th><th>Result</th></tr>
         ${out.log.map(r=>`<tr><td>${esc(r.opp)}</td>
           <td class="n">${r.oppRec}</td>
           <td class="n">${(r.mySkill*100).toFixed(0)} v ${(r.theirSkill*100).toFixed(0)}</td>
           <td class="n" style="color:${r.favoured?"var(--good)":"var(--dim)"}">${Math.round(r.chance*100)}%</td>
+          <td class="n vsub">${r.dec?r.dec.tally:"&mdash;"}</td>
           <td style="color:${r.res==="w"?"var(--good)":"var(--bad)"}">${r.res==="w"?"WIN":"LOSS"}</td></tr>`).join("")}
       </table>
       <div class="crowd">Simulated battles produce no clips &mdash; only verses you actually write get clipped.</div>`;
@@ -1684,8 +1807,9 @@ async function resolveBySim(){
   const startRank=myRank();
   const res=Math.random()<chance?"w":"l";
 
-  creditUser(res,state.op.name,"sim");
-  if(opp) creditResult(opp,res==="w"?"l":"w",RECORDS.user.name,"sim");
+  const dec=decisionFor(Math.abs(chance-0.5)*2);
+  creditUser(res,state.op.name,"sim",dec);
+  if(opp) creditResult(opp,res==="w"?"l":"w",RECORDS.user.name,"sim",dec);
   if(RECORDS.ops[state.op.name] && !opp) RECORDS.ops[state.op.name][res==="w"?"l":"w"]++;
 
   // the rounds you did write were judged for real, so they still rate you
@@ -1697,11 +1821,15 @@ async function resolveBySim(){
 
   uploadVOD({a:RECORDS.user.name,b:state.op.name,
     win:res==="w"?RECORDS.user.name:state.op.name, main:true, close:true,
+    scoreLine:`${dec.tally} ${dec.label}.`,
     rounds:written.length?state.tape.slice(0,written.length):null,
     note:written.length?`${RECORDS.user.name} wrote ${written.length} of 3 rounds; the rest was called.`:"Resolved without a written round."});
   post({kind:"result",who:pick(PRESS),
     text:`${res==="w"?RECORDS.user.name+" def. "+state.op.name:state.op.name+" def. "+RECORDS.user.name}. `+
          `${written.length?`${RECORDS.user.name} wrote ${written.length} of 3 rounds before the panel called it.`:"Walkover - no rounds written."}`});
+  chatter({win:res==="w"?RECORDS.user.name:state.op.name,
+           lose:res==="w"?state.op.name:RECORDS.user.name,
+           dec:dec.tally+" "+dec.label}, 2);
   simLeagueNight();
   const endRank=myRank(), move=startRank-endRank;
   markFeed(2); saveRecords(RECORDS);
@@ -1860,10 +1988,13 @@ async function judge(){
   const opBest=bestLine(opA);
 
   const diff=ut-ot;
+  // settled before the verdict text, which quotes the panel's card
+  const res = Math.abs(diff)<0.9 ? "d" : diff>0 ? "w" : "l";
+  const dec = res==="d" ? DRAW_DEC : decisionFor(Math.abs(diff)/22);
   const verdict = Math.abs(diff)<0.9
     ? `<div class="win d">DRAW — ${ut.toFixed(1)} to ${ot.toFixed(1)}</div><div>Nobody hands out a belt for this. Run it back.</div>`
     : diff>0
-      ? `<div class="win u">WINNER: YOU — ${ut.toFixed(1)} to ${ot.toFixed(1)}</div><div>You took ${state.op.name} in his own basement. The host is already asking who you came with.</div>`
+      ? `<div class="win u">WINNER: YOU — ${dec.tally} ${dec.label} — ${ut.toFixed(1)} to ${ot.toFixed(1)}</div><div>You took ${state.op.name} in his own basement. The host is already asking who you came with.</div>`
       : `<div class="win o">WINNER: ${state.op.name} — ${ot.toFixed(1)} to ${ut.toFixed(1)}</div><div>You lost by ${Math.abs(diff).toFixed(1)} points. That's not a blowout — that's a gap you can close with a pen.</div>`;
 
   const card=push(el(`<div class="card">
@@ -1909,25 +2040,24 @@ async function judge(){
   }
 
   // commit the result to both career records
-  const res = Math.abs(diff)<0.9 ? "d" : diff>0 ? "w" : "l";
-  creditUser(res,state.op.name,"main");
+  creditUser(res,state.op.name,"main",dec);
   RECORDS.user.best = Math.max(RECORDS.user.best||0, ut);
   // your per-round average from this match feeds the rating the simulator uses
   RECORDS.user.form.push(Math.round((ut/3)*10)/10);
   RECORDS.user.form=RECORDS.user.form.slice(-10);
   const oppKey = res==="d"?"d":res==="w"?"l":"w";
   const lrow=fighterRow(state.op.name);
-  if(lrow) creditResult(lrow,oppKey,RECORDS.user.name,"main");
+  if(lrow) creditResult(lrow,oppKey,RECORDS.user.name,"main",dec);
   else if(RECORDS.ops[state.op.name]) RECORDS.ops[state.op.name][oppKey]++;
   const opRec=RECORDS.ops[state.op.name]||lrow;
-  postMatchResult(res,state.op.name,ut,uOT,diff);
+  postMatchResult(res,state.op.name,ut,uOT,diff,dec);
   const before=Object.fromEntries(ladder().map(f=>[f.name,f.rank]));
   simLeagueNight();
   // uploaded last so the main event sits at the top of the channel
   uploadVOD({a:RECORDS.user.name, b:state.op.name,
     win: res==="w"?RECORDS.user.name : res==="l"?state.op.name : "Nobody - drawn",
     main:true, close:Math.abs(diff)<6, rounds:state.tape.slice(0,3),
-    scoreLine:`Final ${ut.toFixed(1)} - ${ot.toFixed(1)}.`,
+    scoreLine:`${dec.tally} ${dec.label}. Final ${ut.toFixed(1)} - ${ot.toFixed(1)}.`,
     note:uOT?`${RECORDS.user.name} ran ${fmtClock(uOT)} into overtime.`:""});
 
   // what the night did to the board

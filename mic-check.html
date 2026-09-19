@@ -147,6 +147,14 @@ table.hist td.r{width:40px;color:var(--dim);font-variant-numeric:tabular-nums}
 .reply b{font-size:12px;color:var(--accent)}
 .reply div{font-size:13.5px}
 .cmt b{font-size:12.5px;color:var(--accent)}
+.belt .beltring{width:64px;height:64px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;
+  justify-content:center;font-weight:800;font-size:15px;letter-spacing:.5px;color:#14140c;
+  background:radial-gradient(circle at 34% 30%,#ffe9a8,var(--accent) 62%,#8a5c05);
+  box-shadow:0 0 0 3px var(--panel),0 0 0 4px var(--line)}
+.card.belt.mine{border-color:var(--accent)}
+.chip.belt{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 55%,transparent);font-weight:800}
+.chip.belt.sm{font-size:9.5px;padding:2px 6px;margin-left:6px}
+select.searchbox{margin-bottom:8px}
 .searchbox{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line);
   border-radius:8px;padding:10px 12px;font-family:inherit;font-size:14px;margin-bottom:10px}
 .tabs{display:flex;gap:6px;margin:0 0 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
@@ -208,11 +216,13 @@ table.hist td.r{width:40px;color:var(--dim);font-variant-numeric:tabular-nums}
     <button class="tab" data-p="feed">BARZ <span class="dot" id="feeddot"></span></button>
     <button class="tab" data-p="tv">TV <span class="dot" id="tvdot"></span></button>
     <button class="tab" data-p="ranks">RANKINGS</button>
+    <button class="tab" data-p="titles">TITLES</button>
   </nav>
   <div id="stage" class="panel on"></div>
   <div id="feed" class="panel"></div>
   <div id="tv" class="panel"></div>
   <div id="ranks" class="panel"></div>
+  <div id="titles" class="panel"></div>
 </div>
 
 <script>
@@ -739,28 +749,99 @@ const SOLO=["PAPERCUT","DEADWEIGHT","NO COMMENT","HANDWRITING","CHALK OUTLINE","
             "WET CEMENT","SECOND OPINION","THE LANDLORD","COLD PIZZA","STAIRWELL","JURY DUTY","MOTH BALL",
             "LOW BATTERY","THE DENTIST","FIRE EXIT","SPARE KEY","TAX SEASON","QUIET STORM","BROKEN ESCALATOR"];
 
-/* Back-fill a career for any fighter carrying a record but no bout log, so a
-   profile opened on day one is not blank - and so saves made before histories
-   existed get one too. The generated bouts add up to exactly the record the
-   fighter already holds, against real names from the same league, each with
-   its own decision, dated backwards in time. */
+/* Back-fill the league's past.
+
+   Every bout has two sides, so a history cannot be generated per fighter in
+   isolation: if KING TITHE beat OG GRAVEL, that same battle has to appear on
+   OG GRAVEL's record as a loss, on the same date, with the same decision.
+
+   So the past is built as a schedule rather than as biographies. Each
+   fighter contributes one slot per win they hold and one per loss; the two
+   pools are shuffled and paired, and each pairing becomes a single bout
+   written to both fighters. That makes every history mutually consistent by
+   construction, and each fighter still ends on exactly the record they carry.
+
+   The pools only pair up if the league's total wins equal its total losses,
+   which independently generated records will not satisfy, so the gap is
+   settled first by adjusting NPC records (never the four you can face, whose
+   records are fixed). Draws are paired the same way and need an even count. */
 function backfillHistories(list,rnd){
   rnd=rnd||Math.random;
-  const roster=list.map(f=>f.name);
-  list.forEach(f=>{
+  const need=list.filter(f=>{
     const total=(f.w||0)+(f.l||0)+(f.d||0);
-    if(Array.isArray(f.hist) && f.hist.length>=Math.min(total,HIST_CAP)) return;   // already has one
-    const seq=[...Array(f.w||0).fill("w"),...Array(f.l||0).fill("l"),...Array(f.d||0).fill("d")];
-    for(let i=seq.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [seq[i],seq[j]]=[seq[j],seq[i]]; }
-    let t=Date.now();
-    f.hist=seq.slice(0,HIST_CAP).map(res=>{
-      t-=(1+Math.floor(rnd()*6))*86400000;
-      let vs=roster[Math.floor(rnd()*roster.length)];
-      if(vs===f.name) vs=roster[(roster.indexOf(vs)+1)%roster.length];
-      const dec = res==="d" ? DRAW_DEC : decisionFor(rnd()*0.9,rnd);
-      return {res, vs, ts:t, ev:"card", dec:dec.tally, lab:dec.label};
-    });
+    return !(Array.isArray(f.hist) && f.hist.length>=Math.min(total,HIST_CAP));
   });
+  if(!need.length) return;
+  need.forEach(f=>f.hist=[]);
+
+  const adjustable=need.filter(f=>f.npc!==false);
+  const bump=(key,n)=>{ for(let i=0;i<n;i++){
+    const f=adjustable[Math.floor(rnd()*adjustable.length)] || need[0]; f[key]=(f[key]||0)+1; } };
+
+  // balance the ledger: one fighter's win is another's loss
+  let diff=need.reduce((a,f)=>a+(f.w||0),0)-need.reduce((a,f)=>a+(f.l||0),0);
+  if(diff>0) bump("l",diff); else if(diff<0) bump("w",-diff);
+  if(need.reduce((a,f)=>a+(f.d||0),0)%2) bump("d",1);
+
+  const slots=key=>{ const out=[];
+    need.forEach(f=>{ for(let i=0;i<(f[key]||0);i++) out.push(f); });
+    for(let i=out.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [out[i],out[j]]=[out[j],out[i]]; }
+    return out; };
+
+  const winners=slots("w"), losers=slots("l"), drawers=slots("d");
+  // a fighter cannot face themselves; swap the collision forward
+  for(let i=0;i<winners.length;i++){
+    if(winners[i]===losers[i]){
+      const j=(i+1)%losers.length;
+      [losers[i],losers[j]]=[losers[j],losers[i]];
+    }
+  }
+  for(let i=0;i<drawers.length-1;i+=2){
+    if(drawers[i]===drawers[i+1]){
+      const j=(i+2)%drawers.length;
+      [drawers[i+1],drawers[j]]=[drawers[j],drawers[i+1]];
+    }
+  }
+
+  const bouts_=[];
+  const n=Math.min(winners.length,losers.length);
+  for(let i=0;i<n;i++){
+    if(winners[i]===losers[i]){
+      // find a partner whose swap resolves this collision without making one
+      let fixed=false;
+      for(let k=1;k<n;k++){
+        const j=(i+k)%n;
+        if(winners[i]!==losers[j] && winners[j]!==losers[i]){
+          [losers[i],losers[j]]=[losers[j],losers[i]]; fixed=true; break;
+        }
+      }
+      // genuinely unpairable: drop the bout AND the record it stood for, so
+      // the fighter's sheet and their W-L never disagree
+      if(!fixed){ winners[i].w--; losers[i].l--; continue; }
+    }
+    bouts_.push({a:winners[i], b:losers[i], draw:false});
+  }
+  for(let i=0;i+1<drawers.length;i+=2){
+    if(drawers[i]===drawers[i+1]){ drawers[i].d--; drawers[i+1].d--; continue; }
+    bouts_.push({a:drawers[i], b:drawers[i+1], draw:true});
+  }
+  for(let i=bouts_.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [bouts_[i],bouts_[j]]=[bouts_[j],bouts_[i]]; }
+
+  // dated backwards, newest bout first, and written to both fighters at once
+  let t=Date.now();
+  bouts_.forEach(bt=>{
+    t-=(6+Math.floor(rnd()*30))*3600000;                 // hours apart, so cards cluster
+    const dec = bt.draw ? DRAW_DEC : decisionFor(rnd()*0.9,rnd);
+    const stamp={ts:t, ev:"card", dec:dec.tally, lab:dec.label};
+    if(bt.draw){
+      bt.a.hist.push({res:"d", vs:bt.b.name, ...stamp});
+      bt.b.hist.push({res:"d", vs:bt.a.name, ...stamp});
+    } else {
+      bt.a.hist.push({res:"w", vs:bt.b.name, ...stamp});
+      bt.b.hist.push({res:"l", vs:bt.a.name, ...stamp});
+    }
+  });
+  need.forEach(f=>{ f.hist.sort((x,y)=>y.ts-x.ts); f.hist=f.hist.slice(0,HIST_CAP); });
 }
 
 // small deterministic RNG so a league generated once looks intentional
@@ -794,7 +875,7 @@ function buildLeague(){
 const SEED=()=>({
   user:{name:"YOU",w:0,l:0,d:0,streak:0,best:0,form:[],hist:[]},
   ops:Object.fromEntries(OPPONENTS.map(o=>[o.name,{...o.rec}])),
-  league:buildLeague(), feed:[], vods:[], clips:0, named:false
+  league:buildLeague(), feed:[], vods:[], clips:0, named:false, titles:null
 });
 function loadRecords(){
   try{
@@ -819,11 +900,13 @@ function loadRecords(){
     if(Array.isArray(p.feed)) base.feed=p.feed.slice(0,150);
     if(Array.isArray(p.vods)) base.vods=p.vods.slice(0,60);
     base.clips=p.clips||0; base.named=!!p.named;
+    if(p.titles&&p.titles.solo) base.titles=p.titles;
     return base;
   }catch(e){ return SEED(); }
 }
 function saveRecords(r){ try{ localStorage.setItem(REC_KEY,JSON.stringify(r)); }catch(e){} }
 let RECORDS=loadRecords();
+if(!RECORDS.titles) RECORDS.titles=seedTitles();   // needs a finished ladder to seed from
 
 /* the ladder: the user is ranked among all 65 */
 function ladder(){
@@ -1024,6 +1107,7 @@ function simLeagueNight(){
 
   feature.slice(0,3).forEach(r=>uploadVOD({a:r.win.name,b:r.lose.name,win:r.win.name,
     main:false, close:r.upset, note:r.upset?"Upset on the undercard.":""}));
+  simTitleNight();
   if(feature.length) chatter({win:feature[0].win.name, lose:feature[0].lose.name,
     dec:feature[0].dec.tally+" "+feature[0].dec.label}, 1+Math.floor(Math.random()*2));
   post({kind:"press",who:"@SublevelStats",
@@ -1032,6 +1116,169 @@ function simLeagueNight(){
       : `${r.win.name} def. ${r.lose.name} (${r.dec.tally})`).join(" · ")});
   return results;
 }
+
+/* ---------------- championships ---------------- */
+/* Three belts. Singles is one MC, tag is a pair, trios is three. A team's
+   strength is its members' skill with the strongest carrying the most weight,
+   so a strong partner helps but cannot drag a weak duo to the top alone. */
+const BELTS=[
+  {key:"solo", size:1, name:"1v1 CHAMPIONSHIP",   short:"1v1"},
+  {key:"duo",  size:2, name:"2v2 TAG CHAMPIONSHIP", short:"2v2"},
+  {key:"trio", size:3, name:"3v3 TRIOS CHAMPIONSHIP", short:"3v3"}
+];
+const beltDef=k=>BELTS.find(b=>b.key===k);
+
+function teamSkill(names){
+  const sk=names.map(n=>skillOf(recOf(n))).sort((a,b)=>b-a);
+  const weights=[0.5,0.3,0.2];
+  let tot=0, wsum=0;
+  sk.forEach((v,i)=>{ const w=weights[i]!==undefined?weights[i]:0.15; tot+=v*w; wsum+=w; });
+  return tot/wsum;
+}
+function seedTitles(){
+  const rows=ladder().filter(r=>!r.you).map(r=>r.name);
+  return {
+    solo:{holders:[rows[0]], since:Date.now(), defenses:2+Math.floor(Math.random()*4),
+          lineage:[{holders:[rows[3]],won:Date.now()-40*86400000,lost:Date.now()},
+                   {holders:[rows[7]],won:Date.now()-90*86400000,lost:Date.now()-40*86400000}]},
+    duo: {holders:[rows[1],rows[4]], since:Date.now(), defenses:1+Math.floor(Math.random()*3),
+          lineage:[{holders:[rows[6],rows[9]],won:Date.now()-70*86400000,lost:Date.now()}]},
+    trio:{holders:[rows[2],rows[5],rows[8]], since:Date.now(), defenses:Math.floor(Math.random()*3),
+          lineage:[{holders:[rows[10],rows[12],rows[14]],won:Date.now()-60*86400000,lost:Date.now()}]}
+  };
+}
+const holdsBelt=name=>BELTS.filter(b=>(RECORDS.titles[b.key].holders||[]).includes(name)).map(b=>b.short);
+
+/* a title changes hands, and the lineage remembers who held it */
+function awardBelt(key,newHolders,note){
+  const t=RECORDS.titles[key], def=beltDef(key);
+  const old=t.holders.slice();
+  t.lineage.unshift({holders:old, won:t.since, lost:Date.now(), defenses:t.defenses});
+  t.lineage=t.lineage.slice(0,12);
+  t.holders=newHolders.slice(); t.since=Date.now(); t.defenses=0;
+  post({kind:"press",who:"@BoilerRoomTV",
+    text:`NEW ${def.name} — ${newHolders.join(" & ")} take it from ${old.join(" & ")}.${note?" "+note:""}`});
+  chatter({win:newHolders[0], lose:old[0], dec:"for the "+def.short+" belt"}, 2);
+  markFeed(2);
+}
+function defendBelt(key,against){
+  const t=RECORDS.titles[key], def=beltDef(key);
+  t.defenses++;
+  post({kind:"result",who:pick(PRESS),
+    text:`${t.holders.join(" & ")} retain the ${def.short} title against ${against}. Defence #${t.defenses}.`});
+}
+
+/* the belts move on their own while you are away */
+function simTitleNight(){
+  BELTS.forEach(b=>{
+    if(Math.random()>0.22) return;                       // not every night
+    const t=RECORDS.titles[b.key];
+    if(t.holders.includes(RECORDS.user.name)) return;    // yours is defended in person
+    const pool=RECORDS.league.filter(f=>!t.holders.includes(f.name)).map(f=>f.name);
+    const challengers=[];
+    while(challengers.length<b.size && pool.length)
+      challengers.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
+    if(challengers.length<b.size) return;
+    const cs=teamSkill(challengers), hs=teamSkill(t.holders);
+    const p=1/(1+Math.exp(-SKILL_SPREAD*(cs-hs)));
+    if(Math.random()<clamp(p,0.1,0.9)) awardBelt(b.key,challengers,"Belt changes hands on the undercard.");
+    else defendBelt(b.key,challengers.join(" & "));
+  });
+}
+
+function renderTitles(){
+  const el2=document.getElementById("titles");
+  const rows=ladder();
+  const myRankNow=myRank();
+  el2.innerHTML=BELTS.map(b=>{
+    const t=RECORDS.titles[b.key];
+    const mine=t.holders.includes(RECORDS.user.name);
+    const days=Math.max(1,Math.round((Date.now()-t.since)/86400000));
+    return `<div class="card belt ${mine?"mine":""}">
+      <div class="tag">${b.name}</div>
+      <div class="phead">
+        <div class="beltring">${b.short}</div>
+        <div style="min-width:0">
+          <div style="font-size:19px;font-weight:700">${t.holders.map(h=>esc(h)).join(" &amp; ")}${mine?` <span style="color:var(--accent)">(you)</span>`:""}</div>
+          <div class="vsub">Champion ${days} day${days===1?"":"s"} &middot; ${t.defenses} defence${t.defenses===1?"":"s"} &middot; team skill ${(teamSkill(t.holders)*100).toFixed(0)}</div>
+        </div>
+      </div>
+      <div class="bar">
+        <button class="chal" data-b="${b.key}" ${mine?"disabled":""}>${mine?"YOU HOLD THIS":"CHALLENGE FOR THE "+b.short}</button>
+      </div>
+      <div id="chal-${b.key}"></div>
+      ${t.lineage.length?`<div class="tag" style="margin-top:14px">Lineage</div>
+        <table><tr><th>Held by</th><th>Defences</th><th>Reign</th></tr>
+        ${t.lineage.map(l=>`<tr><td>${l.holders.map(h=>esc(h)).join(" &amp; ")}</td>
+          <td class="n">${l.defenses||0}</td>
+          <td class="vsub">${Math.max(1,Math.round((l.lost-l.won)/86400000))} days</td></tr>`).join("")}
+        </table>`:""}
+    </div>`;
+  }).join("")+`<div class="card"><div class="crowd">
+      The 1v1 belt is contested in a written battle &mdash; you have to actually rap for it.
+      Tag and trios are contested as team battles, decided on combined skill with the strongest member weighted heaviest.
+      You are ranked #${myRankNow}; a singles challenge needs top 8.</div></div>`;
+
+  el2.querySelectorAll(".chal").forEach(btn=>btn.addEventListener("click",()=>openChallenge(btn.dataset.b)));
+}
+
+function openChallenge(key){
+  const b=beltDef(key), t=RECORDS.titles[key], zone=document.getElementById("chal-"+key);
+  if(b.size===1){
+    if(myRank()>8){ zone.innerHTML=`<div class="timing ot">You are #${myRank()}. Get inside the top 8 and the champion has to answer.</div>`; return; }
+    zone.innerHTML=`<div class="timing">Title shot granted. The battle runs on the BATTLE tab &mdash; three rounds, written, belt on the line.</div>
+      <div class="bar"><button id="gotitle">TAKE THE TITLE SHOT</button></div>`;
+    document.getElementById("gotitle").addEventListener("click",()=>{
+      pendingTitleShot=key; showPanel("stage"); start();
+    });
+    return;
+  }
+  // pick partners for a team challenge
+  const pool=ladder().filter(r=>!r.you && !t.holders.includes(r.name)).slice(0,30);
+  zone.innerHTML=`<div class="timing">Pick ${b.size-1} partner${b.size-1===1?"":"s"} for the ${b.short} challenge.</div>
+    ${Array.from({length:b.size-1},(_,i)=>`<select class="searchbox pnr" data-i="${i}">
+      ${pool.map(r=>`<option value="${esc(r.name)}">#${r.rank} ${esc(r.name)} (${recStr(r)})</option>`).join("")}
+    </select>`).join("")}
+    <div class="bar"><button id="gteam">RUN THE TEAM BATTLE</button></div>
+    <div id="tres-${key}"></div>`;
+  document.getElementById("gteam").addEventListener("click",()=>{
+    const partners=[...zone.querySelectorAll(".pnr")].map(sel=>sel.value);
+    if(new Set(partners).size!==partners.length){
+      document.getElementById("tres-"+key).innerHTML=`<div class="timing ot">Pick different partners.</div>`; return;
+    }
+    runTeamTitle(key,[RECORDS.user.name,...partners]);
+  });
+}
+
+function runTeamTitle(key,team){
+  const b=beltDef(key), t=RECORDS.titles[key];
+  const ts=teamSkill(team), hs=teamSkill(t.holders);
+  const p=clamp(1/(1+Math.exp(-SKILL_SPREAD*(ts-hs))),FLOOR,CEILING);
+  const won=Math.random()<p;
+  const dec=decisionFor(Math.abs(p-0.5)*2);
+  const zone=document.getElementById("tres-"+key);
+  if(won) awardBelt(key,team,`${RECORDS.user.name} takes it on the ${dec.tally}.`);
+  else {
+    t.defenses++;
+    post({kind:"result",who:pick(PRESS),
+      text:`${t.holders.join(" & ")} retain the ${b.short} title against ${team.join(" & ")} | ${dec.tally} ${dec.label}.`});
+    chatter({win:t.holders[0],lose:RECORDS.user.name,dec:dec.tally+" "+dec.label},2);
+  }
+  uploadVOD({a:team.join(" & "), b:t.holders.join(" & "),
+    win:won?team.join(" & "):RECORDS.user.name, main:true, close:Math.abs(p-0.5)<0.15,
+    scoreLine:`${b.short} title bout. ${dec.tally} ${dec.label}.`});
+  markFeed(2); markTV(); saveRecords(RECORDS);
+  zone.innerHTML=`<div class="card">
+    <div class="win ${won?"u":"o"}">${won?"NEW "+b.short+" CHAMPIONS":"CHALLENGE FAILED"}</div>
+    <div class="rec"><span>Your team skill <b>${(ts*100).toFixed(0)}</b></span>
+      <span>Champions <b>${(hs*100).toFixed(0)}</b></span>
+      <span>Odds <b>${Math.round(p*100)}%</b></span>
+      <span>Card <b>${dec.tally} ${dec.label}</b></span></div>
+    <div class="crowd">${won?`${team.join(" & ")} leave with the belt.`:`${t.holders.join(" & ")} keep it. Defence #${t.defenses}.`}</div>
+  </div>`;
+  setTimeout(renderTitles,1400);
+}
+let pendingTitleShot=null;
 
 /* ---------------- fighter profiles ---------------- */
 function profileOf(name){
@@ -1066,7 +1313,8 @@ function openProfile(name){
         <div class="avatar" style="--h:${hueOf(name)}">${esc(initials(name))}</div>
         <div style="min-width:0">
           <h2 style="margin:0 0 3px;font-size:22px">${esc(name)}${f.you?` <span class="vsub">(you)</span>`:""}</h2>
-          <div class="vsub">Rank #${me?me.rank:"?"} of ${rows.length}${champ?` &middot; <b style="color:var(--accent)">CHAMPION</b>`:""}</div>
+          <div class="vsub">Rank #${me?me.rank:"?"} of ${rows.length}${champ?` &middot; <b style="color:var(--accent)">#1</b>`:""}</div>
+          <div class="chips" style="margin-top:6px">${holdsBelt(name).map(t=>`<span class="chip belt">&#9818; ${t}</span>`).join("")||""}</div>
         </div>
       </div>
       <div class="statgrid">
@@ -1601,7 +1849,8 @@ function renderRanks(){
       ${rows.map(r=>`<tr class="${r.you?"me":""}${faceable.has(r.name)?" faceable":""}" data-f="${esc(r.name)}">
         <td class="r">${r.rank===1?"&#9818;":""}${r.rank}</td>
         <td><span class="avatar sm" style="--h:${hueOf(r.name)}">${esc(initials(r.name))}</span>
-            <a class="flink">${esc(r.name)}</a>${r.you?" (you)":""}</td>
+            <a class="flink">${esc(r.name)}</a>${r.you?" (you)":""}${
+              holdsBelt(r.name).map(t=>`<span class="chip belt sm">&#9818;${t}</span>`).join("")}</td>
         <td class="n">${r.w}</td><td class="n">${r.l}</td><td class="n">${r.d}</td><td class="n">${r.pts}</td></tr>`).join("")}
     </table>`;
 
@@ -1677,6 +1926,7 @@ function showPanel(id){
   if(id==="feed"){ renderFeed(); unseen=0; document.getElementById("feeddot").classList.remove("show"); }
   if(id==="tv"){ renderTV(); const d=document.getElementById("tvdot"); if(d) d.classList.remove("show"); }
   if(id==="ranks") renderRanks();
+  if(id==="titles") renderTitles();
 }
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>showPanel(t.dataset.p)));
 
@@ -1713,6 +1963,15 @@ async function start(){
   state.first=Math.random()<0.5?"opponent":"user";
   state.round=0; state.userVerses=[]; state.userScores=[]; state.opScores=[];
   state.skip=false; state.heat=50; state.tape=[];
+  // a granted title shot puts the belt on this battle and names the champion
+  state.title=pendingTitleShot; pendingTitleShot=null;
+  if(state.title){
+    const champ=RECORDS.titles[state.title].holders[0];
+    const match=OPPONENTS.find(o=>o.name===champ);
+    state.op=match?Object.assign({},match)
+                  :Object.assign({},OPPONENTS[Math.floor(Math.random()*OPPONENTS.length)],
+                                 {name:champ, vibe:"Holder of the 1v1 championship. Walks in like the belt is a body part."});
+  }
 
   push(el(`<div class="card">
     <div class="tag">The Boiler Room &middot; Sublevel 3</div>
@@ -1723,10 +1982,13 @@ async function start(){
     <h2 style="margin:0 0 4px">${state.op.name}</h2>
     <div style="color:var(--accent)">${state.op.style}</div>
     <div class="crowd">${state.op.vibe}</div>
-    <div class="rec"><span>Career record &mdash; <b>${state.op.name}</b>: <b>${recStr(RECORDS.ops[state.op.name])}</b>
-        (#${ladder().find(f=>f.name===state.op.name).rank})</span>
+    <div class="rec"><span>Career record &mdash; <b>${state.op.name}</b>: <b>${recStr(recOf(state.op.name))}</b>
+        ${(()=>{const r=ladder().find(f=>f.name===state.op.name);return r?"(#"+r.rank+")":"";})()}</span>
       <span><b>${esc(RECORDS.user.name)}</b>: <b>${recStr(RECORDS.user)}</b> (#${myRank()} of ${ladder().length})</span></div>
     <div class="hr"></div>
+    ${state.title?`<div class="tag">&#9818; TITLE BATTLE</div>
+      <div><b>The 1v1 championship is on the line.</b> Beat ${esc(state.op.name)} and the belt is yours.</div>
+      <div class="hr"></div>`:""}
     <div class="tag">Champion</div>
     <div>&#9818; <b>${esc(ladder()[0].name)}</b> holds the #1 spot at ${recStr(ladder()[0])}.</div>
     <div class="hr"></div>
@@ -1768,7 +2030,7 @@ async function dropOpponent(){
   const clock=makeOpponentClock(goesOT);
 
   const card=push(el(`<div class="card op">
-    <div class="tag">Round ${state.round}/3 &middot; ${state.op.name} &middot; ${recStr(RECORDS.ops[state.op.name])}</div>
+    <div class="tag">Round ${state.round}/3 &middot; ${state.op.name} &middot; ${recStr(recOf(state.op.name))}</div>
     <div class="verse op"></div>
     <div class="bar"><button class="ghost skip">SKIP AHEAD &raquo;</button></div>
   </div>`));
@@ -1840,7 +2102,7 @@ async function resolveBySim(){
     <div class="win ${res==="w"?"u":"o"}">${res==="w"?"WINNER: "+esc(RECORDS.user.name):"WINNER: "+esc(state.op.name)}</div>
     <div class="rec">
       <span>Odds used: <b>${Math.round(chance*100)}%</b> <span style="color:var(--dim)">(skill ${(o.mine*100).toFixed(0)} v ${(o.theirs*100).toFixed(0)})</span></span>
-      <span>${esc(state.op.name)}: <b>${recStr(RECORDS.ops[state.op.name]||opp||{w:0,l:0,d:0})}</b></span>
+      <span>${esc(state.op.name)}: <b>${recStr(recOf(state.op.name))}</b></span>
       <span>Rank: <b>#${startRank} &rarr; #${endRank}</b>${move>0?` <b style="color:var(--good)">up ${move}</b>`:move<0?` <b style="color:var(--bad)">down ${-move}</b>`:""}</span>
     </div>
     ${written.length?`<div class="hr"></div><div class="tag">Rounds you actually wrote</div>
@@ -2049,11 +2311,17 @@ async function judge(){
   const lrow=fighterRow(state.op.name);
   if(lrow) creditResult(lrow,oppKey,RECORDS.user.name,"main",dec);
   else if(RECORDS.ops[state.op.name]) RECORDS.ops[state.op.name][oppKey]++;
-  const opRec=RECORDS.ops[state.op.name]||lrow;
+  const opRec=recOf(state.op.name);
   postMatchResult(res,state.op.name,ut,uOT,diff,dec);
   const before=Object.fromEntries(ladder().map(f=>[f.name,f.rank]));
   simLeagueNight();
   // uploaded last so the main event sits at the top of the channel
+  if(state.title){
+    if(res==="w") awardBelt(state.title,[RECORDS.user.name],`Won in a written battle, ${dec.tally} ${dec.label}.`);
+    else { RECORDS.titles[state.title].defenses++;
+      post({kind:"result",who:pick(PRESS),
+        text:`${state.op.name} retains the 1v1 title against ${RECORDS.user.name} | ${dec.tally} ${dec.label}.`}); }
+  }
   uploadVOD({a:RECORDS.user.name, b:state.op.name,
     win: res==="w"?RECORDS.user.name : res==="l"?state.op.name : "Nobody - drawn",
     main:true, close:Math.abs(diff)<6, rounds:state.tape.slice(0,3),

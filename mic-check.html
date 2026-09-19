@@ -155,6 +155,10 @@ table.hist td.r{width:40px;color:var(--dim);font-variant-numeric:tabular-nums}
 .chip.belt{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 55%,transparent);font-weight:800}
 .chip.belt.sm{font-size:9.5px;padding:2px 6px;margin-left:6px}
 select.searchbox{margin-bottom:8px}
+.bio{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:14px}
+.bioline{display:flex;gap:10px;justify-content:space-between;align-items:baseline;padding:3px 0}
+.bioline span{font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim)}
+.biodesc{font-size:13.5px;color:var(--ink);opacity:.85;margin:7px 0 2px;line-height:1.5}
 .searchbox{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line);
   border-radius:8px;padding:10px 12px;font-family:inherit;font-size:14px;margin-bottom:10px}
 .tabs{display:flex;gap:6px;margin:0 0 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
@@ -1169,19 +1173,29 @@ function defendBelt(key,against){
 }
 
 /* the belts move on their own while you are away */
+/* Belts have to move. Contenders are drawn from the top of the ladder rather
+   than at random, so a champion faces somebody who can actually take it, and
+   a long reign makes the next challenge harder - nobody holds a belt forever. */
 function simTitleNight(){
   BELTS.forEach(b=>{
-    if(Math.random()>0.22) return;                       // not every night
     const t=RECORDS.titles[b.key];
     if(t.holders.includes(RECORDS.user.name)) return;    // yours is defended in person
-    const pool=RECORDS.league.filter(f=>!t.holders.includes(f.name)).map(f=>f.name);
+    if(Math.random()>0.55) return;                       // most nights, not every one
+
+    // the best available fighters get the shot, not whoever was picked first
+    const ranked=ladder().filter(r=>!r.you && !t.holders.includes(r.name));
+    const contenders=ranked.slice(0,Math.max(b.size*3,10));
     const challengers=[];
-    while(challengers.length<b.size && pool.length)
-      challengers.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
+    while(challengers.length<b.size && contenders.length)
+      challengers.push(contenders.splice(Math.floor(Math.random()*contenders.length),1)[0].name);
     if(challengers.length<b.size) return;
+
     const cs=teamSkill(challengers), hs=teamSkill(t.holders);
-    const p=1/(1+Math.exp(-SKILL_SPREAD*(cs-hs)));
-    if(Math.random()<clamp(p,0.1,0.9)) awardBelt(b.key,challengers,"Belt changes hands on the undercard.");
+    // every defence wears the champion down a little
+    const fatigue=Math.min(0.16,(t.defenses||0)*0.035);
+    const p=clamp(1/(1+Math.exp(-SKILL_SPREAD*(cs-hs)))+fatigue,0.18,0.85);
+    if(Math.random()<p) awardBelt(b.key,challengers,
+      `${challengers.join(" & ")} end a ${t.defenses}-defence reign.`);
     else defendBelt(b.key,challengers.join(" & "));
   });
 }
@@ -1286,6 +1300,58 @@ function runTeamTitle(key,team){
 }
 let pendingTitleShot=null;
 
+/* ---------------- who these people are ---------------- */
+/* Every MC gets a biography derived from their own name, so it is stable -
+   the same fighter always has the same style, borough and backstory - without
+   storing 64 hand-written paragraphs. */
+const BOROUGHS=["Sublevel 3","the Eastway blocks","Old Cannery Row","the Foundry district",
+  "Pike & 9th","the Underpass","Hollow Point","Saltmarsh","the Rail Yards","Verge Hill",
+  "Cementworks","the Stairwell blocks","Northgate","the Flood Quarter","Ashline"];
+const STYLES=[
+  {n:"Technical writer", d:"builds four-syllable schemes and never raises his voice"},
+  {n:"Aggressor",        d:"pure pressure, front-foot, no setup bars wasted"},
+  {n:"Comedian",         d:"disarms the room first, then buries you while it is laughing"},
+  {n:"Storyteller",      d:"turns every round into a scene you can picture"},
+  {n:"Puncher",          d:"lives and dies on the one line everybody repeats after"},
+  {n:"Freestyle head",   d:"writes least, adapts most, dangerous in round three"},
+  {n:"Cadence switcher", d:"changes flow mid-bar to throw the crowd's clock off"},
+  {n:"Cold technician",  d:"clinical, unhurried, wins on the tape more than in the room"}];
+const ORIGINS=[
+  n=>`Started in a cypher behind a laundromat and has never once battled sober-nervous since.`,
+  n=>`Came up battling for bus fare. Says the money made him honest.`,
+  n=>`Was a ghostwriter for three years before anybody knew the face.`,
+  n=>`Walked in off the street during an open call and beat the man who ran it.`,
+  n=>`Learned the format from tapes, alone, in a room with bad acoustics.`,
+  n=>`Retired twice. Both retirements lasted under a month.`,
+  n=>`Got famous for one clip and has been trying to outlive it ever since.`,
+  n=>`Came from the poetry circuit and still gets called a tourist for it.`,
+  n=>`Trained by an older brother who never got his own shot.`,
+  n=>`Used to host, not battle. Got tired of introducing people worse than him.`];
+const QUIRKS=[
+  `Never writes anything down until the night before.`,
+  `Refuses to battle without the same jacket on.`,
+  `Counts the crowd before the first bar. Says it changes the pacing.`,
+  `Has lost exactly once in a way that still gets brought up.`,
+  `Will not do rematches. Ever.`,
+  `Shakes hands before and after, every time, win or lose.`,
+  `Talks to nobody for an hour before a card.`,
+  `Keeps a notebook with every bar ever used against him.`];
+
+function hashOf(str){ let h=2166136261;
+  for(const c of String(str)){ h^=c.charCodeAt(0); h=Math.imul(h,16777619); }
+  return Math.abs(h); }
+function bioOf(name){
+  const h=hashOf(name);
+  const arch=OPPONENTS.find(o=>o.name===name);
+  return {
+    style: arch ? {n:arch.style, d:arch.vibe} : STYLES[h%STYLES.length],
+    from:  BOROUGHS[(h>>3)%BOROUGHS.length],
+    debut: 2 + ((h>>7)%13),                       // years in the circuit
+    origin: ORIGINS[(h>>5)%ORIGINS.length](name),
+    quirk:  QUIRKS[(h>>11)%QUIRKS.length]
+  };
+}
+
 /* ---------------- fighter profiles ---------------- */
 function profileOf(name){
   if(name===RECORDS.user.name) return {...RECORDS.user, you:true, pow:null};
@@ -1306,6 +1372,12 @@ function openProfile(name){
   const h2h=f.you?null:headToHead(name);
   const champ=rows[0] && (rows[0].name===name || (rows[0].you&&f.you));
   const hist=f.hist||[];
+  const bio=f.you
+    ? {style:{n:"Unclassified",d:"The panel has not decided what you are yet. Keep writing and they will."},
+       from:"Sublevel 3", debut:1,
+       origin:`Walked into the Boiler Room and asked for a mic. Record stands at ${recStr(RECORDS.user)}.`,
+       quirk:"Writes every bar personally. No ghosts."}
+    : bioOf(name);
   const streak=(()=>{ if(!hist.length) return null;
     const r=hist[0].res; let n=0; for(const b of hist){ if(b.res===r) n++; else break; }
     return {res:r,n}; })();
@@ -1322,6 +1394,14 @@ function openProfile(name){
           <div class="vsub">Rank #${me?me.rank:"?"} of ${rows.length}${champ?` &middot; <b style="color:var(--accent)">#1</b>`:""}</div>
           <div class="chips" style="margin-top:6px">${holdsBelt(name).map(t=>`<span class="chip belt">&#9818; ${t}</span>`).join("")||""}</div>
         </div>
+      </div>
+      <div class="bio">
+        <div class="bioline"><span>Style</span><b>${esc(bio.style.n)}</b></div>
+        <div class="biodesc">${esc(bio.style.d)}</div>
+        <div class="bioline"><span>Out of</span><b>${esc(bio.from)}</b></div>
+        <div class="bioline"><span>In the circuit</span><b>${bio.debut} years</b></div>
+        <div class="biodesc">${esc(bio.origin)}</div>
+        <div class="biodesc">${esc(bio.quirk)}</div>
       </div>
       <div class="statgrid">
         <div class="stat"><b>${recStr(f)}</b><span>Record</span></div>
@@ -1577,7 +1657,7 @@ function runSim(n){
     const opp=nextChallengers(1)[0];
     if(!opp) break;
     log.push(simOneMatch(opp));
-    if(i%3===2) simLeagueNight();          // the rest of the card runs too
+    if(i%3===2) simLeagueNight();          // the rest of the card, belts included
   }
   const w=log.filter(r=>r.res==="w").length,
         l=log.filter(r=>r.res==="l").length,
@@ -1637,7 +1717,7 @@ function postMatchResult(res,opName,ut,ot,diff,dec){
 /* Fliptop format: 3:00 a round. Going past it is allowed - the battle does not
    stop - but it is called as OVERTIME and the judges dock for it. */
 const ROUND_LIMIT=180;      // seconds per round
-const REACTION_TIME=20;     // seconds the crowd gets to react after a verse
+const REACTION_TIME=8;      // seconds the crowd gets to react after a verse
 
 function fmtClock(sec){
   sec=Math.max(0,Math.round(sec));
@@ -1653,14 +1733,26 @@ function setClock(sec,label){
   if(l) l.textContent = over ? "OVERTIME" : (label||"ON THE CLOCK");
 }
 function clearClock(){
+  stopClock();
   const w=document.getElementById("clockwrap");
   if(w){ w.className="clockwrap idle";
     document.getElementById("clock").textContent="3:00";
     document.getElementById("clocklab").textContent="STANDBY"; }
 }
 
-/* A live countdown the user races. Returns a handle; elapsed is read on submit. */
+/* The clock is a single shared display, so it gets a single owner. Any new
+   countdown stops the one before it - otherwise a round's timer outlives its
+   round, keeps ticking through the opponent's verse, and eventually declares
+   overtime on a round nobody is writing. */
+let activeClock=null;
+function stopClock(){
+  if(!activeClock) return 0;
+  const used=activeClock.stop();
+  activeClock=null;
+  return used;
+}
 function startUserClock(onOvertime){
+  stopClock();                                  // never two at once
   const t0=Date.now(); let warned=false;
   const id=setInterval(()=>{
     const el2=Math.floor((Date.now()-t0)/1000);
@@ -1668,7 +1760,8 @@ function startUserClock(onOvertime){
     if(el2>ROUND_LIMIT&&!warned){ warned=true; onOvertime&&onOvertime(); }
   },250);
   setClock(0,"YOUR TIME");
-  return { stop(){ clearInterval(id); return Math.floor((Date.now()-t0)/1000); } };
+  activeClock={ stop(){ clearInterval(id); return Math.floor((Date.now()-t0)/1000); } };
+  return { stop(){ return stopClock(); } };
 }
 
 /* The opponent's clock. Their verse plays in ~20s of real time, so the round
@@ -1704,7 +1797,8 @@ async function crowdWindow(container,tier){
   box.scrollIntoView({behavior:"smooth",block:"center"});
 
   const t0=Date.now();
-  while(!done && !state.skip){
+  if(state.skipAll) done=true;
+  while(!done && !state.skipAll){
     const el2=(Date.now()-t0)/1000, left=REACTION_TIME-el2;
     if(left<=0) break;
     tEl.textContent="0:"+String(Math.ceil(left)).padStart(2,"0");
@@ -1723,7 +1817,7 @@ async function crowdWindow(container,tier){
 
 /* ---------------- state & pacing ---------------- */
 const state={ op:null, first:null, round:0, userVerses:[], userScores:[], opScores:[],
-               skip:false, heat:50, userTimes:[], opTimes:[], userOT:[], opOT:[], tape:[] };
+               skip:false, skipAll:false, heat:50, userTimes:[], opTimes:[], userOT:[], opOT:[], tape:[] };
 const stage=document.getElementById("stage");
 
 function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
@@ -1969,6 +2063,7 @@ async function start(){
   state.first=Math.random()<0.5?"opponent":"user";
   state.round=0; state.userVerses=[]; state.userScores=[]; state.opScores=[];
   state.skip=false; state.heat=50; state.tape=[];
+  stopClock(); clearClock();
   // a granted title shot puts the belt on this battle and names the champion
   state.title=pendingTitleShot; pendingTitleShot=null;
   if(state.title){
@@ -2000,7 +2095,7 @@ async function start(){
     <div class="hr"></div>
     <div class="tag">Format</div>
     <div>Three rounds. <strong>3:00 each.</strong> Past the clock is overtime &mdash; allowed, but the judges dock for it.
-    The crowd gets ${REACTION_TIME} seconds to react after every verse.</div>
+    The crowd gets ${REACTION_TIME} seconds after every verse, skippable.</div>
     <div class="hr"></div>
     <div class="tag">Coin flip</div>
     <div><strong>${state.first==="opponent"?"TAILS &mdash; "+state.op.name+" goes first.":"HEADS &mdash; you go first. No warm-up, no example. Set the tone."}</strong></div>
@@ -2042,6 +2137,7 @@ async function dropOpponent(){
   </div>`));
   const sk=card.querySelector(".skip");
   sk.addEventListener("click",()=>{state.skip=true;sk.remove();});
+  stopClock();                    // the player's round is over, whatever it read
   setClock(0,"OPPONENT");
   await sleep(700);
   await performVerse(card,v,"op",clock);
@@ -2058,6 +2154,7 @@ async function dropOpponent(){
   const s0=state.opScores[state.opScores.length-1];
   const avg=(s0.lyricism+s0.flow+s0.punch)/3;
   await crowdWindow(card, avg>7.5?"huge":avg>6?"good":avg>4.5?"mild":"dead");
+  state.skipAll=false;
   clearClock();
   await sleep(400);
 }
@@ -2192,7 +2289,7 @@ function promptUser(){
     box.innerHTML=`<div class="tag">Round ${state.round}/3 &middot; YOU</div><div class="verse"></div>
       <div class="bar"><button class="ghost skip">SKIP AHEAD &raquo;</button></div>`;
     const sk=box.querySelector(".skip");
-    sk.addEventListener("click",()=>{state.skip=true;sk.remove();});
+    sk.addEventListener("click",()=>{state.skip=true;state.skipAll=true;sk.remove();});
     await sleep(500);
     const best=await performVerse(box,text,"you");
     state.skip=false;            // skip covers that verse only
@@ -2214,6 +2311,7 @@ function promptUser(){
 
     const avg=(sc.lyricism+sc.flow+sc.punch)/3;
     await crowdWindow(box, avg>7.5?"huge":avg>6?"good":avg>4.5?"mild":"dead");
+    state.skipAll=false;
     clearClock();
     await sleep(400);
     if(state.first==="user") await dropOpponent();

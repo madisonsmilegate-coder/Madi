@@ -774,21 +774,60 @@ function clipBar(line,heat,roundNo,opName){
 }
 const handle=n=>String(n).toLowerCase().replace(/[^a-z0-9]+/g,"")||"you";
 
-/* background league bouts so the ladder and the feed stay alive */
+/* ---------------- the rest of the card ---------------- */
+/* You are not the only battle in the building. Every time you finish a match
+   the rest of the ladder fights too: everyone is eligible (including the four
+   you can face), fighters are paired without repeats so nobody battles twice
+   in one night, and every bout ends in a win and a loss - or, rarely, a draw
+   on both records. */
+function fighterRow(name){ return RECORDS.league.find(f=>f.name===name); }
+
+/* the four faceable opponents keep a second copy of their record for the
+   battle screens, so any change has to land on both */
+function creditResult(f,key){
+  f[key]++;
+  if(!f.npc && RECORDS.ops[f.name]) RECORDS.ops[f.name][key]++;
+}
+
 function simLeagueNight(){
-  const pool=RECORDS.league.filter(f=>f.npc);
-  for(let i=0;i<6;i++){
-    const a=pick(pool), b=pick(pool);
-    if(!a||!b||a.name===b.name) continue;
+  const pool=RECORDS.league.slice();           // everyone, faceable four included
+  for(let i=pool.length-1;i>0;i--){            // shuffle, then pair off
+    const j=Math.floor(Math.random()*(i+1));
+    [pool[i],pool[j]]=[pool[j],pool[i]];
+  }
+  const bouts=9+Math.floor(Math.random()*4);   // 9-12 battles on the undercard
+  const results=[];
+  for(let i=0;i<bouts*2 && i+1<pool.length;i+=2){
+    const a=pool[i], b=pool[i+1];
     const pa=a.pow/(a.pow+b.pow);
     const r=Math.random();
-    if(r<0.07){ a.d++; b.d++; if(i<2) post({kind:"result",who:pick(PRESS),
-        text:`DRAW — ${a.name} and ${b.name} go the distance. Panel split. Crowd not happy.`}); }
-    else if(r<0.07+0.93*pa){ a.w++; b.l++; if(i<2) post({kind:"result",who:pick(PRESS),
-        text:`${a.name} def. ${b.name}. ${pick(["Unanimous.","2-1 split.","Judges took four minutes.","Stopped it in round three."])}`}); }
-    else { b.w++; a.l++; if(i<2) post({kind:"result",who:pick(PRESS),
-        text:`UPSET — ${b.name} def. ${a.name}. ${pick(["Nobody saw it coming.","The ladder moves tonight.","Crowd stormed the circle."])}`}); }
+    if(r<0.06){
+      creditResult(a,"d"); creditResult(b,"d");
+      results.push({draw:true,a,b});
+    } else {
+      const aWins = r < 0.06+0.94*pa;
+      const win=aWins?a:b, lose=aWins?b:a;
+      creditResult(win,"w"); creditResult(lose,"l");
+      // an upset is the weaker fighter taking it
+      results.push({draw:false,win,lose,upset:win.pow < lose.pow-1.6});
+    }
   }
+
+  // report the card: a couple of write-ups, then the full results roundup
+  const feature=results.filter(r=>!r.draw);
+  const upsets=feature.filter(r=>r.upset);
+  upsets.slice(0,2).forEach(r=>post({kind:"result",who:pick(PRESS),
+    text:`UPSET — ${r.win.name} def. ${r.lose.name}. ${pick(["Nobody saw it coming.","The ladder moves tonight.","Crowd stormed the circle.","He was not supposed to be here."])}`}));
+  feature.filter(r=>!r.upset).slice(0,2).forEach(r=>post({kind:"result",who:pick(PRESS),
+    text:`${r.win.name} def. ${r.lose.name}. ${pick(["Unanimous.","2-1 split.","Judges took four minutes.","Stopped it in round three.","Never in doubt."])}`}));
+  results.filter(r=>r.draw).slice(0,1).forEach(r=>post({kind:"result",who:pick(PRESS),
+    text:`DRAW — ${r.a.name} and ${r.b.name} go the distance. Panel split. Crowd not happy.`}));
+
+  post({kind:"press",who:"@SublevelStats",
+    text:`TONIGHT'S CARD (${results.length} battles) — `+results.map(r=>r.draw
+      ? `${r.a.name} drew ${r.b.name}`
+      : `${r.win.name} def. ${r.lose.name}`).join(" · ")});
+  return results;
 }
 
 /* posts generated from your match */
@@ -1301,7 +1340,16 @@ async function judge(){
   const lrow=RECORDS.league.find(f=>f.name===state.op.name);
   if(lrow) lrow[res==="d"?"d":res==="w"?"l":"w"]++;
   postMatchResult(res,state.op.name,ut,uOT,diff);
+  const before=Object.fromEntries(ladder().map(f=>[f.name,f.rank]));
   simLeagueNight();
+  // what the night did to the board
+  const movers=ladder().filter(f=>!f.you)
+    .map(f=>({name:f.name,rank:f.rank,move:(before[f.name]||f.rank)-f.rank}))
+    .sort((a,b)=>Math.abs(b.move)-Math.abs(a.move));
+  const up=movers.find(m=>m.move>0), down=movers.find(m=>m.move<0);
+  if(up||down) post({kind:"press",who:"@SublevelStats",
+    text:`LADDER MOVES — ${up?`${up.name} up ${up.move} to #${up.rank}`:""}${up&&down?". ":""}${
+      down?`${down.name} down ${-down.move} to #${down.rank}`:""}.`});
   markFeed(4);
   saveRecords(RECORDS);
 
@@ -1328,7 +1376,9 @@ async function judge(){
       <span>Ladder: <b>#${myRank()} of ${ladder().length}</b></span>
       <span>${esc(state.op.name)}: <b>${recStr(opRec)}</b></span>
       <span>Clips: <b>${RECORDS.clips}</b></span></div>
-    <div class="crowd">The room is talking about this one &mdash; check <strong>BARZ</strong>. Full ladder under <strong>RANKINGS</strong>.</div>
+    <div class="crowd">You were not the only battle tonight &mdash; the rest of the card ran while you were in the circle,
+    and every one of those ended in a win and a loss. The room is talking about this one: check <strong>BARZ</strong>.
+    Full ladder under <strong>RANKINGS</strong>.</div>
     <table style="margin-top:10px">
       <tr><th>Fighter</th><th>Record</th></tr>
       <tr><td><strong>YOU</strong></td><td>${recStr(RECORDS.user)}</td></tr>

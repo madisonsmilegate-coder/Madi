@@ -863,45 +863,57 @@ const jitter=sd=>((Math.random()+Math.random()+Math.random()-1.5)/1.5)*sd;
    with a high win count is harder, and takes 10 percentage points off you.
    "High win count" is the league's top quartile, recomputed each time so it
    keeps meaning something as records grow through the background card. */
-const BASE_WIN=0.50;
-const HIGH_WIN_PENALTY=0.10;
-const RECORD_EDGE=0.10;
+/* ---------------- skill ---------------- */
+/* A record is evidence of skill, not skill itself, and how much evidence it
+   carries depends on how many battles produced it. So each record is shrunk
+   toward even by a fixed number of phantom bouts before it is compared:
+   a 10-2 run is excellent but thin, a 24-9 run is slightly worse per battle
+   and far better established, and the two come out level - which is why a
+   matchup like that is a genuine coin flip rather than an upset when the
+   veteran takes it. Without this a 3-0 fighter would read as unbeatable. */
+const PRIOR_BOUTS=12;          // phantom bouts, at even odds
+const SKILL_SPREAD=3.6;        // how sharply a skill gap turns into odds
+const FLOOR=0.15, CEILING=0.85; // nobody is ever a lock, in either direction
 
+const bouts=r=>(r.w||0)+(r.l||0)+(r.d||0);
+const winPct=r=>bouts(r)?r.w/bouts(r):0;
+
+function skillOf(r){
+  const w=r.w||0, l=r.l||0, d=r.d||0;
+  return (w + d*0.5 + PRIOR_BOUTS*0.5) / (w+l+d+PRIOR_BOUTS);
+}
+
+/* Odds come from the skill gap on a logistic curve, so a small edge is a
+   small edge and a large one still leaves room for an upset. */
+function oddsFor(opp){
+  const mine=skillOf(RECORDS.user), theirs=skillOf(opp);
+  const raw=1/(1+Math.exp(-SKILL_SPREAD*(mine-theirs)));
+  return {
+    p:clamp(raw,FLOOR,CEILING),
+    mine, theirs,
+    favoured: mine>theirs,
+    gap: mine-theirs
+  };
+}
+const winChance=opp=>oddsFor(opp).p;
+
+/* kept for the ladder display: who the league considers a heavy hitter */
 function highWinMark(){
   const wins=RECORDS.league.map(f=>f.w).sort((a,b)=>a-b);
   if(!wins.length) return 12;
   return Math.max(10, wins[Math.floor(wins.length*0.75)]);
 }
 const isHighWin=(f,mark)=>f.w>=(mark!==undefined?mark:highWinMark());
-const bouts=r=>r.w+r.l+(r.d||0);
-const winPct=r=>bouts(r)?r.w/bouts(r):0;
 
-/* The odds for one battle, and why they are what they are:
-     50/50 to start
-     +10 when your win rate is better than theirs - a record has to be worth
-         something, and it can only count once you have actually battled
-     -10 when they are a high-win fighter (the ladder's top quarter)
-   Both can apply at once and cancel out, which is the right answer when you
-   are outperforming a fighter who is still one of the best on the board. */
-function oddsFor(opp,mark){
-  const mine=winPct(RECORDS.user), theirs=winPct(opp);
-  const edge = bouts(RECORDS.user)>0 && mine>theirs;
-  const high = isHighWin(opp,mark);
-  let p=BASE_WIN;
-  if(edge) p+=RECORD_EDGE;
-  if(high) p-=HIGH_WIN_PENALTY;
-  return {p:clamp(p,0.05,0.95), edge, high, mine, theirs};
-}
-const winChance=(opp,mark)=>oddsFor(opp,mark).p;
-
-function simOneMatch(opp,mark){
-  // evaluated per battle, because your own record moves during a run
-  const o=oddsFor(opp,mark);
+function simOneMatch(opp){
+  // evaluated per battle, because both records move during a run
+  const o=oddsFor(opp);
   const res=Math.random()<o.p ? "w" : "l";
   RECORDS.user[res]++;
   RECORDS.user.streak = res==="w" ? (RECORDS.user.streak||0)+1 : 0;
   creditResult(opp, res==="w"?"l":"w");
-  return {opp:opp.name, res, chance:o.p, oppRec:recStr(opp), high:o.high, edge:o.edge};
+  return {opp:opp.name, res, chance:o.p, oppRec:recStr(opp),
+          mySkill:o.mine, theirSkill:o.theirs, favoured:o.favoured};
 }
 
 /* who you face: fighters around your own rank, so simming is a real climb */
@@ -920,11 +932,10 @@ function nextChallengers(n){
 
 function runSim(n){
   const startRank=myRank(), log=[];
-  const mark=highWinMark();                // one standard for the whole run
   for(let i=0;i<n;i++){
     const opp=nextChallengers(1)[0];
     if(!opp) break;
-    log.push(simOneMatch(opp,mark));
+    log.push(simOneMatch(opp));
     if(i%3===2) simLeagueNight();          // the rest of the card runs too
   }
   const w=log.filter(r=>r.res==="w").length,
@@ -1153,11 +1164,11 @@ function renderRanks(){
     <div class="card">
       <div class="tag">Simulate battles</div>
       <div>Run battles against fighters around your rank without writing every verse.
-      Every simulated battle starts at an even <strong>50/50</strong>, then:
-      <br>&bull; <b style="color:var(--good)">+10</b> when your win rate beats theirs
-      <br>&bull; <b style="color:var(--accent2)">&minus;10</b> against a <strong>high win count</strong> fighter
-      (the ladder's top quarter, currently <b id="hwmark"></b>+ wins)
-      <br>Both can apply and cancel out, which is what should happen when you are outperforming one of the best on the board.</div>
+      Odds come from <strong>skill</strong>, not raw record. A record is weighed by how many battles
+      produced it, so a thin hot streak counts for less than a long strong run &mdash; a
+      <b>24-9</b> and a <b>10-2</b> come out level, and a <b>3-0</b> is not a lock.
+      The bigger the skill gap the bigger the edge, but nothing ever passes
+      <b>${Math.round(CEILING*100)}%</b>: an upset is always live.</div>
       <div class="rec" id="ratingline"></div>
       <div class="bar" style="margin-top:10px">
         <button class="sim" data-n="1">SIM 1</button>
@@ -1181,17 +1192,15 @@ function renderRanks(){
         <td class="n">${r.w}</td><td class="n">${r.l}</td><td class="n">${r.d}</td><td class="n">${r.pts}</td></tr>`).join("")}
     </table>`;
 
-  const {rating,provisional,n}=userRating();
-  const mark=highWinMark();
-  const hw=document.getElementById("hwmark"); if(hw) hw.textContent=mark;
+  const {rating,n}=userRating();
+  const mySkill=skillOf(RECORDS.user), b=bouts(RECORDS.user);
+  const stronger=RECORDS.league.filter(f=>mySkill>skillOf(f)).length;
   document.getElementById("ratingline").innerHTML=
-    `<span>Pen rating: <b>${n?rating.toFixed(1):"&mdash;"}</b>${n?"/30 per round":""}</span>`+
-    (n?`<span>From your last <b>${n}</b> real battle${n===1?"":"s"}.</span>`
-      :`<span>No real battles yet.</span>`)+
-    `<span style="color:var(--dim)">Your pen rating is what the judges gave you in real battles. It does not affect simulated odds.</span>`+
-    `<span>High-win fighters on the ladder: <b>${RECORDS.league.filter(f=>isHighWin(f,mark)).length}</b> of ${RECORDS.league.length}</span>`+
-    `<span>Your win rate: <b>${bouts(RECORDS.user)?(winPct(RECORDS.user)*100).toFixed(0)+"%":"&mdash;"}</b>`+
-    `${bouts(RECORDS.user)?` &mdash; you out-record <b>${RECORDS.league.filter(f=>winPct(RECORDS.user)>winPct(f)).length}</b> of ${RECORDS.league.length} fighters`:" (no battles yet, so no record bonus)"}</span>`;
+    `<span>Skill: <b>${(mySkill*100).toFixed(0)}</b>/100</span>`+
+    `<span>Record: <b>${recStr(RECORDS.user)}</b>${b?` (${(winPct(RECORDS.user)*100).toFixed(0)}% over ${b})`:""}</span>`+
+    `<span>You rate above <b>${stronger}</b> of ${RECORDS.league.length} fighters</span>`+
+    (b<6?`<span style="color:var(--accent2)">Only ${b} battle${b===1?"":"s"} on record &mdash; your skill is still weighed toward even until you build a sample.</span>`:"")+
+    `<span style="color:var(--dim)">Pen rating ${n?`<b>${rating.toFixed(1)}</b>/30 from your last ${n} real battle${n===1?"":"s"}`:"unset"} &mdash; a record of what the judges gave you, not an input to these odds.</span>`;
 
   const rb=document.getElementById("resetbtn"), rz=document.getElementById("resetzone");
   rb.addEventListener("click",()=>{
@@ -1223,12 +1232,11 @@ function renderRanks(){
       <div class="rec"><span>Rank: <b>#${out.startRank} &rarr; #${out.endRank}</b></span>
         <span>${out.move>0?`<b style="color:var(--good)">Up ${out.move}</b>`:out.move<0?`<b style="color:var(--bad)">Down ${-out.move}</b>`:"No movement"}</span></div>
       <table style="margin-top:10px">
-        <tr><th>Opponent</th><th>Their record</th><th>Your odds</th><th>Result</th></tr>
-        ${out.log.map(r=>`<tr><td>${esc(r.opp)}${r.high?` <span style="color:var(--accent2);font-size:11px">HIGH WIN</span>`:""}</td>
+        <tr><th>Opponent</th><th>Their record</th><th>Skill</th><th>Your odds</th><th>Result</th></tr>
+        ${out.log.map(r=>`<tr><td>${esc(r.opp)}</td>
           <td class="n">${r.oppRec}</td>
-          <td class="n">${Math.round(r.chance*100)}%${
-            r.edge?` <span style="color:var(--good);font-size:11px">+10</span>`:""}${
-            r.high?` <span style="color:var(--accent2);font-size:11px">&minus;10</span>`:""}</td>
+          <td class="n">${(r.mySkill*100).toFixed(0)} v ${(r.theirSkill*100).toFixed(0)}</td>
+          <td class="n" style="color:${r.favoured?"var(--good)":"var(--dim)"}">${Math.round(r.chance*100)}%</td>
           <td style="color:${r.res==="w"?"var(--good)":"var(--bad)"}">${r.res==="w"?"WIN":"LOSS"}</td></tr>`).join("")}
       </table>
       <div class="crowd">Simulated battles produce no clips &mdash; only verses you actually write get clipped.</div>`;
@@ -1363,9 +1371,8 @@ async function dropOpponent(){
    already earned stays. */
 async function resolveBySim(){
   const opp=fighterRow(state.op.name);
-  const mark=highWinMark();
-  const o=opp?oddsFor(opp,mark):{p:BASE_WIN,high:false,edge:false};
-  const chance=o.p, high=o.high, edge=o.edge;
+  const o=opp?oddsFor(opp):{p:0.5,mine:skillOf(RECORDS.user),theirs:0.5,favoured:false};
+  const chance=o.p;
   const startRank=myRank();
   const res=Math.random()<chance?"w":"l";
 
@@ -1393,7 +1400,7 @@ async function resolveBySim(){
     <div class="tag">Battle resolved by simulation</div>
     <div class="win ${res==="w"?"u":"o"}">${res==="w"?"WINNER: "+esc(RECORDS.user.name):"WINNER: "+esc(state.op.name)}</div>
     <div class="rec">
-      <span>Odds used: <b>${Math.round(chance*100)}%</b>${edge?` <span style="color:var(--good)">(better record, +10)</span>`:""}${high?` <span style="color:var(--accent2)">(high-win opponent, &minus;10)</span>`:""}</span>
+      <span>Odds used: <b>${Math.round(chance*100)}%</b> <span style="color:var(--dim)">(skill ${(o.mine*100).toFixed(0)} v ${(o.theirs*100).toFixed(0)})</span></span>
       <span>${esc(state.op.name)}: <b>${recStr(RECORDS.ops[state.op.name]||opp||{w:0,l:0,d:0})}</b></span>
       <span>Rank: <b>#${startRank} &rarr; #${endRank}</b>${move>0?` <b style="color:var(--good)">up ${move}</b>`:move<0?` <b style="color:var(--bad)">down ${-move}</b>`:""}</span>
     </div>

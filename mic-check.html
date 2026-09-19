@@ -1201,6 +1201,7 @@ function renderTitles(){
         <div style="min-width:0">
           <div style="font-size:19px;font-weight:700">${t.holders.map(h=>esc(h)).join(" &amp; ")}${mine?` <span style="color:var(--accent)">(you)</span>`:""}</div>
           <div class="vsub">Champion ${days} day${days===1?"":"s"} &middot; ${t.defenses} defence${t.defenses===1?"":"s"} &middot; team skill ${(teamSkill(t.holders)*100).toFixed(0)}</div>
+          <div class="vsub">${b.size===1?`Open division &mdash; all ${ladder().length} eligible`:`${b.size}-fighter teams`}</div>
         </div>
       </div>
       <div class="bar">
@@ -1214,10 +1215,14 @@ function renderTitles(){
           <td class="vsub">${Math.max(1,Math.round((l.lost-l.won)/86400000))} days</td></tr>`).join("")}
         </table>`:""}
     </div>`;
-  }).join("")+`<div class="card"><div class="crowd">
-      The 1v1 belt is contested in a written battle &mdash; you have to actually rap for it.
-      Tag and trios are contested as team battles, decided on combined skill with the strongest member weighted heaviest.
-      You are ranked #${myRankNow}; a singles challenge needs top 8.</div></div>`;
+  }).join("")+`<div class="card">
+      <div class="tag">Division rules</div>
+      <div>The <b>1v1 championship is an open division</b>: all ${ladder().length} fighters on the ladder are eligible,
+      you included, at any rank. No qualifying, no seeding &mdash; call the champion out and rap for it.
+      You are #${myRankNow} and that changes nothing.</div>
+      <div class="crowd">The 1v1 is contested in a written battle, three rounds, judged like any other.
+      Tag and trios are team battles decided on combined skill, with the strongest member weighted heaviest.</div>
+    </div>`;
 
   el2.querySelectorAll(".chal").forEach(btn=>btn.addEventListener("click",()=>openChallenge(btn.dataset.b)));
 }
@@ -1225,8 +1230,9 @@ function renderTitles(){
 function openChallenge(key){
   const b=beltDef(key), t=RECORDS.titles[key], zone=document.getElementById("chal-"+key);
   if(b.size===1){
-    if(myRank()>8){ zone.innerHTML=`<div class="timing ot">You are #${myRank()}. Get inside the top 8 and the champion has to answer.</div>`; return; }
-    zone.innerHTML=`<div class="timing">Title shot granted. The battle runs on the BATTLE tab &mdash; three rounds, written, belt on the line.</div>
+    // open division: every one of the 65 can call for this belt, any rank
+    zone.innerHTML=`<div class="timing">Title shot granted &mdash; you are #${myRank()} of ${ladder().length}, and this belt answers everybody.
+      The battle runs on the BATTLE tab: three rounds, written, belt on the line.</div>
       <div class="bar"><button id="gotitle">TAKE THE TITLE SHOT</button></div>`;
     document.getElementById("gotitle").addEventListener("click",()=>{
       pendingTitleShot=key; showPanel("stage"); start();

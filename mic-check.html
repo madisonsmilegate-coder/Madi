@@ -88,6 +88,30 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
 .meter .mrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .meter .track{height:7px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;overflow:hidden}
 .meter .track>div{height:100%;background:var(--accent);border-radius:99px;transition:width .5s ease,background .5s ease}
+.tabs{display:flex;gap:6px;margin:0 0 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tab{background:none;color:var(--dim);border:0;border-bottom:2px solid transparent;border-radius:0;
+  padding:9px 13px;font-size:12px;letter-spacing:1.5px;font-weight:700}
+.tab:hover{color:var(--ink);filter:none}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+.dot{display:none;width:7px;height:7px;border-radius:99px;background:var(--accent2);vertical-align:2px;margin-left:4px}
+.dot.show{display:inline-block}
+.panel{display:none}
+.panel.on{display:block}
+.post{border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin:10px 0;background:var(--panel)}
+.post .ph{display:flex;gap:8px;align-items:baseline;font-size:12px;color:var(--dim);margin-bottom:7px;flex-wrap:wrap}
+.post .ph b{color:var(--ink);font-size:13px}
+.post .body{font-size:14.5px}
+.post.clip{border-left:3px solid var(--accent)}
+.post.beef{border-left:3px solid var(--accent2)}
+.post.result{border-left:3px solid var(--line)}
+.post .q{font-size:16px;line-height:1.5;border-left:2px solid var(--accent);padding-left:12px;margin:8px 0;font-style:italic}
+.views{font-size:12px;color:var(--dim);margin-top:8px;letter-spacing:.5px}
+.trend{display:inline-block;font-size:10px;letter-spacing:1.5px;font-weight:700;color:#14140c;
+  background:var(--accent);padding:2px 7px;border-radius:99px;margin-left:6px}
+.rk td.r{width:44px;color:var(--dim);font-variant-numeric:tabular-nums}
+.rk tr.me td{background:var(--panel2);color:var(--accent);font-weight:700}
+.rk tr.faceable td:nth-child(2){color:var(--accent2)}
+.empty{color:var(--dim);font-style:italic;padding:20px 0}
 .clockwrap{display:flex;align-items:center;gap:10px;justify-content:space-between;
   border:1px solid var(--line);border-radius:8px;padding:7px 12px;background:var(--panel);margin-bottom:8px}
 .clockwrap #clock{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:1px}
@@ -118,7 +142,14 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
 <div class="wrap">
   <h1>MIC <span>CHECK</span></h1>
   <div class="sub">Underground Rap Battles &middot; 3 Rounds</div>
-  <div id="stage"></div>
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-p="stage">BATTLE</button>
+    <button class="tab" data-p="feed">BARZ <span class="dot" id="feeddot"></span></button>
+    <button class="tab" data-p="ranks">RANKINGS</button>
+  </nav>
+  <div id="stage" class="panel on"></div>
+  <div id="feed" class="panel"></div>
+  <div id="ranks" class="panel"></div>
 </div>
 
 <script>
@@ -614,8 +645,47 @@ function heatTier(h){ return h>0.72?"huge":h>0.52?"good":h>0.32?"mild":"dead"; }
 /* Career records persist per browser. Storage can throw or come back empty
    (private windows, blocked site data), so every access is guarded and the
    game runs identically without it. */
-const REC_KEY="miccheck.records.v1";
-const SEED=()=>({user:{w:0,l:0,d:0},ops:Object.fromEntries(OPPONENTS.map(o=>[o.name,{...o.rec}]))});
+const REC_KEY="miccheck.save.v2";
+
+/* ---------------- the league ---------------- */
+/* A ladder of exactly 65: you, the four you can face, and 60 who battle each
+   other in the background so the rankings and the feed keep moving. */
+const FN1=["YOUNG","BIG","LIL","MAD","KING","DJ","MC","SIR","OG","DOC","SAINT","BARON","THE","PROF","EL","CAPTAIN"];
+const FN2=["VERSE","MALICE","CIPHER","GRAVEL","SERMON","STATIC","MARROW","THESAURUS","TREMOR","GOSPEL","VENDETTA",
+           "LEXICON","OBITUARY","CADENCE","SYNTAX","HOLLOW","QUARRY","PARABLE","MONSOON","FRACTURE","VANDAL",
+           "TERMITE","ARSON","PENDULUM","GRAMMAR","SCRIPTURE","BASEMENT","LANTERN","VULTURE","ASPHALT","TITHE"];
+const SOLO=["PAPERCUT","DEADWEIGHT","NO COMMENT","HANDWRITING","CHALK OUTLINE","BUS FARE","LOOSE TOOTH",
+            "WET CEMENT","SECOND OPINION","THE LANDLORD","COLD PIZZA","STAIRWELL","JURY DUTY","MOTH BALL",
+            "LOW BATTERY","THE DENTIST","FIRE EXIT","SPARE KEY","TAX SEASON","QUIET STORM","BROKEN ESCALATOR"];
+
+// small deterministic RNG so a league generated once looks intentional
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+function buildLeague(){
+  const rnd=mulberry(20260919);
+  const names=new Set(SOLO);
+  while(names.size<60){
+    const n=FN1[Math.floor(rnd()*FN1.length)]+" "+FN2[Math.floor(rnd()*FN2.length)];
+    names.add(n);
+  }
+  const list=[...names].slice(0,60).map(n=>{
+    const pow=2+rnd()*7.5;                       // hidden strength, drives sim results
+    const bouts=8+Math.floor(rnd()*26);
+    const wr=clamp(0.18+(pow/10)*0.62+(rnd()-0.5)*0.14,0.08,0.93);
+    const w=Math.round(bouts*wr), d=rnd()<0.25?1:0;
+    return {name:n,w,l:Math.max(0,bouts-w-d),d,pow:Math.round(pow*10)/10,npc:true};
+  });
+  // the four you can actually face join the same ladder
+  OPPONENTS.forEach(o=>list.push({name:o.name,...o.rec,pow:[0,4.5,7,8.8][o.diff]||6,npc:false}));
+  return list;
+}
+
+const SEED=()=>({
+  user:{name:"YOU",w:0,l:0,d:0,streak:0,best:0},
+  ops:Object.fromEntries(OPPONENTS.map(o=>[o.name,{...o.rec}])),
+  league:buildLeague(), feed:[], clips:0, named:false
+});
 function loadRecords(){
   try{
     const raw=localStorage.getItem(REC_KEY);
@@ -624,12 +694,131 @@ function loadRecords(){
     if(!p||typeof p!=="object") return base;
     base.user={...base.user,...(p.user||{})};
     for(const n in base.ops) if(p.ops&&p.ops[n]) base.ops[n]={...base.ops[n],...p.ops[n]};
+    // a save from an earlier league size is rebuilt, keeping the records it held
+    if(Array.isArray(p.league)&&p.league.length===base.league.length) base.league=p.league;
+    else if(Array.isArray(p.league)){
+      const old=Object.fromEntries(p.league.map(f=>[f.name,f]));
+      base.league.forEach(f=>{ const o=old[f.name]; if(o){f.w=o.w;f.l=o.l;f.d=o.d;} });
+    }
+    if(Array.isArray(p.feed)) base.feed=p.feed.slice(0,150);
+    base.clips=p.clips||0; base.named=!!p.named;
     return base;
   }catch(e){ return SEED(); }
 }
 function saveRecords(r){ try{ localStorage.setItem(REC_KEY,JSON.stringify(r)); }catch(e){} }
 let RECORDS=loadRecords();
+
+/* the ladder: the user is ranked among all 65 */
+function ladder(){
+  const rows=RECORDS.league.map(f=>({...f}));
+  rows.push({name:RECORDS.user.name,w:RECORDS.user.w,l:RECORDS.user.l,d:RECORDS.user.d,you:true});
+  rows.forEach(f=>{
+    const g=f.w+f.l+f.d;
+    f.pts=f.w*3+f.d;
+    f.pct=g?f.w/g:0;
+  });
+  rows.sort((a,b)=> b.pts-a.pts || b.pct-a.pct || a.l-b.l || a.name.localeCompare(b.name));
+  rows.forEach((f,i)=>f.rank=i+1);
+  return rows;
+}
+function myRank(){ const r=ladder().find(f=>f.you); return r?r.rank:ladder().length; }
+
 const recStr=r=>`${r.w}-${r.l}${r.d?"-"+r.d:""}`;
+
+/* ---------------- BARZ (the social feed) ---------------- */
+/* Every post here is generated from something that actually happened in a
+   match: a result, a bar you really wrote, a time you ran over the clock. */
+const FANS=["@cipherhead","@basement_dwella","@barsonly","@notaryfan92","@the_ohh_guy","@penlord",
+  "@rewindthat","@auntiewiththephone","@quotableclips","@sublevel3","@boothrat","@mic_forensics",
+  "@doubletime","@thecrowdwas","@wordplaywatch","@nosleepbars","@clipfarmer","@venomstan","@bracketdefender"];
+const PRESS=["@BoilerRoomTV","@UndergroundWire","@BarReport","@TheCircleMag","@SublevelStats"];
+
+function nowStamp(){ return Date.now(); }
+function ago(ts){
+  const m=Math.floor((Date.now()-ts)/60000);
+  if(m<1) return "now"; if(m<60) return m+"m";
+  const h=Math.floor(m/60); if(h<24) return h+"h";
+  return Math.floor(h/24)+"d";
+}
+function post(o){
+  RECORDS.feed.unshift({id:Math.random().toString(36).slice(2),ts:nowStamp(),likes:0,...o});
+  RECORDS.feed=RECORDS.feed.slice(0,150);
+}
+const fmtViews=n=> n>=1e6?(n/1e6).toFixed(1)+"M" : n>=1e3?(n/1e3).toFixed(1)+"K" : String(n);
+
+/* THE CLIP SYSTEM — the hook of the whole social layer.
+   Your hardest bar each round gets clipped. Views scale off how hard it hit
+   and how loud the room was, so writing a real bar is what makes you famous. */
+function clipBar(line,heat,roundNo,opName){
+  if(!line) return null;
+  const base=400+Math.pow(heat,2.3)*46000;
+  const roomBonus=1+(state.heat/100)*1.4;
+  const views=Math.round(base*roomBonus*(0.75+Math.random()*0.6));
+  const trending=views>28000;
+  RECORDS.clips++;
+  post({kind:"clip",who:"@"+handle(RECORDS.user.name),quote:line,views,trending,
+        text:`Round ${roundNo} vs ${opName}.`});
+  if(trending){
+    post({kind:"fan",who:pick(FANS),
+      text:pick([`"${line}" I'm not okay. I'm not okay.`,
+                 `run that back. "${line}" RUN IT BACK.`,
+                 `whoever clipped "${line}" deserves a raise`,
+                 `"${line}" is going in my notes app permanently`,
+                 `nah "${line}" ended that man's whole career arc`])});
+    post({kind:"fan",who:pick(FANS),text:pick([
+      `the room GONE after that one. gone.`,
+      `i rewound this 11 times. eleven.`,
+      `this is the clip of the night and it ain't close`])});
+  }
+  return {views,trending};
+}
+const handle=n=>String(n).toLowerCase().replace(/[^a-z0-9]+/g,"")||"you";
+
+/* background league bouts so the ladder and the feed stay alive */
+function simLeagueNight(){
+  const pool=RECORDS.league.filter(f=>f.npc);
+  for(let i=0;i<6;i++){
+    const a=pick(pool), b=pick(pool);
+    if(!a||!b||a.name===b.name) continue;
+    const pa=a.pow/(a.pow+b.pow);
+    const r=Math.random();
+    if(r<0.07){ a.d++; b.d++; if(i<2) post({kind:"result",who:pick(PRESS),
+        text:`DRAW — ${a.name} and ${b.name} go the distance. Panel split. Crowd not happy.`}); }
+    else if(r<0.07+0.93*pa){ a.w++; b.l++; if(i<2) post({kind:"result",who:pick(PRESS),
+        text:`${a.name} def. ${b.name}. ${pick(["Unanimous.","2-1 split.","Judges took four minutes.","Stopped it in round three."])}`}); }
+    else { b.w++; a.l++; if(i<2) post({kind:"result",who:pick(PRESS),
+        text:`UPSET — ${b.name} def. ${a.name}. ${pick(["Nobody saw it coming.","The ladder moves tonight.","Crowd stormed the circle."])}`}); }
+  }
+}
+
+/* posts generated from your match */
+function postMatchResult(res,opName,ut,ot,diff){
+  const me="@"+handle(RECORDS.user.name);
+  const rank=myRank();
+  if(res==="w"){
+    post({kind:"result",who:pick(PRESS),text:`${RECORDS.user.name} def. ${opName}, ${ut.toFixed(1)}-${(ut-diff).toFixed(1)}. Now ranked #${rank} of ${ladder().length}.`});
+    post({kind:"fan",who:pick(FANS),text:pick([
+      `${RECORDS.user.name} really came in and took that. ok.`,
+      `whoever booked ${opName} vs ${RECORDS.user.name} owes him an apology`,
+      `#${rank} and climbing. remember the name.`])});
+    if(RECORDS.user.streak>=2) post({kind:"press",who:pick(PRESS),
+      text:`${RECORDS.user.name} on a ${RECORDS.user.streak}-battle run. The ladder is taking notice.`});
+  } else if(res==="l"){
+    post({kind:"result",who:pick(PRESS),text:`${opName} def. ${RECORDS.user.name}. ${RECORDS.user.name} falls to #${rank} of ${ladder().length}.`});
+    post({kind:"fan",who:pick(FANS),text:pick([
+      `${RECORDS.user.name} had moments tho. the pen is there, the clock wasn't.`,
+      `respectfully ${RECORDS.user.name} got cooked but he showed up. that counts.`,
+      `${opName} is just built different down there`])});
+  } else {
+    post({kind:"result",who:pick(PRESS),text:`DRAW — ${RECORDS.user.name} and ${opName} split the panel. Nobody moves.`});
+  }
+  if(ot>0) post({kind:"fan",who:pick(FANS),
+    text:`${RECORDS.user.name} went ${fmtClock(ot)} over the clock. love the bars, respect the format 😭`});
+  // the opponent talks back
+  post({kind:"beef",who:"@"+handle(opName),text:res==="w"
+    ? pick([`Take it. I'll see you again and it won't read the same.`,`One night. One. Enjoy it.`,`He caught me. Next one I'm not warming up.`])
+    : pick([`Told y'all. Next.`,`That's the ladder. Climb it or move.`,`Bring me somebody who writes.`])});
+}
 
 /* ---------------- the round clock ---------------- */
 /* Fliptop format: 3:00 a round. Going past it is allowed - the battle does not
@@ -782,8 +971,76 @@ async function performVerse(container, text, who, clock){
   return best;
 }
 
-function start(){
+function renderFeed(){
+  const f=document.getElementById("feed");
+  if(!RECORDS.feed.length){ f.innerHTML=`<div class="empty">Nothing on the timeline yet. Battle somebody and the room will start talking.</div>`; return; }
+  f.innerHTML=RECORDS.feed.map(p=>{
+    const head=`<div class="ph"><b>${esc(p.who)}</b><span>&middot; ${ago(p.ts)}</span>${
+      p.kind==="clip"?`<span class="trend">${p.trending?"TRENDING":"CLIP"}</span>`:""}</div>`;
+    if(p.kind==="clip") return `<div class="post clip">${head}
+      <div class="body">${esc(p.text)}</div>
+      <div class="q">&ldquo;${esc(p.quote)}&rdquo;</div>
+      <div class="views">&#9654; ${fmtViews(p.views)} views</div></div>`;
+    return `<div class="post ${p.kind}">${head}<div class="body">${esc(p.text)}</div></div>`;
+  }).join("");
+}
+function renderRanks(){
+  const rows=ladder(), me=rows.find(r=>r.you);
+  const faceable=new Set(OPPONENTS.map(o=>o.name));
+  document.getElementById("ranks").innerHTML=`
+    <div class="card">
+      <div class="tag">Your standing</div>
+      <div style="font-size:26px;font-weight:700">#${me.rank}<span style="color:var(--dim);font-size:15px"> of ${rows.length}</span></div>
+      <div class="rec"><span>Record: <b>${recStr(RECORDS.user)}</b></span>
+        <span>Clips: <b>${RECORDS.clips}</b></span>
+        <span>Streak: <b>${RECORDS.user.streak||0}</b></span></div>
+      <div class="crowd">Names in red are fighters you can actually face tonight. Beat ranked opponents to climb.</div>
+    </div>
+    <table class="rk">
+      <tr><th>#</th><th>Fighter</th><th>W</th><th>L</th><th>D</th><th>Pts</th></tr>
+      ${rows.map(r=>`<tr class="${r.you?"me":""}${faceable.has(r.name)?" faceable":""}">
+        <td class="r">${r.rank}</td><td>${esc(r.name)}${r.you?" (you)":""}</td>
+        <td class="n">${r.w}</td><td class="n">${r.l}</td><td class="n">${r.d}</td><td class="n">${r.pts}</td></tr>`).join("")}
+    </table>`;
+}
+let unseen=0;
+function markFeed(n){ unseen+=n; const d=document.getElementById("feeddot"); if(d) d.classList.toggle("show",unseen>0); }
+function showPanel(id){
+  document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("on",p.id===id));
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.p===id));
+  if(id==="feed"){ renderFeed(); unseen=0; document.getElementById("feeddot").classList.remove("show"); }
+  if(id==="ranks") renderRanks();
+}
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>showPanel(t.dataset.p)));
+
+/* one-time: pick the name the feed and the ladder will use for you */
+function askName(){
+  return new Promise(res=>{
+    const box=push(el(`<div class="card">
+      <div class="tag">Before you step in</div>
+      <div>What do they call you? This is the name the ladder and the timeline will use.</div>
+      <div class="bar" style="margin-top:12px">
+        <input id="nm" maxlength="22" placeholder="YOUR BATTLE NAME"
+          style="flex:1;min-width:190px;background:var(--panel2);color:var(--ink);border:1px solid var(--line);
+                 border-radius:8px;padding:11px;font-family:inherit;font-size:15px">
+        <button id="nmok">LOCK IT IN</button>
+      </div></div>`));
+    const inp=box.querySelector("#nm"), ok=box.querySelector("#nmok");
+    inp.focus();
+    const go=()=>{
+      const v=inp.value.trim().toUpperCase().slice(0,22);
+      RECORDS.user.name=v||"YOU"; RECORDS.named=true; saveRecords(RECORDS);
+      box.remove(); res();
+    };
+    ok.addEventListener("click",go);
+    inp.addEventListener("keydown",e=>{if(e.key==="Enter")go();});
+  });
+}
+
+async function start(){
   stage.innerHTML="";
+  showPanel("stage");
+  if(!RECORDS.named) await askName();
   state.op=Object.assign({},OPPONENTS[Math.floor(Math.random()*OPPONENTS.length)]);
   if(state.op.style==="Wildcard / Joker") state.op.diff=1+Math.floor(Math.random()*3);
   state.first=Math.random()<0.5?"opponent":"user";
@@ -799,8 +1056,9 @@ function start(){
     <h2 style="margin:0 0 4px">${state.op.name}</h2>
     <div style="color:var(--accent)">${state.op.style}</div>
     <div class="crowd">${state.op.vibe}</div>
-    <div class="rec"><span>Career record &mdash; <b>${state.op.name}</b>: <b>${recStr(RECORDS.ops[state.op.name])}</b></span>
-      <span>You: <b>${recStr(RECORDS.user)}</b></span></div>
+    <div class="rec"><span>Career record &mdash; <b>${state.op.name}</b>: <b>${recStr(RECORDS.ops[state.op.name])}</b>
+        (#${ladder().find(f=>f.name===state.op.name).rank})</span>
+      <span><b>${esc(RECORDS.user.name)}</b>: <b>${recStr(RECORDS.user)}</b> (#${myRank()} of ${ladder().length})</span></div>
     <div class="hr"></div>
     <div class="tag">Format</div>
     <div>Three rounds. <strong>3:00 each.</strong> Past the clock is overtime &mdash; allowed, but the judges dock for it.
@@ -930,7 +1188,15 @@ function promptUser(){
       ? "&#9201; OVERTIME &mdash; "+fmtClock(used)+" (+"+fmtClock(over)+" over). Delivery docked."
       : "&#9201; "+fmtClock(used)+" &mdash; inside the three."}</div>`));
     box.appendChild(el(`<div class="crowd">${reaction(sc)}</div>`));
-    if(best.line && best.h>0.6) box.appendChild(el(`<div class="crowd">Your hardest bar that round: &ldquo;${esc(best.line)}&rdquo;</div>`));
+    if(best.line && best.h>0.6){
+      box.appendChild(el(`<div class="crowd">Your hardest bar that round: &ldquo;${esc(best.line)}&rdquo;</div>`));
+      const clip=clipBar(best.line,best.h,state.round,state.op.name);
+      if(clip){
+        markFeed(clip.trending?3:1); saveRecords(RECORDS);
+        box.appendChild(el(`<div class="timing">&#9654; Somebody clipped it. ${fmtViews(clip.views)} views${
+          clip.trending?" &mdash; <b style=\"color:var(--accent)\">TRENDING on BARZ</b>":""}</div>`));
+      }
+    }
 
     const avg=(sc.lyricism+sc.flow+sc.punch)/3;
     await crowdWindow(box, avg>7.5?"huge":avg>6?"good":avg>4.5?"mild":"dead");
@@ -1027,8 +1293,16 @@ async function judge(){
   // commit the result to both career records
   const res = Math.abs(diff)<0.9 ? "d" : diff>0 ? "w" : "l";
   RECORDS.user[res]++;
+  RECORDS.user.streak = res==="w" ? (RECORDS.user.streak||0)+1 : 0;
+  RECORDS.user.best = Math.max(RECORDS.user.best||0, ut);
   const opRec=RECORDS.ops[state.op.name];
   opRec[res==="d"?"d":res==="w"?"l":"w"]++;
+  // the same result on the shared ladder
+  const lrow=RECORDS.league.find(f=>f.name===state.op.name);
+  if(lrow) lrow[res==="d"?"d":res==="w"?"l":"w"]++;
+  postMatchResult(res,state.op.name,ut,uOT,diff);
+  simLeagueNight();
+  markFeed(4);
   saveRecords(RECORDS);
 
   const fin=card.querySelector("#final");
@@ -1050,8 +1324,11 @@ async function judge(){
   bumpHeat(diff>0?40:-20);
   fin.appendChild(el(`<div>${verdict}</div>`));
   fin.appendChild(el(`<div class="hr"></div><div class="tag">Records after this battle</div>
-    <div class="rec"><span>You: <b>${recStr(RECORDS.user)}</b></span>
-      <span>${esc(state.op.name)}: <b>${recStr(opRec)}</b></span></div>
+    <div class="rec"><span>${esc(RECORDS.user.name)}: <b>${recStr(RECORDS.user)}</b></span>
+      <span>Ladder: <b>#${myRank()} of ${ladder().length}</b></span>
+      <span>${esc(state.op.name)}: <b>${recStr(opRec)}</b></span>
+      <span>Clips: <b>${RECORDS.clips}</b></span></div>
+    <div class="crowd">The room is talking about this one &mdash; check <strong>BARZ</strong>. Full ladder under <strong>RANKINGS</strong>.</div>
     <table style="margin-top:10px">
       <tr><th>Fighter</th><th>Record</th></tr>
       <tr><td><strong>YOU</strong></td><td>${recStr(RECORDS.user)}</td></tr>

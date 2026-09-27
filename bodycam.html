@@ -11,7 +11,8 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;
   font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:var(--ink)}
 #wrap{position:fixed;inset:0;background:#000}
 canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:auto}
-#grain{position:absolute;inset:0;pointer-events:none;opacity:.055;mix-blend-mode:screen}
+#grain{position:absolute;inset:0;pointer-events:none;opacity:.10;
+  will-change:opacity;contain:strict}
 #vig{position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(ellipse at 50% 50%,transparent 38%,rgba(0,0,0,.72) 100%)}
 #scan{position:absolute;inset:0;pointer-events:none;opacity:.18;
@@ -68,7 +69,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
 
 /* ---- screens ---- */
 .screen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  background:rgba(0,0,0,.9);backdrop-filter:blur(3px);padding:22px;overflow:auto;z-index:20}
+  background:rgba(4,4,6,.94);padding:22px;overflow:auto;z-index:20}
 .screen.hide{display:none}
 .panel{max-width:660px;width:100%;border:1px solid #2a2a33;background:#0c0c0f;border-radius:12px;padding:26px}
 h1{margin:0 0 4px;font-size:clamp(24px,5vw,38px);letter-spacing:-1px}
@@ -278,8 +279,158 @@ function roomAt(x,y){
 }
 const doorAt=(x,y)=>G.map.doors.get(Math.floor(x)+","+Math.floor(y));
 
+/* ---------------- textures ----------------
+   Everything is generated at floor load into 64x64 byte arrays and then
+   sampled per pixel, which is far cheaper than computing a pattern inside
+   the render loop. The look is deliberately cheap-hotel: patterned carpet,
+   papered walls with a chair rail, acoustic ceiling tile, panelled doors. */
+const TW2=64, TH2=64;
+// 3x5 bitmap digits, drawn onto door plates and the exit sign
+const DIGITS=["111101101101111","010110010010111","111001111100111","111001111001111",
+              "101101111001001","111100111001111","111100111101111","111001001001001",
+              "111101111101111","111101111001111"];
+function stampDigit(t,dx,dy,n,r,g,b,sc){
+  sc=sc||1; const bits=DIGITS[n%10];
+  for(let y=0;y<5;y++) for(let x=0;x<3;x++){
+    if(bits[y*3+x]!=="1") continue;
+    for(let sy=0;sy<sc;sy++) for(let sx=0;sx<sc;sx++) px(t,dx+x*sc+sx,dy+y*sc+sy,r,g,b);
+  }
+}
+function stampNumber(t,dx,dy,num,r,g,b,sc){
+  const str=String(num);
+  for(let i=0;i<str.length;i++) stampDigit(t,dx+i*(4*(sc||1)),dy,+str[i],r,g,b,sc);
+}
+function newTex(){ return new Uint8Array(TW2*TH2*3); }
+const px=(t,x,y,r,g,b)=>{ const i=((y&63)*TW2+(x&63))*3; t[i]=r; t[i+1]=g; t[i+2]=b; };
+const nz=(x,y,k)=>{ const v=Math.sin(x*12.9898+y*78.233+(k||0))*43758.5453; return v-Math.floor(v); };
+
+function buildTextures(th){
+  const T2={};
+
+  // --- corridor wall: papered, chair rail at a third up from the skirting ---
+  const wall=newTex();
+  for(let y=0;y<TH2;y++) for(let x=0;x<TW2;x++){
+    const up = y<TH2*0.60;                                  // above the rail
+    let [r,g,b] = up ? th.wall[0] : th.wall[1];
+    const stripe = (x%8<4) ? 1.04 : 0.96;                   // vertical paper stripe
+    let k=stripe;
+    if(!up && (x%16<1)) k*=0.9;                             // wainscot joints
+    if(y>=TH2*0.58 && y<TH2*0.62) { r=62;g=52;b=40; k=1; }  // the rail itself
+    if(y>TH2*0.93){ r=58;g=50;b=42; k=1; }                  // skirting board
+    if(y<2){ r=44;g=40;b=36; k=1; }                         // cornice shadow
+    const grime = 0.86+0.14*nz(x,y,3);
+    const stain = (nz((x>>3),(y>>3),9)>0.90 && y>TH2*0.45) ? 0.78 : 1;
+    px(wall,x,y, r*k*grime*stain, g*k*grime*stain, b*k*grime*stain);
+  }
+  T2.wall=wall;
+
+  // --- guest door: two recessed panels, handle, number plate ---
+  const door=newTex();
+  for(let y=0;y<TH2;y++) for(let x=0;x<TW2;x++){
+    let r=88,g=62,b=40;
+    const grain=0.88+0.12*nz(x*0.4,y*3.0,1);
+    const inPanel = (x>10&&x<54) && ((y>8&&y<28)||(y>34&&y<56));
+    if(inPanel){ r*=0.84; g*=0.84; b*=0.84; }
+    if((x>8&&x<56)&&((y>6&&y<8)||(y>28&&y<30)||(y>32&&y<34)||(y>56&&y<58))){ r*=1.18;g*=1.18;b*=1.18; }
+    if(x<3||x>60){ r*=0.7; g*=0.7; b*=0.7; }
+    if(y>4&&y<10&&x>24&&x<40){ r=196;g=190;b=170; }          // number plate
+    if(y>30&&y<34&&x>52&&x<58){ r=188;g=170;b=110; }         // lever handle
+    if(y>58){ r=54;g=44;b=34; }                              // kick plate
+    px(door,x,y, r*grain, g*grain, b*grain);
+  }
+  T2.door=door;
+  // one numbered variant per room, so every door on the floor is its own
+  T2.doors=[];
+  for(let i=0;i<8;i++){
+    const dv=door.slice();
+    stampNumber(dv, 25, 4, th.num*100+i+1, 34,30,26, 1);
+    T2.doors.push(dv);
+  }
+
+  // --- carpet: the loud repeating hotel motif ---
+  const carp=newTex();
+  const [c0,c1,c2]=th.carpet;
+  for(let y=0;y<TH2;y++) for(let x=0;x<TW2;x++){
+    let c=c0;
+    const dx=Math.abs((x%16)-8), dy=Math.abs((y%16)-8);
+    if(dx+dy<5) c=c1;                                        // diamond
+    if(dx+dy<2) c=c2;                                        // centre
+    if((x%32<1)||(y%32<1)) c=c2;                             // border grid
+    const wear=0.82+0.18*nz(x*0.7,y*0.7,5);
+    const path=(y>24&&y<40)?0.92:1;                          // worn traffic lane
+    px(carp,x,y, c[0]*wear*path, c[1]*wear*path, c[2]*wear*path);
+  }
+  T2.carpet=carp;
+
+  // --- ceiling: acoustic tile on a grid, stained here and there ---
+  const ceil=newTex();
+  for(let y=0;y<TH2;y++) for(let x=0;x<TW2;x++){
+    let v=150+18*nz(x*1.7,y*1.7,7);
+    if(x%32<1||y%32<1) v=96;                                 // T-bar grid
+    if(nz(x>>4,y>>4,11)>0.86) v*=0.72;                       // water stain
+    // a recessed fluorescent troffer in two of the four tiles
+    const tx2=x%32, ty2=y%32, lamp=(x<32)!==(y<32);
+    if(lamp && tx2>6 && tx2<26 && ty2>10 && ty2<22){
+      v=238; if(ty2>15&&ty2<17) v=210;                       // the diffuser seam
+    }
+    px(ceil,x,y, v*0.96, v*0.95, v*0.88);
+  }
+  T2.ceil=ceil;
+
+  // --- prop / furniture ---
+  const prop=newTex();
+  for(let y=0;y<TH2;y++) for(let x=0;x<TW2;x++){
+    let r=74,g=60,b=46;
+    if(y<6){ r=92;g=76;b=58; }
+    if(x%20<1) { r*=0.8;g*=0.8;b*=0.8; }
+    const k=0.86+0.14*nz(x,y,13);
+    px(prop,x,y, r*k, g*k, b*k);
+  }
+  T2.prop=prop;
+
+  // --- window: frame and night sky beyond ---
+  const glass=newTex();
+  for(let y=0;y<TH2;y++) for(let x=0;x<TW2;x++){
+    let r=16,g=22,b=34;
+    if(nz(x*3,y*3,17)>0.985){ r=120;g=130;b=150; }           // city lights
+    if(x<5||x>58||y<5||y>58||Math.abs(x-32)<2){ r=52;g=48;b=44; }  // frame + mullion
+    px(glass,x,y,r,g,b);
+  }
+  T2.glass=glass;
+
+  // --- stairwell wall: the lit EXIT sign, the one green thing on the floor ---
+  const ex=wall.slice();
+  for(let y=14;y<26;y++) for(let x=14;x<50;x++) px(ex,x,y, 12,26,16);
+  for(let y=13;y<27;y++){ px(ex,13,y,60,60,56); px(ex,50,y,60,60,56); }
+  // E X I T, hand-placed so the letters read at distance
+  const G2=[70,235,120];
+  const letter=(ox2,rows)=>{ for(let y=0;y<7;y++) for(let x=0;x<5;x++)
+    if(rows[y][x]==="#") for(let s2=0;s2<1;s2++) px(ex,ox2+x,16+y,G2[0],G2[1],G2[2]); };
+  letter(17,["#####","#....","#....","####.","#....","#....","#####"]);
+  letter(25,["#...#",".#.#.","..#..","..#..","..#..",".#.#.","#...#"]);
+  letter(33,["#####","..#..","..#..","..#..","..#..","..#..","#####"]);
+  letter(41,["#####","..#..","..#..","..#..","..#..","..#..","..#.."]);
+  T2.exit=ex;
+
+  // --- sconce wall: a wall light between doors ---
+  const sc=wall.slice();
+  for(let y=18;y<30;y++) for(let x=27;x<37;x++){
+    const d2=Math.abs(x-32)/5+Math.abs(y-24)/6;
+    const v=clamp(1-d2,0,1);
+    px(sc,x,y, 40+215*v, 36+190*v, 30+130*v);
+  }
+  for(let y=30;y<44;y++) for(let x=24;x<40;x++){
+    const v=clamp(1-(y-30)/14,0,1)*clamp(1-Math.abs(x-32)/8,0,1);
+    px(sc,x,y, 132*0.4+120*v, 118*0.4+96*v, 96*0.4+60*v);
+  }
+  T2.sconce=sc;
+  return T2;
+}
+let TEX=null;
+
 /* ---------------- contacts ---------------- */
 /* Each has: type civ|susp, state, and an intent that only resolves on challenge. */
+const SERVICE=["ICE & VENDING","HOUSEKEEPING","LINEN STORE","ELEVATOR LOBBY","STAIR VESTIBULE"];
 const ROOMNAMES=[
  ["RECEPTION","MAIL ROOM","SECURITY OFFICE","LOUNGE","COAT CHECK","STORAGE","LOADING BAY","MEZZANINE"],
  ["OFFICE 2A","OFFICE 2B","COPY ROOM","BOARDROOM","BREAK ROOM","IT CLOSET","ARCHIVE","OPEN PLAN"],
@@ -288,11 +439,16 @@ const ROOMNAMES=[
  ["GALLERY","MASTER SUITE","WINE ROOM","STUDY","POOL DECK","PANIC ROOM","TERRACE","VAULT"]
 ];
 const FLOORS=[
-  {n:"LOBBY & MEZZANINE", wall:[58,54,50], accent:[92,78,52], obj:"Sweep reception and the mezzanine."},
-  {n:"OFFICE FLOOR",      wall:[52,54,58], accent:[70,84,96], obj:"Cubicle rows. Check under the desks."},
-  {n:"SERVER & PLANT",    wall:[44,50,54], accent:[40,110,120],obj:"Machine noise will cover footsteps."},
-  {n:"RESIDENTIAL SUITES",wall:[62,52,46], accent:[110,70,48], obj:"Occupied units. Expect families."},
-  {n:"PENTHOUSE",         wall:[56,48,60], accent:[120,80,130], obj:"Top floor. This is where they are."}
+  {n:"LOBBY & FRONT DESK", obj:"Reception, bar, back office. Guests were checking out.",
+   carpet:[[64,26,30],[128,58,42],[40,44,62]], wall:[[132,118,96],[96,84,66]], num:1},
+  {n:"2ND FLOOR - GUEST",  obj:"Standard rooms. Housekeeping never finished the hall.",
+   carpet:[[40,44,62],[86,64,96],[28,30,42]], wall:[[120,112,104],[86,80,72]], num:2},
+  {n:"7TH FLOOR - GUEST",  obj:"Long-stay rooms. Half of them are occupied.",
+   carpet:[[54,40,28],[110,80,44],[34,26,20]], wall:[[128,110,86],[92,78,58]], num:7},
+  {n:"11TH - SERVICE",     obj:"Linen, plant, staff rooms. No guests up here.",
+   carpet:[[38,42,40],[60,70,64],[26,30,28]], wall:[[104,104,100],[72,72,70]], num:11},
+  {n:"PENTHOUSE LEVEL",    obj:"Top floor. One suite, and whoever is in it.",
+   carpet:[[46,28,38],[120,88,52],[30,20,28]], wall:[[118,102,110],[84,70,78]], num:14}
 ];
 const theme=()=>FLOORS[clamp(G.floorNo-1,0,FLOORS.length-1)];
 
@@ -403,11 +559,11 @@ const G={
 
 const $=id=>document.getElementById(id);
 const cvs=$("c"), ctx=cvs.getContext("2d",{alpha:false});
-let W=0,H=0,RW=0,RH=0,img=null,zbuf=null;
+let W=0,H=0,RW=0,RH=0,img=null,zbuf=null,coneLUT=null;
 
 function resize(){
   W=window.innerWidth; H=window.innerHeight;
-  const scale = W>1400?0.42:W>900?0.5:0.6;      // render small, upscale: bodycam softness
+  const scale = W>1400?0.36:W>900?0.44:0.56;    // render small, upscale: bodycam softness
   RW=Math.max(200,Math.floor(W*scale)); RH=Math.max(120,Math.floor(H*scale));
   cvs.width=RW; cvs.height=RH;
   img=ctx.createImageData(RW,RH); zbuf=new Float32Array(RW);
@@ -531,7 +687,9 @@ function buildGrain(){
   const gc=$("grain"); gc.width=Math.floor(W/3); gc.height=Math.floor(H/3);
   const g=gc.getContext("2d"), d=g.createImageData(gc.width,gc.height);
   for(let i=0;i<d.data.length;i+=4){
-    const v=Math.random()*255; d.data[i]=d.data[i+1]=d.data[i+2]=v; d.data[i+3]=255;
+    // centred noise: lifts and drops equally, so it reads as sensor grain
+    const v=90+Math.random()*110;
+    d.data[i]=d.data[i+1]=d.data[i+2]=v; d.data[i+3]=Math.random()*255|0;
   }
   g.putImageData(d,0,0);
 }
@@ -547,6 +705,7 @@ function startFloor(n){
   G.bangs=Math.min(3,G.bangs+1); G.meds=Math.min(2,G.meds+1); G.flashT=0; G.ads=0;
   G.clearCalled=false; G.spotted=new Set(); G.shells=[]; G.sparks=[]; seen=null;
   G.mates=makeMates();
+  TEX=buildTextures(theme());
   $("flr").textContent=String(n).padStart(2,"0");
   updHUD();
   const th=theme();
@@ -558,20 +717,22 @@ function startFloor(n){
 
 const remaining=()=>G.contacts.filter(c=>c.state!==S.DOWN&&c.state!==S.OUT).length;
 
+const _hud={};
+function setTxt(id,v){ if(_hud[id]!==v){ _hud[id]=v; $(id).textContent=v; } }
 function updHUD(){
-  $("ammo").textContent=G.ammo; $("mags").textContent=G.mags;
-  $("wepname").textContent=wep().name;
-  $("bangs").textContent=G.bangs; $("meds").textContent=G.meds;
-  $("cnt").textContent=remaining();
-  if(G.map&&G.map.rooms) $("rooms").textContent=
-    G.map.rooms.filter(r=>r.cleared).length+"/"+G.map.rooms.length;
+  setTxt("ammo",G.ammo); setTxt("mags",G.mags);
+  setTxt("wepname",wep().name);
+  setTxt("bangs",G.bangs); setTxt("meds",G.meds);
+  setTxt("cnt",remaining());
+  if(G.map&&G.map.rooms) setTxt("rooms",
+    G.map.rooms.filter(r=>r.cleared).length+"/"+G.map.rooms.length);
   $("hpbar").style.width=clamp(G.hp,0,100)+"%";
   $("hpbar").style.background = G.hp>60?"var(--green)":G.hp>30?"var(--amber)":"var(--red)";
   $("stambar").style.width=G.stam+"%";
-  $("stanceV").textContent=G.crouch>0.5?"CROUCH":"STAND";
-  $("lightV").textContent=G.light?"ON":"OFF";
+  setTxt("stanceV",G.crouch>0.5?"CROUCH":"STAND");
+  setTxt("lightV",G.light?"ON":"OFF");
   $("lightV").style.color=G.light?"var(--amber)":"#6a6a78";
-  $("roster").innerHTML=G.mates.map(m=>
+  if(G.tick%10===0) $("roster").innerHTML=G.mates.map(m=>
     `<span style="color:${m.hue}">&#9679;</span> <span class="dim">${m.cs}</span>`).join(" &nbsp; ");
   const rb=$("roombanner");
   if(rb){ rb.textContent=G.roomName||""; rb.style.opacity=(G.roomTag>0)?String(clamp(G.roomTag,0,1)):"0"; }
@@ -579,9 +740,9 @@ function updHUD(){
   $("flash").style.opacity=String(clamp(G.flashT*0.9,0,0.95));
   drawMap(); drawHeadcam();
   const s=Math.floor(G.tNow/1000);
-  $("tc").textContent=[Math.floor(s/3600),Math.floor(s/60)%60,s%60]
-    .map(v=>String(v).padStart(2,"0")).join(":");
-  $("bat").textContent="BATT "+Math.max(1,Math.floor(G.bat))+"%";
+  setTxt("tc",[Math.floor(s/3600),Math.floor(s/60)%60,s%60]
+    .map(v=>String(v).padStart(2,"0")).join(":"));
+  setTxt("bat","BATT "+Math.max(1,Math.floor(G.bat))+"%");
 }
 
 /* ---------------- interaction ---------------- */
@@ -911,10 +1072,58 @@ function render(){
   const planeX=-dirY*fov, planeY=dirX*fov;
   const horizon=(RH>>1)+G.vz+shake*(Math.random()-0.5);
   const LP=G.light?1:0.22;                       // flashlight power
+  if(!coneLUT||coneLUT.length!==RW){
+    coneLUT=new Float32Array(RW);
+    for(let i=0;i<RW;i++) coneLUT[i]=1-Math.min(1,Math.abs(2*i/RW-1)*1.25);
+  }
+  const cone=x=>coneLUT[x];
 
+  /* ---- floor and ceiling, cast row by row ----
+     For each screen row below the horizon the distance is constant, so we
+     step across the row in world space and sample the carpet directly. That
+     is what gives a real patterned floor instead of a gradient. */
+  const posZ=0.5*RH;
+  const carp=TEX.carpet, ceil=TEX.ceil;
+  for(let y=0;y<RH;y++){
+    const isFloor = y>horizon;
+    const pDist = isFloor ? (posZ/(y-horizon)) : (posZ/(horizon-y));
+    const pd = (!isFinite(pDist)||pDist>34) ? 34 : pDist;   // clamp, never skip:
+    // an unwritten row keeps the previous frame and shows as a seam
+    const rdx0=dirX-planeX, rdy0=dirY-planeY;
+    const rdx1=dirX+planeX, rdy1=dirY+planeY;
+    let fx=G.px+pd*rdx0, fy=G.py+pd*rdy0;
+    const stepX=pd*(rdx1-rdx0)/RW, stepY=pd*(rdy1-rdy0)/RW;
+    const shade=clamp((0.08+LP*1.9/(1+pd*0.75)),0,1)*(isFloor?1:0.80);
+    const tex=isFloor?carp:ceil;
+    let i=(y*RW)*4;
+    if(isFloor){
+      for(let x=0;x<RW;x++){
+        const ti=(((((fy*24)|0)&63)*TW2)+(((fx*24)|0)&63))*3;
+        const k=shade*(0.36+coneLUT[x]*0.74);
+        let r=tex[ti]*k, g=tex[ti+1]*k, b2=tex[ti+2]*k;
+        d[i]=r; d[i+1]=g; d[i+2]=b2; d[i+3]=255;
+        i+=4; fx+=stepX; fy+=stepY;
+      }
+    } else {
+      // only the ceiling carries lamps, so only it pays for the test
+      const emK=0.46*(pd<26?1-pd/26:0);
+      for(let x=0;x<RW;x++){
+        const ti=(((((fy*24)|0)&63)*TW2)+(((fx*24)|0)&63))*3;
+        const t0=tex[ti];
+        const k=shade*(0.36+coneLUT[x]*0.74) + (t0>200?emK:0);
+        let r=t0*k, g=tex[ti+1]*k, b2=tex[ti+2]*k;
+        d[i]  = r>255?255:r;
+        d[i+1]= g>255?255:g;
+        d[i+2]= b2>255?255:b2;
+        d[i+3]=255;
+        i+=4; fx+=stepX; fy+=stepY;
+      }
+    }
+  }
+
+  /* ---- walls ---- */
   for(let x=0;x<RW;x++){
-    const camX=2*x/RW-1;
-    const rdx=dirX+planeX*camX, rdy=dirY+planeY*camX;
+    const camX=2*x/RW-1;    const rdx=dirX+planeX*camX, rdy=dirY+planeY*camX;
     let mx=Math.floor(G.px), my=Math.floor(G.py);
     const ddx=Math.abs(1/(rdx||1e-9)), ddy=Math.abs(1/(rdy||1e-9));
     let sx,sy,sdx,sdy;
@@ -932,35 +1141,47 @@ function render(){
     const dist = side===0 ? (sdx-ddx) : (sdy-ddy);
     zbuf[x]=dist;
     const full=Math.min(RH*4, RH/Math.max(dist,0.05));
-    const h = tile===T.PROP ? full*0.52 : full;     // furniture is waist height
+    const h = tile===T.PROP ? full*0.52 : full;
     const top = tile===T.PROP ? horizon+full/2-h : horizon-h/2;
     const y0=Math.max(0,Math.floor(top)), y1=Math.min(RH-1,Math.floor(top+h));
 
-    // flashlight: bright at centre, falls off hard with distance
-    const cone=1-Math.min(1,Math.abs(camX)*1.25);
-    const lit=clamp((0.16+LP*2.4/(1+dist*0.60))*(0.40+cone*0.70*LP),0,1)*(G.light?1:0.30);
-    let r,g,b;
-    const th=theme();
-    if(tile===T.GLASS){ r=26;g=42;b=54; }
-    else if(tile===T.PROP){ r=th.accent[0]*0.55; g=th.accent[1]*0.55; b=th.accent[2]*0.55; }
-    else if(tile===T.DOOR){ r=th.accent[0]*0.7; g=th.accent[1]*0.7; b=th.accent[2]*0.7; }
-    else { r=th.wall[0]; g=th.wall[1]; b=th.wall[2]; }
-    const shade=(side===1?0.62:1)*lit;
-    r*=shade; g*=shade; b*=shade;
+    // exact point along the wall face, which becomes the horizontal texture coord
+    let wallX = side===0 ? (G.py+dist*rdy) : (G.px+dist*rdx);
+    wallX -= Math.floor(wallX);
+    let texX = (wallX*TW2)|0;
+    const mirror = (side===0&&rdx>0)||(side===1&&rdy<0);
+    const isEndWall = mx>=MW-2 && Math.abs(my-G.map.cy)<2;
+    if(mirror && tile!==T.DOOR && !isEndWall) texX = TW2-texX-1;
 
-    for(let y=0;y<RH;y++){
-      let rr,gg,bb;
-      if(y<y0){                                  // ceiling
-        const f=(horizon-y)/RH;
-        const l=clamp(0.06+0.30/(0.25+f*4.0),0,1)*(0.42+cone*0.58);
-        rr=16*l; gg=16*l; bb=19*l;
-      } else if(y>y1){                           // floor
-        const f=(y-horizon)/RH;
-        const l=clamp(0.10+0.72/(0.18+f*3.0),0,1)*(0.40+cone*0.70);
-        rr=40*l; gg=37*l; bb=34*l;
-      } else { rr=r; gg=g; bb=b; }
+    let tex;
+    if(tile===T.DOOR){
+      const dr=G.map.doors.get(mx+","+my);
+      tex = (dr && TEX.doors) ? TEX.doors[dr.room.id%TEX.doors.length] : TEX.door;
+    }
+    else if(tile===T.GLASS) tex=TEX.glass;
+    else if(tile===T.PROP) tex=TEX.prop;
+    else {
+      // the wall facing the stairwell carries the exit sign; every fourth
+      // corridor panel carries a sconce
+      const isEnd = mx>=MW-2 && Math.abs(my-G.map.cy)<2;
+      tex = isEnd ? TEX.exit : (((mx*7+my*13)%4===0 && Math.abs(my-G.map.cy)<3) ? TEX.sconce : TEX.wall);
+    }
+    // a lit doorway reads as a room beyond, and glass is self-lit by the city
+    let emis = tile===T.GLASS ? 0.35 : 0;
+    const lit=clamp((0.14+LP*2.2/(1+dist*0.62))*(0.40+cone(x)*0.70*LP),0,1)*(G.light?1:0.34);
+    const sideK = side===1?0.68:1;
+    if(tex===TEX.exit || tex===TEX.sconce) emis=0.30*clamp(1-dist/16,0,1);
+    const kk = lit*sideK + emis;      // hoisted out of the column loop
+    const step2 = TH2/h;
+    let texPos = (y0-top)*step2;
+    for(let y=y0;y<=y1;y++){
+      const ty=clamp(texPos|0,0,TH2-1); texPos+=step2;
+      const ti=(ty*TW2+texX)*3;
       const i=(x+y*RW)*4;
-      d[i]=rr; d[i+1]=gg; d[i+2]=bb; d[i+3]=255;
+      const r=tex[ti]*kk, g=tex[ti+1]*kk, b2=tex[ti+2]*kk;
+      d[i]  = r>255?255:r;
+      d[i+1]= g>255?255:g;
+      d[i+2]= b2>255?255:b2;
     }
   }
 
@@ -1549,7 +1770,7 @@ $("abort").onclick=()=>{ G.paused=false; $("s-pause").classList.add("hide"); end
 $("sens").oninput=e=>{ G.sens=parseFloat(e.target.value); };
 $("mute").onclick=e=>{ G.muted=!G.muted; e.target.textContent="SOUND: "+(G.muted?"OFF":"ON"); };
 resize(); buildXH();
-setInterval(buildGrain,90);
+setInterval(buildGrain,150);
 </script>
 </body>
 </html>

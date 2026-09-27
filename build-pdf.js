@@ -29,17 +29,17 @@ const html=`<!doctype html><html><head><meta charset="utf-8"><style>
   src:url(data:font/ttf;base64,${b64(FD+'URWBookman-LightItalic.ttf')}) format('truetype')}
 @page{size:8.5in 13in;margin:1in}
 html,body{margin:0;padding:0}
-body{font:12pt/1.15 Bookman,serif;color:#000;-webkit-print-color-adjust:exact}
+body{font:12pt/1.0 Bookman,serif;color:#000;-webkit-print-color-adjust:exact}
 p{margin:0}
 .hdr{margin-bottom:2pt}
 .hdr .g{display:inline-block;margin-left:0}
 .hdr .pad{display:inline-block;width:3.25in}
 .teach{margin-bottom:13pt}
 .pic{text-align:center;margin-bottom:9pt}
-.pic img{width:5.208in;display:inline-block}
+.pic img{width:4.896in;display:inline-block}
 h1{font-size:14pt;font-weight:700;text-align:center;margin:0 0 15pt;line-height:1.15}
 .tag{font-weight:700;margin:6pt 0 3pt}
-.body{margin:0 0 10pt;text-align:left}
+.body{margin:0 0 9pt;text-align:left}
 .cap{text-align:center;margin-top:11pt}
 .cap i{font-style:italic}
 .cap a{color:#1155CC;text-decoration:underline}
@@ -79,6 +79,16 @@ ${bodyHtml}
   console.log('available      : %s px  (%s pt)',m.avail,(m.avail*0.75).toFixed(0));
   console.log('overflow       : %s px  (%s lines)',(m.h-m.avail).toFixed(0),((m.h-m.avail)/20).toFixed(1));
   console.log('Bookman probe  : %s px  (DejaVu was 617.4, Liberation 490.3)',m.probe.toFixed(1));
+  for(const pct of [5,10,15,20]){
+    const st=await p.evaluate(async q=>{
+      document.body.style.letterSpacing=(q/100*6.6)+'pt';   // ~6.6pt avg advance
+      const h=document.body.getBoundingClientRect().height;
+      document.body.style.letterSpacing='';
+      return h;
+    },pct);
+    console.log('  +%s%% wider glyphs -> %s px %s',String(pct).padStart(2),
+                st.toFixed(0), st<=1056?'FITS':'OVERFLOWS');
+  }
   await p.pdf({path:'/home/user/Madi/Ha-Long-Bay-Advertisement.pdf',
                width:'8.5in',height:'13in',printBackground:true,
                margin:{top:'1in',right:'1in',bottom:'1in',left:'1in'}});

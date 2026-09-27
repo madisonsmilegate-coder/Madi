@@ -31,11 +31,23 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
 .dim{color:#9a9aa8}
 #xh{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
 #xh div{position:absolute;background:rgba(255,255,255,.85);box-shadow:0 0 4px #000}
-.hp{position:absolute;left:16px;bottom:40px;width:200px;height:5px;
+#map{position:absolute;top:auto;left:auto;right:16px;bottom:64px;width:150px;height:120px;
+  border:1px solid #2a2a33;background:rgba(6,6,9,.72);border-radius:4px;pointer-events:none}
+#stance{right:16px;bottom:190px;text-align:right}
+.stam{position:absolute;left:16px;bottom:56px;width:200px;height:3px;
+  background:rgba(255,255,255,.12);border-radius:99px;overflow:hidden}
+.stam i{display:block;height:100%;width:100%;background:#7fd1ff;transition:width .15s}
+.hp{position:absolute;left:16px;bottom:66px;width:200px;height:5px;
   background:rgba(255,255,255,.14);border-radius:99px;overflow:hidden}
 .hp i{display:block;height:100%;width:100%;background:var(--green);transition:width .18s}
-#log{position:absolute;left:16px;bottom:62px;width:min(430px,46vw);pointer-events:none}
-#log div{font-size:12.5px;margin:3px 0;opacity:.95;animation:in .25s ease both}
+#log{position:absolute;left:16px;bottom:100px;width:min(430px,44vw);pointer-events:none}
+#log div{font-size:12.5px;margin:3px 0;opacity:.95;animation:in .25s ease both;line-height:1.35}
+#log .cm{padding-left:82px;text-indent:-82px}
+#log .cm b{display:inline-block;width:75px;font-size:10.5px;letter-spacing:1.4px;
+  text-indent:0;vertical-align:1px}
+.c-op b{color:#8fd3ff} .c-op{color:#dfe9f2}
+.c-toc b{color:#ffd27a} .c-toc{color:#e6dcc6}
+.c-urg b{color:#ff7a7a} .c-urg{color:#ffd9d9;font-weight:600}
 @keyframes in{from{opacity:0;transform:translateX(-6px)}}
 .l-rad{color:#7fd1ff} .l-warn{color:var(--amber)} .l-bad{color:var(--red)} .l-ok{color:var(--green)}
 #prompt{position:absolute;left:50%;top:57%;transform:translateX(-50%);text-align:center;
@@ -83,21 +95,31 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
   <div class="hud" id="tl"><span class="rec"><b></b>REC</span> <span class="dim" id="tc">00:00:00</span></div>
   <div class="hud" id="tr"><span id="unit">UNIT 4-ADAM-12</span><br><span class="dim" id="bat">BATT 98%</span></div>
   <div class="hud" id="bl"><span class="dim">FLOOR</span> <span id="flr">01</span>
-    <span class="dim">/ CONTACTS</span> <span id="cnt">0</span></div>
+    <span class="dim">/5 &middot;</span> <span id="flrname">LOBBY</span>
+    <span class="dim">&middot; CONTACTS</span> <span id="cnt">0</span>
+    <div class="dim" id="obj" style="font-size:11px;margin-top:3px;max-width:44vw"></div></div>
   <div class="hud" id="br"><span class="dim">AMMO</span> <span id="ammo">12</span>
     <span class="dim">| MAG</span> <span id="mags">2</span></div>
   <div id="xh"></div>
-  <div class="hud" style="left:16px;bottom:50px"><span class="dim" style="font-size:11px">VITALS</span></div>
+  <div class="hud" style="left:16px;bottom:76px"><span class="dim" style="font-size:11px">VITALS</span></div>
   <div class="hp"><i id="hpbar"></i></div>
   <div id="log"></div>
+  <canvas id="map" width="150" height="120"></canvas>
+  <div class="hud" id="stance"><span class="dim">STANCE</span> <span id="stanceV">STAND</span>
+    &middot; <span class="dim">LIGHT</span> <span id="lightV">ON</span></div>
+  <div class="stam"><i id="stambar"></i></div>
   <div class="hud" id="prompt"></div>
 
   <div class="screen" id="s-brief">
     <div class="panel">
       <h1>BODY<span>CAM</span></h1>
       <div class="sub">Vertical Entry &middot; High-Rise Clearance</div>
-      <p>You are first through the door. Eight floors, dark, power cut. Civilians are still
-      inside and so is everyone else.</p>
+      <p>You are first through the door. <strong>Five floors</strong>, dark, power cut &mdash;
+      lobby, offices, the server plant, the residential suites, and whatever is waiting in the
+      penthouse. Civilians are still inside and so is everyone else.</p>
+      <p>You are <strong>4-ADAM-12</strong>. <strong>TOC</strong> is on the net the whole way up:
+      they answer your callouts, confirm your decisions, and will tell you when to consider
+      coming back down.</p>
       <p><strong>The job is not shooting.</strong> Challenge every contact you find. Civilians
       comply and are walked out. Some suspects surrender. Some do not &mdash; and only when a
       weapon is out are you clear to fire. Shoot a civilian, or fire on someone who never drew,
@@ -110,6 +132,8 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
         <b>CLICK</b><span>Fire</span>
         <b>R</b><span>Reload</span>
         <b>E</b><span>Use stairwell once floor is clear</span>
+        <b>CTRL</b><span>Crouch &mdash; slower, steadier, lower profile</span>
+        <b>L</b><span>Flashlight &mdash; off is near-blind, but it drains the battery</span>
       </div>
       <div class="warn">Fiction, not training. Contacts are silhouettes; this is a discrimination
       and de-escalation puzzle, not a simulation of real tactics.</div>
@@ -117,7 +141,8 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
         <button id="go">MAKE ENTRY</button>
         <button class="ghost" id="mute">SOUND: ON</button>
       </div>
-      <p class="dim" style="font-size:12px;margin-top:14px">Desktop, mouse + keyboard. Click the
+      <p class="dim" style="font-size:12px;margin-top:14px">The map bottom-right only fills in
+      where you have actually been. Desktop, mouse + keyboard. Click the
       view to capture the mouse; press ESC to release.</p>
     </div>
   </div>
@@ -138,7 +163,7 @@ const rnd=(a,b)=>a+Math.random()*(b-a), pick=a=>a[Math.floor(Math.random()*a.len
 
 /* ---------------- map ---------------- */
 const MW=26, MH=20;                 // grid size per floor
-const T={VOID:0, WALL:1, FLOOR:2, DOOR:3, STAIR:4, GLASS:5};
+const T={VOID:0, WALL:1, FLOOR:2, DOOR:3, STAIR:4, GLASS:5, PROP:6, LIGHT:7};
 
 function makeFloor(n){
   const g=new Uint8Array(MW*MH).fill(T.WALL);
@@ -171,13 +196,38 @@ function makeFloor(n){
       rooms.push({x0,x1,y0:Math.min(yTop,yBot),y1:Math.max(yTop,yBot),side});
     }
   }
+  // clutter: desks, cabinets, racks. Solid, so rooms have real cover and
+  // corners you cannot see past from the doorway.
+  for(const r of rooms){
+    const n=1+Math.floor(Math.random()*3);
+    for(let i=0;i<n;i++){
+      const px=r.x0+1+Math.floor(Math.random()*(r.x1-r.x0-1));
+      const py=r.y0+1+Math.floor(Math.random()*(r.y1-r.y0-1));
+      if(g[at(px,py)]===T.FLOOR) set(px,py,T.PROP);
+      if(Math.random()<0.45 && g[at(px+1,py)]===T.FLOOR) set(px+1,py,T.PROP);
+    }
+  }
+  // emergency lights along the corridor: the only colour in the building
+  const lights=[];
+  for(let x=4;x<MW-3;x+=5){
+    lights.push({x:x+0.5,y:cy-1.05,ph:Math.random()*TAU});
+  }
   // stairwell at the far end of the corridor
   set(MW-3,cy,T.STAIR); set(MW-3,cy-1,T.STAIR);
-  return {g,rooms,cy,spawn:{x:3.5,y:cy+0.5},stair:{x:MW-3+0.5,y:cy+0.5}};
+  return {g,rooms,cy,lights,spawn:{x:3.5,y:cy+0.5},stair:{x:MW-3+0.5,y:cy+0.5}};
 }
 
 /* ---------------- contacts ---------------- */
 /* Each has: type civ|susp, state, and an intent that only resolves on challenge. */
+const FLOORS=[
+  {n:"LOBBY & MEZZANINE", wall:[58,54,50], accent:[92,78,52], obj:"Sweep reception and the mezzanine."},
+  {n:"OFFICE FLOOR",      wall:[52,54,58], accent:[70,84,96], obj:"Cubicle rows. Check under the desks."},
+  {n:"SERVER & PLANT",    wall:[44,50,54], accent:[40,110,120],obj:"Machine noise will cover footsteps."},
+  {n:"RESIDENTIAL SUITES",wall:[62,52,46], accent:[110,70,48], obj:"Occupied units. Expect families."},
+  {n:"PENTHOUSE",         wall:[56,48,60], accent:[120,80,130], obj:"Top floor. This is where they are."}
+];
+const theme=()=>FLOORS[clamp(G.floorNo-1,0,FLOORS.length-1)];
+
 const S={IDLE:"idle",AWARE:"aware",COMPLY:"comply",DRAW:"draw",HOSTILE:"hostile",
          DOWN:"down",OUT:"out"};
 
@@ -206,12 +256,14 @@ function makeContacts(floor,n){
 
 /* ---------------- game state ---------------- */
 const G={
-  running:false, floorNo:1, maxFloor:8,
+  running:false, floorNo:1, maxFloor:5,
   map:null, contacts:[],
   px:0, py:0, ang:0, vz:0,
   hp:100, ammo:12, mags:2, magSize:12,
+  crouch:0, light:true, stam:100,
   keys:{}, mouse:{dx:0}, muted:false,
-  gun:{bob:0, recoil:0, flash:0, sway:0, dry:0},
+  gun:{bob:0, recoil:0, flash:0, sway:0, dry:0, slide:0},
+  lowWarned:false, spotted:new Set(), shells:[], sparks:[],
   t0:0, tNow:0, shake:0, fireCd:0, reloading:0, bat:98,
   stat:{shots:0,hits:0,civShot:0,unjustified:0,detained:0,neutralized:0,evacuated:0,
         hitsTaken:0,floors:0,time:0},
@@ -267,12 +319,63 @@ function sfx(kind){
   }catch(e){}
 }
 
+/* ---------------- comms ----------------
+   Two voices on the net: OPERATOR is you, calling your own movement, and TOC
+   is the controller on the other end who answers, warns and pushes you on.
+   Everything here fires off real game events, never on a timer. */
+const BARK={
+  entry:["Making entry. Slicing the corner.","In the room. Working left.","Moving. Doorway clear."],
+  spot:["Contact. I have a body.","Movement, front.","I've got somebody in here."],
+  challengeCiv:["Hands are empty. Civilian.","She's clear. Hands up.","Nothing in his hands."],
+  comply:["Compliant. Coming out.","Hands on the wall. Good.","They're giving up."],
+  draw:["GUN. HE'S GOT A GUN.","Weapon! Weapon!","He's reaching - drawn!"],
+  fired:["Shots fired, shots fired.","Rounds away.","Engaged, one down."],
+  civHit:["NO. NO - that was a civilian.","Cease fire. Cease fire. Civilian down.","...that was not a threat."],
+  unjust:["He never showed a weapon.","I fired early. That's on me.","No weapon. I called it wrong."],
+  reload:["Reloading, cover me.","Changing mags.","Dry - reloading."],
+  lowAmmo:["Getting low.","Half a mag left.","Running short on rounds."],
+  hurt:["I'm hit! I'm hit!","Taking rounds!","He's on me!"],
+  clear:["Floor's clear. All rooms checked.","Last room clear. Nothing moving.","We're clear up here."],
+  stair:["Moving to the stairwell.","Stacking on the stairs.","Heading up."]
+};
+const TOC={
+  floorIn:f=>[`TOC copies. ${f.n}. ${f.obj}`,`Copy your entry. ${f.obj}`,`You're on ${f.n}. Go slow, we've got time.`],
+  spot:["TOC copy contact. Challenge before you decide.","Copy. Voice first, 4-Adam-12.","Understood. Identify before you engage."],
+  comply:["Good work. Keep that voice going.","Copy compliant. That's how we want it.","Nice. No rounds needed."],
+  draw:["Weapon confirmed on your call. You're clear.","Copy gun. You're covered.","Acknowledged - your call."],
+  fired:["Shots heard. Status?","Copy shots fired. Give me a body count.","TOC copies. Talk to me."],
+  civHit:["...TOC copies. Medical is moving. Stand by.","Say again? Confirm civilian. Stand by.","Hold what you have. We're sending medical."],
+  unjust:["Log that one. We'll walk through it after.","Copy. Review board will want the footage.","Understood. Keep the camera running."],
+  hurt:["TOC copies you're hit. Fall back if you can.","We hear it. Backup is two floors down.","Get to cover, 4-Adam-12."],
+  low:["Your vitals are dropping. Consider withdrawing.","You're bleeding out up there. Say the word and we pull you.","Medical is staged in the lobby."],
+  clear:f=>[`Copy clear on ${f}. Stairwell's yours.`,`Good clear. Move up when you're ready.`,`${f} is green. Take the stairs.`],
+  ammo:["Resupply is with the stack, two floors down.","Copy low on ammo. Make them count.","Noted. No resupply until you come down."]
+};
+let lastBark=0;
+function say(who,text,cls){
+  const d=document.createElement("div");
+  d.className="cm "+(cls||"");
+  d.innerHTML=`<b>${who}</b> ${text.replace(/</g,"&lt;")}`;
+  $("log").appendChild(d);
+  while($("log").children.length>5) $("log").firstChild.remove();
+  setTimeout(()=>{ if(d.parentNode) d.style.opacity=".4"; },5200);
+  setTimeout(()=>{ if(d.parentNode) d.remove(); },10000);
+  sfx("radio");
+}
+const op =(k,cls)=>say("OPERATOR", pick(BARK[k]), cls||"c-op");
+const toc=(k,cls)=>say("TOC",     Array.isArray(k)?pick(k):pick(TOC[k]), cls||"c-toc");
+// keep the two voices from stepping on each other
+function exchange(opKey,tocKey,opCls,tocCls){
+  op(opKey,opCls);
+  setTimeout(()=>{ if(G.running||tocKey==="civHit") toc(tocKey,tocCls); }, 700+Math.random()*500);
+}
+
 /* ---------------- logging ---------------- */
 function log(text,cls){
   const d=document.createElement("div");
   d.className=cls||""; d.textContent=text;
   $("log").appendChild(d);
-  while($("log").children.length>6) $("log").firstChild.remove();
+  while($("log").children.length>5) $("log").firstChild.remove();
   setTimeout(()=>{ if(d.parentNode) d.style.opacity=".35"; },4200);
   setTimeout(()=>{ if(d.parentNode) d.remove(); },9000);
 }
@@ -294,9 +397,14 @@ function startFloor(n){
   G.contacts=makeContacts(G.map,n);
   G.px=G.map.spawn.x; G.py=G.map.spawn.y; G.ang=0;
   G.ammo=G.magSize; G.reloading=0; G.fireCd=0;
+  G.clearCalled=false; G.spotted=new Set(); G.shells=[]; G.sparks=[]; seen=null;
   $("flr").textContent=String(n).padStart(2,"0");
   updHUD();
-  log(`RADIO: Floor ${n}. ${G.contacts.length} heat signatures. Go slow.`,"l-rad");
+  const th=theme();
+  $("flrname").textContent=th.n;
+  $("obj").textContent=th.obj;
+  say("TOC",`Floor ${n} - ${th.n}. ${G.contacts.length} signatures on thermal.`,"c-toc");
+  setTimeout(()=>{ if(G.running) toc(TOC.floorIn(th)); },1400);
 }
 
 const remaining=()=>G.contacts.filter(c=>c.state!==S.DOWN&&c.state!==S.OUT).length;
@@ -306,6 +414,11 @@ function updHUD(){
   $("cnt").textContent=remaining();
   $("hpbar").style.width=clamp(G.hp,0,100)+"%";
   $("hpbar").style.background = G.hp>60?"var(--green)":G.hp>30?"var(--amber)":"var(--red)";
+  $("stambar").style.width=G.stam+"%";
+  $("stanceV").textContent=G.crouch>0.5?"CROUCH":"STAND";
+  $("lightV").textContent=G.light?"ON":"OFF";
+  $("lightV").style.color=G.light?"var(--amber)":"#6a6a78";
+  drawMap();
   const s=Math.floor(G.tNow/1000);
   $("tc").textContent=[Math.floor(s/3600),Math.floor(s/60)%60,s%60]
     .map(v=>String(v).padStart(2,"0")).join(":");
@@ -333,63 +446,74 @@ function targeted(){
 
 function challenge(){
   const c=targeted();
-  if(!c){ log("You shout into an empty room.","l-warn"); return; }
+  if(!c){ say("OPERATOR","Nothing in here. Moving.","c-op"); return; }
   if(c.state===S.COMPLY||c.state===S.DRAW||c.state===S.HOSTILE) return;
-  sfx("radio");
-  log('YOU: "POLICE! HANDS! LET ME SEE YOUR HANDS!"');
+  say("OPERATOR",'"POLICE! HANDS! LET ME SEE YOUR HANDS!"',"c-op");
   c.state=S.AWARE; c.t=0;
   setTimeout(()=>{
     if(c.state===S.DOWN||c.state===S.OUT) return;
     if(c.type==="civ"){
-      c.state=S.COMPLY; log("CONTACT: hands up. Civilian. Walking them out.","l-ok");
+      c.state=S.COMPLY; op("challengeCiv");
       setTimeout(()=>{ if(c.state===S.COMPLY){ c.state=S.OUT; G.stat.evacuated++;
-        log("CIVILIAN EVACUATED.","l-ok"); updHUD(); } },900);
+        say("TOC","Copy one civilian out. Escort has them.","c-toc"); updHUD(); } },900);
     } else if(c.willSurrender){
-      c.state=S.COMPLY; log("CONTACT: weapon down. Hands out. Complying.","l-ok");
+      c.state=S.COMPLY; exchange("comply","comply");
       setTimeout(()=>{ if(c.state===S.COMPLY){ c.state=S.OUT; G.stat.detained++;
-        log("SUSPECT DETAINED. No shots fired.","l-ok"); updHUD(); } },1100);
+        say("TOC","Suspect in custody. No rounds fired. Outstanding.","c-toc"); updHUD(); } },1100);
     } else {
       c.state=S.DRAW; c.drawAt=performance.now();
-      log("CONTACT IS DRAWING. WEAPON. WEAPON.","l-bad");
-      sfx("click");
+      op("draw","c-urg"); sfx("click");
     }
   }, 380+Math.random()*420);
 }
 
 function fire(){
   if(G.reloading>0) return;
-  if(G.ammo<=0){ sfx("click"); log("DRY. Reload (R).","l-warn"); return; }
+  if(G.ammo<=0){ sfx("click"); say("OPERATOR","Dry! Reloading!","c-urg"); return; }
   G.ammo--; G.stat.shots++; G.fireCd=0.19; G.shake=1; sfx("shot");
-  G.gun.recoil=1; G.gun.flash=1;
+  if(G.ammo===4) op("lowAmmo");
+  G.gun.recoil=1; G.gun.flash=1; G.gun.slide=1;
+  // eject a case: screen-space particle thrown up and right from the port
+  G.shells.push({x:14, y:-16, vx:rnd(26,44), vy:rnd(-46,-28), rot:Math.random()*TAU,
+                 spin:rnd(-14,14), life:1});
   $("flash").style.opacity=".16"; setTimeout(()=>$("flash").style.opacity="0",50);
   const c=targeted();
   updHUD();
-  if(!c){ log("Round into the drywall.","l-warn"); return; }
+  if(!c){
+    say("OPERATOR","Round into the drywall.","c-op");
+    for(let i=0;i<7;i++) G.sparks.push({x:0,y:0,vx:rnd(-50,50),vy:rnd(-40,20),life:1});
+    return;
+  }
+  G.hitMark=1;
   G.stat.hits++; c.hitFlash=1;
   if(c.type==="civ"){
     c.state=S.DOWN; G.stat.civShot++;
-    log("!! CIVILIAN DOWN. THAT WAS A CIVILIAN.","l-bad");
+    exchange("civHit","civHit","c-urg","c-urg");
   } else if(c.state===S.DRAW||c.state===S.HOSTILE){
     c.state=S.DOWN; G.stat.neutralized++;
-    log("THREAT DOWN. Weapon was out.","l-ok");
+    exchange("fired","draw");
   } else {
     c.state=S.DOWN; G.stat.unjustified++;
-    log("!! SUSPECT DOWN - no weapon shown. That is on the report.","l-bad");
+    exchange("unjust","unjust","c-urg");
   }
   updHUD();
 }
 
 function reload(){
   if(G.reloading>0||G.ammo===G.magSize) return;
-  if(G.mags<=0){ log("No magazines left.","l-warn"); return; }
-  G.reloading=1.5; G.mags--; sfx("reload"); log("Reloading.","");
+  if(G.mags<=0){ say("OPERATOR","No mags. I'm out.","c-urg"); return; }
+  G.reloading=1.5; G.mags--; sfx("reload"); op("reload");
+  if(G.mags===0) setTimeout(()=>{ if(G.running) toc("ammo"); },900);
 }
 
-function hurt(n){
+function hurt(n,fromAng){
+  G.dmgDir=1; G.dmgFrom=(fromAng===undefined?G.ang:fromAng);
   G.hp-=n; G.stat.hitsTaken++;
   $("dmg").style.opacity=Math.min(0.9,(100-G.hp)/100+0.25);
   setTimeout(()=>{ $("dmg").style.opacity=String(clamp((100-G.hp)/260,0,0.5)); },260);
   G.shake=1.4; sfx("hit"); updHUD();
+  if(Math.random()<0.6) op("hurt","c-urg");
+  if(G.hp<40 && !G.lowWarned){ G.lowWarned=true; setTimeout(()=>{ if(G.running) toc("low"); },800); }
   if(G.hp<=0){ endGame(false); }
 }
 
@@ -405,12 +529,16 @@ function solid(x,y){
   const gx=Math.floor(x), gy=Math.floor(y);
   if(gx<0||gy<0||gx>=MW||gy>=MH) return true;
   const t=G.map.g[gx+gy*MW];
-  return t===T.WALL||t===T.VOID||t===T.GLASS;
+  return t===T.WALL||t===T.VOID||t===T.GLASS||t===T.PROP;
 }
 
 function update(dt){
   // movement with wall sliding
-  const sp=(G.keys.shift?3.4:2.1)*dt;
+  // crouching is slower and steadier; sprinting burns stamina
+  const wantSprint=G.keys.shift && G.stam>2 && !G.keys.ctrl;
+  G.stam = clamp(G.stam + (wantSprint?-34:18)*dt, 0, 100);
+  G.crouch += ((G.keys.ctrl?1:0)-G.crouch)*Math.min(1,dt*9);
+  const sp=(wantSprint?3.6:2.1)*(1-G.crouch*0.45)*dt;
   let fx=0,fy=0;
   const f=(G.keys.w?1:0)-(G.keys.s?1:0), s=(G.keys.d?1:0)-(G.keys.a?1:0);
   if(f||s){
@@ -420,13 +548,24 @@ function update(dt){
   }
   if(!solid(G.px+fx*1.6,G.py) && !blockedByContact(G.px+fx*1.6,G.py)) G.px+=fx;
   if(!solid(G.px,G.py+fy*1.6) && !blockedByContact(G.px,G.py+fy*1.6)) G.py+=fy;
-  G.vz=(f||s)?Math.sin(performance.now()/135)*0.9:G.vz*0.9;   // head bob
+  const bobAmt=(1-G.crouch*0.6)*(wantSprint?1.7:1);
+  G.vz=(f||s)?Math.sin(performance.now()/135)*0.9*bobAmt:G.vz*0.9;   // head bob
+  G.vz += G.crouch*RH*0.055;                                        // eye line drops
   // weapon: bob while walking, sway when turning, recoil and flash decay
   const moving=!!(f||s);
-  G.gun.bob += dt*(moving?(G.keys.shift?11:7.5):2.2);
+  G.gun.bob += dt*(moving?(wantSprint?11:7.5):2.2);
   G.gun.sway += ((moving?0:0) - G.gun.sway)*0.1;
   G.gun.recoil*=Math.pow(0.0007,dt);
   G.gun.flash*=Math.pow(0.000002,dt);
+  G.gun.slide*=Math.pow(1e-7,dt);                 // slide snaps back fast
+  G.hitMark=Math.max(0,(G.hitMark||0)-dt*3.4);
+  G.dmgDir=Math.max(0,(G.dmgDir||0)-dt*1.2);
+  // cases tumble and settle
+  for(const sh of G.shells){ sh.vy+=170*dt; sh.x+=sh.vx*dt; sh.y+=sh.vy*dt;
+    sh.rot+=sh.spin*dt; sh.life-=dt*0.55; }
+  G.shells=G.shells.filter(sh=>sh.life>0);
+  for(const sp of G.sparks){ sp.life-=dt*2.6; sp.x+=sp.vx*dt; sp.y+=sp.vy*dt; sp.vy+=90*dt; }
+  G.sparks=G.sparks.filter(sp=>sp.life>0);
   G.gun.dry = (G.ammo<=0&&G.reloading<=0)?1:0;
 
   // look
@@ -437,9 +576,10 @@ function update(dt){
   if(G.keys.arrowright) G.ang+=2.0*dt;
 
   if(G.fireCd>0) G.fireCd-=dt;
-  if(G.reloading>0){ G.reloading-=dt; if(G.reloading<=0){ G.ammo=G.magSize; updHUD(); log("Up.",""); } }
+  if(G.reloading>0){ G.reloading-=dt; if(G.reloading<=0){ G.ammo=G.magSize; updHUD(); say("OPERATOR","Up. Back in the fight.","c-op"); } }
   G.shake*=0.86;
   G.bat=Math.max(1,98-(G.tNow/1000)*0.05);
+  if(G.light) G.bat=Math.max(1,G.bat-dt*0.20);
 
   // contacts
   for(const c of G.contacts){
@@ -450,21 +590,23 @@ function update(dt){
     // a suspect who sees you first may go for it unprompted
     if(c.state===S.IDLE && c.type==="susp" && d<5.2 && inView(c)){
       if(Math.random()<dt*0.55){ c.state=S.DRAW; c.drawAt=performance.now();
-        log("CONTACT REACHING. WEAPON.","l-bad"); sfx("click"); }
+        op("draw","c-urg"); sfx("click"); }
     }
-    if(c.state===S.IDLE && c.type==="civ" && d<3.4 && inView(c)){
-      c.state=S.AWARE; log("CONTACT: someone's in here. Hands are empty.","l-warn");
+    if(c.state===S.IDLE && d<5.0 && inView(c) && !G.spotted.has(c)){
+      G.spotted.add(c);
+      exchange("spot","spot");
     }
     // drawn weapon: a window to react, then they fire
     if(c.state===S.DRAW){
       if(performance.now()-c.drawAt>1250){
         c.state=S.HOSTILE;
-        hurt(18+Math.random()*10);
-        log("YOU ARE TAKING FIRE.","l-bad");
+        hurt(18+Math.random()*10, Math.atan2(c.y-G.py,c.x-G.px));
+        say("TOC","Shots on you - we hear it. Move!","c-urg");
         c.drawAt=performance.now()+400;
       }
     } else if(c.state===S.HOSTILE){
-      if(performance.now()-c.drawAt>1500){ c.drawAt=performance.now(); hurt(12+Math.random()*8); }
+      if(performance.now()-c.drawAt>1500){ c.drawAt=performance.now();
+        hurt(12+Math.random()*8, Math.atan2(c.y-G.py,c.x-G.px)); }
       const a=Math.atan2(G.py-c.y,G.px-c.x);
       if(d>2.2){ const nx=c.x+Math.cos(a)*dt*0.9, ny=c.y+Math.sin(a)*dt*0.9;
         if(!solid(nx,ny) && !blockedByContact(nx,ny,c)){ c.x=nx; c.y=ny; } }
@@ -479,9 +621,11 @@ function update(dt){
   let p="";
   if(onStair && clear) p="<b>[E]</b> ASCEND TO NEXT FLOOR";
   else if(onStair && !clear) p=`${remaining()} CONTACT(S) UNACCOUNTED FOR`;
+  if(clear && !G.clearCalled){ G.clearCalled=true; op("clear");
+    setTimeout(()=>{ if(G.running) toc(TOC.clear(theme().n)); },900); }
   else if(tgt && tgt.state!==S.COMPLY) p="<b>[F]</b> CHALLENGE";
   $("prompt").innerHTML=p;
-  if(onStair && clear && G.keys.e){ G.keys.e=false; nextFloor(); }
+  if(onStair && clear && G.keys.e){ G.keys.e=false; op("stair"); nextFloor(); }
   updHUD();
 }
 
@@ -499,6 +643,7 @@ function render(){
   const dirX=Math.cos(G.ang), dirY=Math.sin(G.ang);
   const planeX=-dirY*0.72, planeY=dirX*0.72;
   const horizon=(RH>>1)+G.vz+shake*(Math.random()-0.5);
+  const LP=G.light?1:0.22;                       // flashlight power
 
   for(let x=0;x<RW;x++){
     const camX=2*x/RW-1;
@@ -513,19 +658,24 @@ function render(){
       if(sdx<sdy){ sdx+=ddx; mx+=sx; side=0; } else { sdy+=ddy; my+=sy; side=1; }
       if(mx<0||my<0||mx>=MW||my>=MH){ hit=1; tile=T.WALL; break; }
       const t=G.map.g[mx+my*MW];
-      if(t===T.WALL||t===T.VOID||t===T.GLASS){ hit=1; tile=t; }
+      if(t===T.WALL||t===T.VOID||t===T.GLASS||t===T.PROP){ hit=1; tile=t; }
     }
     const dist = side===0 ? (sdx-ddx) : (sdy-ddy);
     zbuf[x]=dist;
-    const h=Math.min(RH*4, RH/Math.max(dist,0.05));
-    const y0=Math.max(0,Math.floor(horizon-h/2)), y1=Math.min(RH-1,Math.floor(horizon+h/2));
+    const full=Math.min(RH*4, RH/Math.max(dist,0.05));
+    const h = tile===T.PROP ? full*0.52 : full;     // furniture is waist height
+    const top = tile===T.PROP ? horizon+full/2-h : horizon-h/2;
+    const y0=Math.max(0,Math.floor(top)), y1=Math.min(RH-1,Math.floor(top+h));
 
     // flashlight: bright at centre, falls off hard with distance
     const cone=1-Math.min(1,Math.abs(camX)*1.25);
-    const lit=clamp((0.16+2.4/(1+dist*0.60))*(0.40+cone*0.70),0,1);
+    const lit=clamp((0.16+LP*2.4/(1+dist*0.60))*(0.40+cone*0.70*LP),0,1)*(G.light?1:0.30);
     let r,g,b;
+    const th=theme();
     if(tile===T.GLASS){ r=26;g=42;b=54; }
-    else { r=54;g=52;b=50; }
+    else if(tile===T.PROP){ r=th.accent[0]*0.55; g=th.accent[1]*0.55; b=th.accent[2]*0.55; }
+    else if(tile===T.DOOR){ r=th.accent[0]*0.7; g=th.accent[1]*0.7; b=th.accent[2]*0.7; }
+    else { r=th.wall[0]; g=th.wall[1]; b=th.wall[2]; }
     const shade=(side===1?0.62:1)*lit;
     r*=shade; g*=shade; b*=shade;
 
@@ -604,16 +754,14 @@ function render(){
    opposite the look direction, kicks on fire, dips out of frame to reload,
    and locks its slide back when the magazine runs dry. */
 function drawGun(){
-  const s=RH/150;                                   // scales with the viewport
-  const rec=G.gun.recoil;
-  // reload: a smooth dip down and back up across the 1.5s timer
+  const s=RH/150;
+  const rec=G.gun.recoil, cyc=G.gun.slide;
   const rl = G.reloading>0 ? Math.sin((1-clamp(G.reloading/1.5,0,1))*Math.PI) : 0;
   const bobX=Math.sin(G.gun.bob)*3.4*s;
   const bobY=Math.abs(Math.cos(G.gun.bob))*3.0*s;
-  // the shape spans roughly -26..+40 in x, so bias left to sit on the centreline
   const x=RW*0.5 - 7*s + bobX + G.gun.sway*9*s;
-  const y=RH - 28*s + bobY + rl*86*s - rec*9*s;     // recoil lifts, reload drops
-  const tilt=(-rec*0.1 + G.gun.sway*0.05);
+  const y=RH - 28*s + bobY + rl*86*s - rec*9*s + G.crouch*6*s;
+  const tilt=(-rec*0.10 + G.gun.sway*0.05);
 
   ctx.save();
   ctx.translate(x,y); ctx.rotate(tilt);
@@ -621,43 +769,83 @@ function drawGun(){
     ctx.moveTo(pts[0]*s,pts[1]*s);
     for(let i=2;i<pts.length;i+=2) ctx.lineTo(pts[i]*s,pts[i+1]*s);
     ctx.closePath(); ctx.fill(); };
+  const R=(x0,y0,w,h,fill)=>{ ctx.fillStyle=fill; ctx.fillRect(x0*s,y0*s,w*s,h*s); };
 
-  // slide pulled back while dry or mid-recoil
-  const slide = (G.gun.dry?5:0) + rec*4;
+  // slide travel: cycles on every shot, and stays back when the magazine is dry
+  const slide=(G.gun.dry?7:0)+cyc*7;
 
-  // forearm and gloved hands, wrapped around the grip
-  P([-26,60, -12,4, 10,4, 22,60],"#23242a");
-  P([-14,10, 16,10, 19,34, -17,34],"#2f3037");
-  // grip
-  P([-11,36, 13,36, 9,4, -7,4],"#1b1c21");
-  P([-9,32, 11,32, 8,8, -6,8],"#26272d");
-  // frame
-  P([-20,6, 26,6, 26,-6, -20,-6],"#34353c");
-  // slide, offset back when the action is open
-  P([-22+slide,-6, 30+slide,-6, 30+slide,-20, -22+slide,-20],"#43444c");
-  P([-22+slide,-20, 30+slide,-20, 30+slide,-23, -22+slide,-23],"#54555f");
-  // ejection port shows as a dark gap once the slide is back
-  if(slide>2) P([6,-7, 6+slide,-7, 6+slide,-19, 6,-19],"#0d0d10");
-  // barrel and front sight
-  P([28+slide*0.4,-10, 40+slide*0.4,-10, 40+slide*0.4,-17, 28+slide*0.4,-17],"#3a3b42");
-  P([33,-23, 36,-23, 36,-27, 33,-27],"#5a5b64");
-  // trigger guard
-  ctx.strokeStyle="#2a2b31"; ctx.lineWidth=2.2*s;
-  ctx.beginPath(); ctx.arc(2*s,14*s,8*s,-0.2,Math.PI+0.6); ctx.stroke();
+  /* ---- support arm and gloved hands ---- */
+  P([-34,64, -18,10, -2,10, -6,64],"#1e1f24");                 // support forearm
+  R(-20,6,16,10,"#2b2c33");                                     // support glove
+  R(-19,7,3.2,7,"#232429"); R(-15,7,3.2,7,"#232429");           // knuckles
+  R(-11,7,3.2,7,"#232429");
+  P([-26,62, -10,6, 12,6, 24,62],"#23242a");                    // firing forearm
+  R(-16,44,30,7,"#191a1f");                                     // cuff
+  R(-15,45.6,28,1.4,"#3a3b42");                                 // cuff stitching
 
-  // muzzle flash
+  /* ---- grip, backstrap, magazine ---- */
+  P([-11,40, 13,40, 9,6, -7,6],"#16171b");
+  P([-9,36, 11,36, 8,9, -6,9],"#22232a");
+  for(let i=0;i<6;i++) R(-7+i*0.2,12+i*4,13,1.6,"#191a1f");     // grip texture
+  R(-10,38,22,4,"#2e2f37");                                     // magazine baseplate
+  P([12,34, 15,34, 13,10, 11,10],"#2a2b32");                    // backstrap
+
+  /* ---- frame, trigger, guard ---- */
+  R(-20,-4,46,10,"#303138");
+  ctx.strokeStyle="#26272e"; ctx.lineWidth=2.6*s;
+  ctx.beginPath(); ctx.arc(2*s,15*s,8.5*s,-0.25,Math.PI+0.62); ctx.stroke();
+  P([0,10, 4,10, 3,17, -1,17],"#3d3e46");                       // trigger
+  R(-4,9,7,7,"#2b2c33");                                        // trigger finger
+  R(20,-3,7,4,"#3a3b43");                                       // accessory rail block
+
+  /* ---- slide, serrations, ports ---- */
+  const sx=-22+slide;
+  R(sx,-18,52,14,"#41424a");                                    // slide body
+  R(sx,-19.6,52,2.2,"#53545e");                                 // top rib highlight
+  R(sx,-5.4,52,1.6,"#2b2c33");                                  // lower shadow line
+  for(let i=0;i<7;i++) R(sx+2+i*2.6,-16,1.3,10,"#373841");      // rear serrations
+  for(let i=0;i<4;i++) R(sx+38+i*2.6,-16,1.3,10,"#373841");     // forward serrations
+  if(slide>1.5) R(6,-17.4,slide,12.6,"#0b0b0e");                // open ejection port
+  R(sx+8,-17,10,3,"#33343c");                                   // extractor cut
+  P([sx+52,-18, sx+58,-15, sx+58,-7, sx+52,-4],"#3c3d45");      // muzzle end
+
+  /* ---- sights ---- */
+  R(sx+2,-23,5,4.4,"#54555f"); R(sx+3.4,-22,0.9,2.4,"#0e0e12"); // rear notch
+  R(sx+3.0,-21.6,0.8,1.8,"#8fd3ff"); R(sx+5.6,-21.6,0.8,1.8,"#8fd3ff");
+  R(sx+46,-23,3.4,4.6,"#5a5b64");                               // front post
+  R(sx+47,-22.2,1.4,1.6,"#cfe9ff");                             // front dot
+
+  /* ---- rail light, lit only when the flashlight is on ---- */
+  R(22,2,14,7,"#24252b");
+  R(35,3,2.4,5,G.light?"#ffe9b0":"#2f3036");
+  if(G.light){
+    const lg=ctx.createRadialGradient(37*s,5.5*s,0,37*s,5.5*s,17*s);
+    lg.addColorStop(0,"rgba(255,235,170,.55)"); lg.addColorStop(1,"rgba(255,220,140,0)");
+    ctx.fillStyle=lg; ctx.beginPath(); ctx.arc(37*s,5.5*s,17*s,0,TAU); ctx.fill();
+  }
+
+  /* ---- ejected cases ---- */
+  for(const sh of G.shells){
+    ctx.save(); ctx.translate(sh.x*s,sh.y*s); ctx.rotate(sh.rot);
+    ctx.globalAlpha=clamp(sh.life,0,1);
+    ctx.fillStyle="#c9a24a"; ctx.fillRect(-1.1*s,-3.2*s,2.2*s,6.4*s);
+    ctx.fillStyle="#e4c274"; ctx.fillRect(-1.1*s,-3.2*s,2.2*s,1.5*s);
+    ctx.restore();
+  }
+  ctx.globalAlpha=1;
+
+  /* ---- muzzle flash ---- */
   if(G.gun.flash>0.02){
-    const f=G.gun.flash, mx=42*s, my=-13.5*s;
+    const f=G.gun.flash, mx=(58+slide*0.3)*s, my=-11*s;
     ctx.globalAlpha=Math.min(1,f*1.5);
-    const g=ctx.createRadialGradient(mx,my,0,mx,my,26*s*(0.6+f*0.7));
-    g.addColorStop(0,"#fff6d8"); g.addColorStop(0.35,"rgba(255,190,70,.85)");
+    const g=ctx.createRadialGradient(mx,my,0,mx,my,30*s*(0.6+f*0.7));
+    g.addColorStop(0,"#fff8e2"); g.addColorStop(0.32,"rgba(255,196,80,.9)");
     g.addColorStop(1,"rgba(255,140,30,0)");
-    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(mx,my,26*s*(0.6+f*0.7),0,TAU); ctx.fill();
-    // ragged star, rotated each shot so no two look identical
-    ctx.fillStyle="#fff4cf"; ctx.beginPath();
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(mx,my,30*s*(0.6+f*0.7),0,TAU); ctx.fill();
+    ctx.fillStyle="#fff6d4"; ctx.beginPath();
     const rot=G.stat.shots*1.7;
-    for(let i=0;i<10;i++){
-      const a=rot+i*TAU/10, r=(i%2?5:15)*s*(0.7+f*0.6);
+    for(let i=0;i<12;i++){
+      const a=rot+i*TAU/12, r=(i%2?5:17)*s*(0.7+f*0.6);
       const px=mx+Math.cos(a)*r, py=my+Math.sin(a)*r*0.8;
       i?ctx.lineTo(px,py):ctx.moveTo(px,py);
     }
@@ -666,13 +854,89 @@ function drawGun(){
   }
   ctx.restore();
 
-  // the flash briefly lights the room, from the muzzle outward
+  // room lit by the flash, from the muzzle outward
   if(G.gun.flash>0.05){
     const g=ctx.createRadialGradient(x,y-14*s,0,x,y-14*s,RW*0.62);
-    g.addColorStop(0,`rgba(255,205,120,${0.20*G.gun.flash})`);
+    g.addColorStop(0,`rgba(255,205,120,${0.22*G.gun.flash})`);
     g.addColorStop(1,"rgba(255,170,60,0)");
     ctx.fillStyle=g; ctx.fillRect(0,0,RW,RH);
   }
+
+  // impact sparks where a round went wide
+  if(G.sparks.length){
+    const cx=RW/2, cy=RH/2;
+    for(const sp of G.sparks){
+      ctx.globalAlpha=clamp(sp.life,0,1);
+      ctx.fillStyle="#ffd489";
+      ctx.fillRect(cx+sp.x*(RH/220), cy+sp.y*(RH/220), 1.6*(RH/220), 1.6*(RH/220));
+    }
+    ctx.globalAlpha=1;
+  }
+
+  // hit marker
+  if(G.hitMark>0){
+    const cx=RW/2, cy=RH/2, r=5*(RH/220), a=clamp(G.hitMark,0,1);
+    ctx.globalAlpha=a; ctx.strokeStyle="#fff"; ctx.lineWidth=1.4*(RH/300);
+    for(const [dx,dy] of [[-1,-1],[1,-1],[-1,1],[1,1]]){
+      ctx.beginPath();
+      ctx.moveTo(cx+dx*r*(2-a), cy+dy*r*(2-a));
+      ctx.lineTo(cx+dx*r*(3.4-a), cy+dy*r*(3.4-a)); ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+  }
+
+  // where the round came from
+  if(G.dmgDir>0){
+    let rel=(G.dmgFrom||0)-G.ang;
+    while(rel>Math.PI)rel-=TAU; while(rel<-Math.PI)rel+=TAU;
+    ctx.save(); ctx.translate(RW/2,RH/2); ctx.rotate(rel+Math.PI/2);
+    ctx.globalAlpha=clamp(G.dmgDir,0,1)*0.85;
+    ctx.strokeStyle="#ff4747"; ctx.lineWidth=3*(RH/300);
+    ctx.beginPath(); ctx.arc(0,0,RH*0.22,-0.42-Math.PI/2,0.42-Math.PI/2); ctx.stroke();
+    ctx.globalAlpha=1; ctx.restore();
+  }
+}
+
+/* ---------------- tactical map ----------------
+   Only shows what the flashlight has actually reached, so it is a record of
+   where you have been rather than a free overview of the floor. */
+let seen=null;
+function drawMap(){
+  const mc=$("map"); if(!mc) return;
+  const x=mc.getContext("2d"), W2=mc.width, H2=mc.height;
+  if(!seen||seen.length!==MW*MH) seen=new Uint8Array(MW*MH);
+  const gx=Math.floor(G.px), gy=Math.floor(G.py);
+  for(let dy=-4;dy<=4;dy++) for(let dx=-4;dx<=4;dx++){
+    const px=gx+dx, py=gy+dy;
+    if(px<0||py<0||px>=MW||py>=MH) continue;
+    if(dx*dx+dy*dy<=20) seen[px+py*MW]=1;
+  }
+  x.clearRect(0,0,W2,H2);
+  const cw=W2/MW, ch=H2/MH;
+  for(let yy=0;yy<MH;yy++) for(let xx=0;xx<MW;xx++){
+    if(!seen[xx+yy*MW]) continue;
+    const t=G.map.g[xx+yy*MW];
+    if(t===T.WALL||t===T.VOID) x.fillStyle="#2b2c33";
+    else if(t===T.PROP) x.fillStyle="#3b3d46";
+    else if(t===T.STAIR) x.fillStyle="#ffb020";
+    else if(t===T.GLASS) x.fillStyle="#24414f";
+    else x.fillStyle="#14151a";
+    x.fillRect(xx*cw,yy*ch,Math.ceil(cw),Math.ceil(ch));
+  }
+  // contacts you have actually laid eyes on
+  for(const c of G.contacts){
+    if(c.state===S.OUT) continue;
+    if(!G.spotted.has(c)&&c.state===S.IDLE) continue;
+    x.fillStyle = c.state===S.DOWN?"#555" :
+                  (c.state===S.DRAW||c.state===S.HOSTILE)?"#ff3b3b" :
+                  c.state===S.COMPLY?"#4ade80":"#cfcfd8";
+    x.beginPath(); x.arc(c.x*cw,c.y*ch,2.4,0,TAU); x.fill();
+  }
+  // you, and your facing
+  x.strokeStyle="#7fd1ff"; x.lineWidth=1.4;
+  x.beginPath(); x.moveTo(G.px*cw,G.py*ch);
+  x.lineTo((G.px+Math.cos(G.ang)*2.4)*cw,(G.py+Math.sin(G.ang)*2.4)*ch); x.stroke();
+  x.fillStyle="#7fd1ff"; x.beginPath(); x.arc(G.px*cw,G.py*ch,2.6,0,TAU); x.fill();
 }
 
 /* ---------------- crosshair ---------------- */
@@ -762,7 +1026,8 @@ function endGame(won){
 }
 
 /* ---------------- input ---------------- */
-const KEYMAP={KeyW:"w",KeyA:"a",KeyS:"s",KeyD:"d",KeyE:"e",KeyF:"f",KeyR:"r",
+const KEYMAP={KeyW:"w",KeyA:"a",KeyS:"s",KeyD:"d",KeyE:"e",KeyF:"f",KeyR:"r",KeyL:"l",
+  ControlLeft:"ctrl",ControlRight:"ctrl",
   ShiftLeft:"shift",ShiftRight:"shift",ArrowLeft:"arrowleft",ArrowRight:"arrowright"};
 addEventListener("keydown",e=>{
   const k=KEYMAP[e.code]; if(!k) return;
@@ -770,6 +1035,8 @@ addEventListener("keydown",e=>{
   if(!G.keys[k]){
     if(k==="f"&&G.running) challenge();
     if(k==="r"&&G.running) reload();
+    if(k==="l"&&G.running){ G.light=!G.light; sfx("click");
+      say("OPERATOR",G.light?"Light on.":"Going dark.","c-op"); }
   }
   G.keys[k]=true;
 });

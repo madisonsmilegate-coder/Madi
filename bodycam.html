@@ -31,9 +31,15 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
 .dim{color:#9a9aa8}
 #xh{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
 #xh div{position:absolute;background:rgba(255,255,255,.85);box-shadow:0 0 4px #000}
+#hcwrap{position:absolute;top:60px;right:16px;width:172px;height:132px;pointer-events:none}
+.hclabel{font-size:9.5px;letter-spacing:1.6px;color:#9a9aa8;margin-bottom:3px;text-align:right}
+.hclabel .rec b{width:6px;height:6px;margin-right:4px}
+#hcam{position:static;inset:auto;width:172px;height:115px;
+  border:1px solid #2a2a33;border-radius:4px;background:#000;display:block}
 #map{position:absolute;top:auto;left:auto;right:16px;bottom:64px;width:150px;height:120px;
   border:1px solid #2a2a33;background:rgba(6,6,9,.72);border-radius:4px;pointer-events:none}
 #stance{right:16px;bottom:190px;text-align:right}
+#roster{right:16px;bottom:212px;text-align:right;font-size:11px}
 .stam{position:absolute;left:16px;bottom:56px;width:200px;height:3px;
   background:rgba(255,255,255,.12);border-radius:99px;overflow:hidden}
 .stam i{display:block;height:100%;width:100%;background:#7fd1ff;transition:width .15s}
@@ -98,13 +104,19 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
     <span class="dim">/5 &middot;</span> <span id="flrname">LOBBY</span>
     <span class="dim">&middot; CONTACTS</span> <span id="cnt">0</span>
     <div class="dim" id="obj" style="font-size:11px;margin-top:3px;max-width:44vw"></div></div>
-  <div class="hud" id="br"><span class="dim">AMMO</span> <span id="ammo">12</span>
-    <span class="dim">| MAG</span> <span id="mags">2</span></div>
+  <div class="hud" id="br"><span id="wepname">P226 SIDEARM</span><br>
+    <span class="dim">AMMO</span> <span id="ammo">12</span>
+    <span class="dim">| MAG</span> <span id="mags">3</span></div>
   <div id="xh"></div>
   <div class="hud" style="left:16px;bottom:76px"><span class="dim" style="font-size:11px">VITALS</span></div>
   <div class="hp"><i id="hpbar"></i></div>
   <div id="log"></div>
   <canvas id="map" width="150" height="120"></canvas>
+  <div id="hcwrap">
+    <div class="hclabel"><span class="rec"><b></b></span> TEAMCAM &middot; <span id="hcname">BRAVO</span></div>
+    <canvas id="hcam" width="168" height="112"></canvas>
+  </div>
+  <div class="hud" id="roster"></div>
   <div class="hud" id="stance"><span class="dim">STANCE</span> <span id="stanceV">STAND</span>
     &middot; <span class="dim">LIGHT</span> <span id="lightV">ON</span></div>
   <div class="stam"><i id="stambar"></i></div>
@@ -117,6 +129,11 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
       <p>You are first through the door. <strong>Five floors</strong>, dark, power cut &mdash;
       lobby, offices, the server plant, the residential suites, and whatever is waiting in the
       penthouse. Civilians are still inside and so is everyone else.</p>
+      <p><strong>BRAVO</strong> and <strong>CHARLIE</strong> stack behind your shoulders. They
+      call what they see and will cover you &mdash; but only against a weapon that is already out.
+      Their headcam is relayed top-right.</p>
+      <p>You carry a <strong>P226 sidearm</strong> and a <strong>suppressed M4A1</strong>. The
+      carbine is full-auto and quiet; an unsuppressed shot wakes suspects across the floor.</p>
       <p>You are <strong>4-ADAM-12</strong>. <strong>TOC</strong> is on the net the whole way up:
       they answer your callouts, confirm your decisions, and will tell you when to consider
       coming back down.</p>
@@ -134,6 +151,7 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
         <b>E</b><span>Use stairwell once floor is clear</span>
         <b>CTRL</b><span>Crouch &mdash; slower, steadier, lower profile</span>
         <b>L</b><span>Flashlight &mdash; off is near-blind, but it drains the battery</span>
+        <b>1 / 2 / Q</b><span>Sidearm &harr; suppressed M4A1 carbine</span>
       </div>
       <div class="warn">Fiction, not training. Contacts are silhouettes; this is a discrimination
       and de-escalation puzzle, not a simulation of real tactics.</div>
@@ -254,16 +272,78 @@ function makeContacts(floor,n){
   return list;
 }
 
+/* ---------------- weapons ----------------
+   Two in the loadout. The suppressed carbine is quieter, which matters:
+   an unsuppressed shot wakes contacts across the floor. */
+const WEAPONS=[
+  {id:"P226", name:"P226 SIDEARM", mag:12, mags:3, rpm:320, auto:false,
+   dmgRange:7, recoil:1.0, loud:9.0, sup:false},
+  {id:"M4A1", name:"M4A1 / SUPPRESSED", mag:30, mags:4, rpm:720, auto:true,
+   dmgRange:11, recoil:0.55, loud:3.2, sup:true}
+];
+const wep=()=>WEAPONS[G.wi];
+
+/* ---------------- the stack ----------------
+   Two operators move with you. They hold formation behind your shoulders,
+   call what they see, and will engage a contact that already has a weapon
+   out - never one that has not drawn. */
+const MATES=[{cs:"BRAVO", hue:"#7fd1ff", off:[-0.9,-0.75]},
+             {cs:"CHARLIE",hue:"#9ae6a0", off:[-0.9, 0.75]}];
+function makeMates(){
+  return MATES.map(m=>({...m, x:G.px, y:G.py, ang:0, cd:0, said:0, alive:true}));
+}
+function updateMates(dt){
+  for(const m of G.mates){
+    // desired slot, rotated into the player's facing
+    const c=Math.cos(G.ang), sn=Math.sin(G.ang);
+    const tx=G.px + m.off[0]*c - m.off[1]*sn;
+    const ty=G.py + m.off[0]*sn + m.off[1]*c;
+    const dx=tx-m.x, dy=ty-m.y, d=Math.hypot(dx,dy);
+    if(d>0.12){
+      const sp=Math.min(d, (d>2.2?3.4:2.0)*dt);
+      const nx=m.x+dx/d*sp, ny=m.y+dy/d*sp;
+      if(!solid(nx,m.y)) m.x=nx;
+      if(!solid(m.x,ny)) m.y=ny;
+      if(solid(nx,ny)&&d>2.6){ m.x=tx; m.y=ty; }        // unstick if left behind
+    }
+    m.ang=G.ang;
+    m.cd-=dt;
+    // cover fire, but only on a weapon that is already out
+    if(m.cd<=0){
+      for(const c2 of G.contacts){
+        if(c2.state!==S.DRAW&&c2.state!==S.HOSTILE) continue;
+        const dd=Math.hypot(c2.x-m.x,c2.y-m.y);
+        if(dd<6.5 && !solidBetween(m.x,m.y,c2.x,c2.y)){
+          m.cd=1.6;
+          if(Math.random()<0.5){
+            c2.state=S.DOWN; G.stat.neutralized++; G.stat.mateKills=(G.stat.mateKills||0)+1;
+            say(m.cs,"Engaging - target down.","c-op"); sfx("shot",true);
+            updHUD();
+          } else say(m.cs,"Contact right, he's got a weapon!","c-urg");
+          break;
+        }
+      }
+    }
+  }
+}
+function solidBetween(x0,y0,x1,y1){
+  const n=Math.ceil(Math.hypot(x1-x0,y1-y0)*4);
+  for(let i=1;i<n;i++){ const t=i/n;
+    if(solid(x0+(x1-x0)*t, y0+(y1-y0)*t)) return true; }
+  return false;
+}
+
 /* ---------------- game state ---------------- */
 const G={
   running:false, floorNo:1, maxFloor:5,
   map:null, contacts:[],
   px:0, py:0, ang:0, vz:0,
-  hp:100, ammo:12, mags:2, magSize:12,
+  hp:100, wi:0, ammo:12, mags:3, magSize:12,
+  ammoStore:[{a:12,m:3},{a:30,m:4}],
   crouch:0, light:true, stam:100,
-  keys:{}, mouse:{dx:0}, muted:false,
+  keys:{}, mouse:{dx:0}, muted:false, trigger:false, swap:0,
   gun:{bob:0, recoil:0, flash:0, sway:0, dry:0, slide:0},
-  lowWarned:false, spotted:new Set(), shells:[], sparks:[],
+  lowWarned:false, spotted:new Set(), shells:[], sparks:[], mates:[],
   t0:0, tNow:0, shake:0, fireCd:0, reloading:0, bat:98,
   stat:{shots:0,hits:0,civShot:0,unjustified:0,detained:0,neutralized:0,evacuated:0,
         hitsTaken:0,floors:0,time:0},
@@ -287,12 +367,13 @@ window.addEventListener("resize",resize);
 /* ---------------- audio (synth, no assets) ---------------- */
 let AC=null;
 function ac(){ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); return AC; }
-function sfx(kind){
+function sfx(kind,suppressed){
   if(G.muted) return;
   try{
     const a=ac(), t=a.currentTime;
     if(kind==="shot"){
-      const b=a.createBuffer(1,a.sampleRate*0.22,a.sampleRate), d=b.getChannelData(0);
+      const dur=suppressed?0.10:0.22;
+      const b=a.createBuffer(1,a.sampleRate*dur,a.sampleRate), d=b.getChannelData(0);
       for(let i=0;i<d.length;i++){ const k=1-i/d.length; d[i]=(Math.random()*2-1)*k*k; }
       const s=a.createBufferSource(); s.buffer=b;
       const f=a.createBiquadFilter(); f.type="lowpass"; f.frequency.setValueAtTime(2200,t);
@@ -396,8 +477,10 @@ function startFloor(n){
   G.map=makeFloor(n);
   G.contacts=makeContacts(G.map,n);
   G.px=G.map.spawn.x; G.py=G.map.spawn.y; G.ang=0;
-  G.ammo=G.magSize; G.reloading=0; G.fireCd=0;
+  G.magSize=wep().mag; G.ammo=G.magSize; G.reloading=0; G.fireCd=0; G.swap=0;
+  G.ammoStore=[{a:12,m:3},{a:30,m:4}]; G.ammoStore[G.wi]={a:G.ammo,m:G.mags};
   G.clearCalled=false; G.spotted=new Set(); G.shells=[]; G.sparks=[]; seen=null;
+  G.mates=makeMates();
   $("flr").textContent=String(n).padStart(2,"0");
   updHUD();
   const th=theme();
@@ -411,6 +494,7 @@ const remaining=()=>G.contacts.filter(c=>c.state!==S.DOWN&&c.state!==S.OUT).leng
 
 function updHUD(){
   $("ammo").textContent=G.ammo; $("mags").textContent=G.mags;
+  $("wepname").textContent=wep().name;
   $("cnt").textContent=remaining();
   $("hpbar").style.width=clamp(G.hp,0,100)+"%";
   $("hpbar").style.background = G.hp>60?"var(--green)":G.hp>30?"var(--amber)":"var(--red)";
@@ -418,7 +502,9 @@ function updHUD(){
   $("stanceV").textContent=G.crouch>0.5?"CROUCH":"STAND";
   $("lightV").textContent=G.light?"ON":"OFF";
   $("lightV").style.color=G.light?"var(--amber)":"#6a6a78";
-  drawMap();
+  $("roster").innerHTML=G.mates.map(m=>
+    `<span style="color:${m.hue}">&#9679;</span> <span class="dim">${m.cs}</span>`).join(" &nbsp; ");
+  drawMap(); drawHeadcam();
   const s=Math.floor(G.tNow/1000);
   $("tc").textContent=[Math.floor(s/3600),Math.floor(s/60)%60,s%60]
     .map(v=>String(v).padStart(2,"0")).join(":");
@@ -468,15 +554,23 @@ function challenge(){
 }
 
 function fire(){
-  if(G.reloading>0) return;
+  if(G.reloading>0||G.swap>0) return;
+  if(G.fireCd>0) return;
   if(G.ammo<=0){ sfx("click"); say("OPERATOR","Dry! Reloading!","c-urg"); return; }
-  G.ammo--; G.stat.shots++; G.fireCd=0.19; G.shake=1; sfx("shot");
+  const w=wep();
+  G.ammo--; G.stat.shots++; G.fireCd=60/w.rpm; G.shake=w.recoil; sfx("shot",w.sup);
   if(G.ammo===4) op("lowAmmo");
-  G.gun.recoil=1; G.gun.flash=1; G.gun.slide=1;
+  G.gun.recoil=w.recoil; G.gun.flash=w.sup?0.45:1; G.gun.slide=1;
   // eject a case: screen-space particle thrown up and right from the port
-  G.shells.push({x:14, y:-16, vx:rnd(26,44), vy:rnd(-46,-28), rot:Math.random()*TAU,
+  G.shells.push({x:11, y:-4, vx:rnd(30,52), vy:rnd(-52,-30), rot:Math.random()*TAU,
                  spin:rnd(-14,14), life:1});
   $("flash").style.opacity=".16"; setTimeout(()=>$("flash").style.opacity="0",50);
+  for(const o of G.contacts){
+    if(o.state!==S.IDLE||o.type!=="susp") continue;
+    if(Math.hypot(o.x-G.px,o.y-G.py) < w.loud && Math.random()<(w.sup?0.12:0.75)){
+      o.state=S.DRAW; o.drawAt=performance.now();
+    }
+  }
   const c=targeted();
   updHUD();
   if(!c){
@@ -485,7 +579,7 @@ function fire(){
     return;
   }
   G.hitMark=1;
-  G.stat.hits++; c.hitFlash=1;
+  G.stat.hits++; c.hitFlash=0.85;
   if(c.type==="civ"){
     c.state=S.DOWN; G.stat.civShot++;
     exchange("civHit","civHit","c-urg","c-urg");
@@ -499,6 +593,16 @@ function fire(){
   updHUD();
 }
 
+function swapTo(i){
+  if(i===G.wi||G.reloading>0||G.swap>0) return;
+  G.ammoStore[G.wi]={a:G.ammo,m:G.mags};          // remember what was left
+  G.wi=i; G.swap=0.55;
+  const st=G.ammoStore[i];
+  G.ammo=st.a; G.mags=st.m; G.magSize=wep().mag;
+  sfx("reload");
+  say("OPERATOR", i===1?"Going to the carbine. Suppressed.":"Back on the sidearm.","c-op");
+  updHUD();
+}
 function reload(){
   if(G.reloading>0||G.ammo===G.magSize) return;
   if(G.mags<=0){ say("OPERATOR","No mags. I'm out.","c-urg"); return; }
@@ -576,15 +680,19 @@ function update(dt){
   if(G.keys.arrowright) G.ang+=2.0*dt;
 
   if(G.fireCd>0) G.fireCd-=dt;
+  if(G.trigger && wep().auto && G.fireCd<=0 && G.running) fire();   // carbine is full-auto
+  if(G.swap>0) G.swap-=dt;
   if(G.reloading>0){ G.reloading-=dt; if(G.reloading<=0){ G.ammo=G.magSize; updHUD(); say("OPERATOR","Up. Back in the fight.","c-op"); } }
   G.shake*=0.86;
   G.bat=Math.max(1,98-(G.tNow/1000)*0.05);
   if(G.light) G.bat=Math.max(1,G.bat-dt*0.20);
 
+  updateMates(dt);
+
   // contacts
   for(const c of G.contacts){
     if(c.state===S.DOWN||c.state===S.OUT) continue;
-    c.t+=dt; c.bob+=dt*2; c.hitFlash*=0.9;
+    c.t+=dt; c.bob+=dt*2; c.hitFlash*=Math.pow(0.004,dt);   // brief, not lingering
     const d=Math.hypot(c.x-G.px,c.y-G.py);
 
     // a suspect who sees you first may go for it unprompted
@@ -696,7 +804,7 @@ function render(){
   }
 
   // sprites: contacts, painted as billboards, far to near
-  const list=G.contacts.filter(c=>c.state!==S.OUT)
+  const list=[...G.contacts.filter(c=>c.state!==S.OUT), ...G.mates.map(m=>({...m,mate:true}))]
     .map(c=>({c,d:(c.x-G.px)**2+(c.y-G.py)**2})).sort((a,b)=>b.d-a.d);
   const invDet=1/(planeX*dirY-dirX*planeY);
   for(const {c} of list){
@@ -710,38 +818,77 @@ function render(){
     const y0=Math.floor(-sh/2+horizon+vOff), y1=Math.floor(sh/2+horizon+vOff);
     const x0=Math.floor(-sw/2+sxp), x1=Math.floor(sw/2+sxp);
     const lit=clamp(0.18+2.2/(1+ty*0.55),0,1);
-    // colour reads the state, which is the whole game: who is dangerous
-    let base = c.type==="civ" ? [150,150,165] : [120,116,120];
-    if(c.state===S.COMPLY) base=[110,190,130];
-    if(c.state===S.DRAW||c.state===S.HOSTILE) base=[210,70,60];
-    if(down) base=[70,60,60];
+
+    /* Palette per person, so a room of civilians does not look like one
+       repeated cut-out: skin, hair and clothing vary, and state recolours
+       the shirt so a drawn weapon still reads instantly at distance. */
+    const seed=c.mate?9:((c.x*37+c.y*91)|0);
+    const SKIN=[[214,172,138],[176,132,98],[128,92,66],[236,200,168]][Math.abs(seed)%4];
+    const HAIR=[[38,30,26],[70,48,32],[24,22,24],[120,96,64]][Math.abs(seed>>2)%4];
+    let SHIRT=[[96,110,142],[132,96,96],[86,116,96],[150,142,120]][Math.abs(seed>>4)%4];
+    let PANTS=[[54,58,70],[46,44,48],[62,54,44]][Math.abs(seed>>6)%3];
+    if(c.mate){ SHIRT=[38,54,72]; PANTS=[30,34,44]; }
+    if(c.type==="susp"&&!down) SHIRT=[86,78,84];
+    if(c.state===S.COMPLY) SHIRT=[86,150,104];
+    if(c.state===S.DRAW||c.state===S.HOSTILE) SHIRT=[176,62,54];
+    const cower = !c.mate && c.type==="civ" && (c.state===S.AWARE||c.state===S.IDLE) && (Math.abs(seed)%3===0);
+
     for(let x=Math.max(0,x0);x<Math.min(RW,x1);x++){
       if(ty>=zbuf[x]) continue;
       const u=(x-x0)/(x1-x0||1);
       for(let y=Math.max(0,y0);y<Math.min(RH,y1);y++){
-        const v=(y-y0)/(y1-y0||1);
-        // crude human silhouette: head, shoulders, torso taper
-        let inside;
+        let v=(y-y0)/(y1-y0||1);
+        let col=null;
+        const su=u-0.5;
         if(down){
-          // prone: a low, wide mass with a head at one end
-          inside = (v>0.74 && v<0.94 && Math.abs(u-0.5)<0.46) ||
-                   (v>0.68 && v<0.80 && Math.abs(u-0.74)<0.12);
-        } else if(v<0.17){ inside=Math.abs(u-0.5)<0.15;              // head
-        } else if(v<0.24){ inside=Math.abs(u-0.5)<0.34;              // shoulders
-        } else { inside=Math.abs(u-0.5)<0.30-(v-0.24)*0.10; }        // torso
-        // hands up when complying
-        if(!down && c.state===S.COMPLY && v>0.06 && v<0.30 &&
-           (Math.abs(u-0.14)<0.09||Math.abs(u-0.86)<0.09)) inside=true;
-        // weapon arm when drawn
-        if(!down && (c.state===S.DRAW||c.state===S.HOSTILE) && v>0.30 && v<0.40 &&
-           u>0.5 && u<0.95) inside=true;
-        if(!inside) continue;
+          if(v>0.775&&v<0.895&&u>0.30&&u<0.74) col=SHIRT;          // torso
+          else if(v>0.80&&v<0.90&&u>0.06&&u<0.31) col=PANTS;       // legs
+          else if(v>0.845&&v<0.90&&u>0.00&&u<0.09) col=[30,30,34]; // boots
+          else if(v>0.755&&v<0.845&&u>0.74&&u<0.85) col=SKIN;      // head
+          else if(v>0.745&&v<0.795&&u>0.76&&u<0.86) col=HAIR;      // hair
+          else if(v>0.735&&v<0.785&&u>0.46&&u<0.68) col=SHIRT;     // outflung arm
+          else if(v>0.735&&v<0.775&&u>0.64&&u<0.71) col=SKIN;      // hand
+        } else {
+          const vv = cower ? 0.30+v*0.70 : v;            // crouched: compressed
+          if(vv<0.085){                                   // hair
+            if(Math.abs(su)<0.155) col=HAIR;
+          } else if(vv<0.175){                            // face
+            if(Math.abs(su)<0.145) col=SKIN;
+          } else if(vv<0.205){                            // neck
+            if(Math.abs(su)<0.075) col=SKIN;
+          } else if(vv<0.56){                             // torso
+            if(Math.abs(su)<0.215-(vv-0.205)*0.10) col=SHIRT;
+          } else if(vv<0.98){                             // legs, with a gap
+            if(Math.abs(su)<0.19 && Math.abs(su)>0.030) col=PANTS;
+          }
+          // arms, posed by what the person is doing
+          if(c.state===S.COMPLY){
+            if(vv>0.02&&vv<0.30&&(Math.abs(u-0.17)<0.070||Math.abs(u-0.83)<0.070)) col=SHIRT;
+            if(vv>0.00&&vv<0.06&&(Math.abs(u-0.17)<0.055||Math.abs(u-0.83)<0.055)) col=SKIN;
+          } else if(c.state===S.DRAW||c.state===S.HOSTILE){
+            if(vv>0.26&&vv<0.34&&u>0.5&&u<0.94) col=SHIRT;
+            if(vv>0.26&&vv<0.34&&u>0.86&&u<0.99) col=[26,26,30];   // the weapon
+          } else if(c.mate){
+            if(vv>0.24&&vv<0.34&&u>0.52&&u<0.90) col=[30,32,38];   // carbine up
+            if(vv>0.20&&vv<0.30&&(u<0.20||u>0.80)) col=SHIRT;
+          } else {
+            if(vv>0.20&&vv<0.52&&(Math.abs(u-0.235)<0.055||Math.abs(u-0.765)<0.055)) col=SHIRT;
+            if(vv>0.46&&vv<0.54&&(Math.abs(u-0.235)<0.050||Math.abs(u-0.765)<0.050)) col=SKIN;
+          }
+          // kit that marks out the stack
+          if(c.mate){
+            if(vv>0.21&&vv<0.42&&Math.abs(su)<0.20) col=[26,34,46];   // plate carrier
+            if(vv>0.055&&vv<0.115&&Math.abs(su)<0.16) col=[34,38,46]; // helmet
+            if(vv>0.10&&vv<0.14&&Math.abs(u-0.63)<0.05) col=[120,200,255]; // IR strobe
+          }
+        }
+        if(!col) continue;
         const i=(x+y*RW)*4;
-        const fl=c.hitFlash*160;
-        const sh2=lit*(0.55+0.45*(1-v));
-        d[i]=clamp(base[0]*sh2+fl,0,255);
-        d[i+1]=clamp(base[1]*sh2,0,255);
-        d[i+2]=clamp(base[2]*sh2,0,255);
+        const fl=(c.hitFlash||0)*160;
+        const shade=lit*(0.60+0.40*(1-v))*(down?0.7:1);
+        d[i]=clamp(col[0]*shade+fl,0,255);
+        d[i+1]=clamp(col[1]*shade+fl*0.92,0,255);
+        d[i+2]=clamp(col[2]*shade+fl*0.86,0,255);
       }
     }
   }
@@ -753,139 +900,172 @@ function render(){
    A Doom-style sidearm held centre-bottom: bobs with the walk cycle, swings
    opposite the look direction, kicks on fire, dips out of frame to reload,
    and locks its slide back when the magazine runs dry. */
+/* ---------------- first-person weapon ----------------
+   Drawn from BEHIND the weapon, not side-on: the rear of the receiver sits
+   near the camera and the barrel recedes toward the crosshair, so everything
+   is built from trapezoids that narrow with distance. Arms come up from the
+   bottom corners into the grips. */
 function drawGun(){
-  const s=RH/150;
+  const w=wep();
+  const S = w.id==='M4A1' ? RH/250 : RH/150;      // carbine is far longer
+  const baseUp = w.id==='M4A1' ? 30 : 24;         // lifts the grips into frame
   const rec=G.gun.recoil, cyc=G.gun.slide;
   const rl = G.reloading>0 ? Math.sin((1-clamp(G.reloading/1.5,0,1))*Math.PI) : 0;
-  const bobX=Math.sin(G.gun.bob)*3.4*s;
-  const bobY=Math.abs(Math.cos(G.gun.bob))*3.0*s;
-  const x=RW*0.5 - 7*s + bobX + G.gun.sway*9*s;
-  const y=RH - 28*s + bobY + rl*86*s - rec*9*s + G.crouch*6*s;
-  const tilt=(-rec*0.10 + G.gun.sway*0.05);
+  const sw = G.swap>0 ? Math.sin((1-clamp(G.swap/0.55,0,1))*Math.PI) : 0;
+  const bobX=Math.sin(G.gun.bob)*3.0*S;
+  const bobY=Math.abs(Math.cos(G.gun.bob))*2.6*S;
 
-  ctx.save();
-  ctx.translate(x,y); ctx.rotate(tilt);
-  const P=(pts,fill)=>{ ctx.fillStyle=fill; ctx.beginPath();
-    ctx.moveTo(pts[0]*s,pts[1]*s);
-    for(let i=2;i<pts.length;i+=2) ctx.lineTo(pts[i]*s,pts[i+1]*s);
-    ctx.closePath(); ctx.fill(); };
-  const R=(x0,y0,w,h,fill)=>{ ctx.fillStyle=fill; ctx.fillRect(x0*s,y0*s,w*s,h*s); };
+  // origin: bottom centre. y grows downward, and "far" means up the screen.
+  // weapons sit right of centre, as they do in the hand, so the muzzle
+  // never covers the thing you are trying to identify
+  const ox=RW*0.5 + RW*0.085 + bobX + G.gun.sway*10*S;
+  const oy=RH - baseUp*S + bobY + (rl+sw)*92*S - rec*7*S + G.crouch*5*S;
+  const tilt=(-rec*0.05 + G.gun.sway*0.035);
 
-  // slide travel: cycles on every shot, and stays back when the magazine is dry
-  const slide=(G.gun.dry?7:0)+cyc*7;
+  ctx.save(); ctx.translate(ox,oy); ctx.rotate(tilt);
 
-  /* ---- support arm and gloved hands ---- */
-  P([-34,64, -18,10, -2,10, -6,64],"#1e1f24");                 // support forearm
-  R(-20,6,16,10,"#2b2c33");                                     // support glove
-  R(-19,7,3.2,7,"#232429"); R(-15,7,3.2,7,"#232429");           // knuckles
-  R(-11,7,3.2,7,"#232429");
-  P([-26,62, -10,6, 12,6, 24,62],"#23242a");                    // firing forearm
-  R(-16,44,30,7,"#191a1f");                                     // cuff
-  R(-15,45.6,28,1.4,"#3a3b42");                                 // cuff stitching
+  // trapezoid running away from the camera: near half-width nw at yn,
+  // far half-width fw at yf. This is what sells the perspective.
+  const TR=(yn,nw,yf,fw,fill,dx)=>{
+    dx=dx||0; ctx.fillStyle=fill; ctx.beginPath();
+    ctx.moveTo((dx-nw)*S,yn*S); ctx.lineTo((dx+nw)*S,yn*S);
+    ctx.lineTo((dx+fw)*S,yf*S); ctx.lineTo((dx-fw)*S,yf*S);
+    ctx.closePath(); ctx.fill();
+  };
+  const BOX=(x0,y0,ww,hh,fill)=>{ ctx.fillStyle=fill; ctx.fillRect(x0*S,y0*S,ww*S,hh*S); };
 
-  /* ---- grip, backstrap, magazine ---- */
-  P([-11,40, 13,40, 9,6, -7,6],"#16171b");
-  P([-9,36, 11,36, 8,9, -6,9],"#22232a");
-  for(let i=0;i<6;i++) R(-7+i*0.2,12+i*4,13,1.6,"#191a1f");     // grip texture
-  R(-10,38,22,4,"#2e2f37");                                     // magazine baseplate
-  P([12,34, 15,34, 13,10, 11,10],"#2a2b32");                    // backstrap
+  /* ---------- arms: both forearms rise from the bottom corners ---------- */
+  const armR=(handX,handY)=>{
+    ctx.fillStyle="#23242a"; ctx.beginPath();
+    ctx.moveTo(34*S,74*S); ctx.lineTo(58*S,74*S);
+    ctx.lineTo((handX+9)*S,handY*S); ctx.lineTo((handX-3)*S,handY*S);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle="#191a1f"; ctx.fillRect((handX-4)*S,(handY-2)*S,15*S,7*S); // cuff
+  };
+  const armL=(handX,handY)=>{
+    ctx.fillStyle="#1e1f25"; ctx.beginPath();
+    ctx.moveTo(-58*S,74*S); ctx.lineTo(-34*S,74*S);
+    ctx.lineTo((handX+3)*S,handY*S); ctx.lineTo((handX-9)*S,handY*S);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle="#191a1f"; ctx.fillRect((handX-11)*S,(handY-2)*S,15*S,7*S);
+  };
+  const glove=(gx,gy,gw,gh)=>{
+    BOX(gx,gy,gw,gh,"#2c2d34");
+    for(let i=0;i<3;i++) BOX(gx+1.5+i*(gw-3)/3,gy+1,(gw-4)/3,gh-2,"#232429");
+  };
 
-  /* ---- frame, trigger, guard ---- */
-  R(-20,-4,46,10,"#303138");
-  ctx.strokeStyle="#26272e"; ctx.lineWidth=2.6*s;
-  ctx.beginPath(); ctx.arc(2*s,15*s,8.5*s,-0.25,Math.PI+0.62); ctx.stroke();
-  P([0,10, 4,10, 3,17, -1,17],"#3d3e46");                       // trigger
-  R(-4,9,7,7,"#2b2c33");                                        // trigger finger
-  R(20,-3,7,4,"#3a3b43");                                       // accessory rail block
-
-  /* ---- slide, serrations, ports ---- */
-  const sx=-22+slide;
-  R(sx,-18,52,14,"#41424a");                                    // slide body
-  R(sx,-19.6,52,2.2,"#53545e");                                 // top rib highlight
-  R(sx,-5.4,52,1.6,"#2b2c33");                                  // lower shadow line
-  for(let i=0;i<7;i++) R(sx+2+i*2.6,-16,1.3,10,"#373841");      // rear serrations
-  for(let i=0;i<4;i++) R(sx+38+i*2.6,-16,1.3,10,"#373841");     // forward serrations
-  if(slide>1.5) R(6,-17.4,slide,12.6,"#0b0b0e");                // open ejection port
-  R(sx+8,-17,10,3,"#33343c");                                   // extractor cut
-  P([sx+52,-18, sx+58,-15, sx+58,-7, sx+52,-4],"#3c3d45");      // muzzle end
-
-  /* ---- sights ---- */
-  R(sx+2,-23,5,4.4,"#54555f"); R(sx+3.4,-22,0.9,2.4,"#0e0e12"); // rear notch
-  R(sx+3.0,-21.6,0.8,1.8,"#8fd3ff"); R(sx+5.6,-21.6,0.8,1.8,"#8fd3ff");
-  R(sx+46,-23,3.4,4.6,"#5a5b64");                               // front post
-  R(sx+47,-22.2,1.4,1.6,"#cfe9ff");                             // front dot
-
-  /* ---- rail light, lit only when the flashlight is on ---- */
-  R(22,2,14,7,"#24252b");
-  R(35,3,2.4,5,G.light?"#ffe9b0":"#2f3036");
-  if(G.light){
-    const lg=ctx.createRadialGradient(37*s,5.5*s,0,37*s,5.5*s,17*s);
-    lg.addColorStop(0,"rgba(255,235,170,.55)"); lg.addColorStop(1,"rgba(255,220,140,0)");
-    ctx.fillStyle=lg; ctx.beginPath(); ctx.arc(37*s,5.5*s,17*s,0,TAU); ctx.fill();
+  if(w.id==="P226"){
+    /* ================= sidearm, seen from behind ================= */
+    const slide=(G.gun.dry?4:0)+cyc*5;
+    armR(9,22); armL(-11,22);
+    // grip disappearing under the hands
+    TR(26,9, 6,7, "#17181c");
+    glove(1,8,16,17); glove(-17,8,16,17);              // right then left hand
+    // frame, then slide running away toward the crosshair
+    TR(6,11, -4,9.2, "#2e2f36");
+    TR(4+slide,10.4, -30+slide,7.4, "#42434b");        // slide top face
+    TR(2+slide,10.4, -30+slide,7.4, "#4c4d56", 0);     // lit upper edge
+    BOX(-10.4,-30,20.8,2.0,"#54555f");                 // front of the slide
+    if(slide>1.5) BOX(4.5,-2-slide,6,slide+2,"#0b0b0e");   // open ejection port
+    // rear sight straddling the crosshair line, front post far away
+    BOX(-9,-1,5.2,5.0,"#55565f"); BOX(3.8,-1,5.2,5.0,"#55565f");
+    BOX(-8,0.2,1.3,2.6,"#9fd8ff"); BOX(6.2,0.2,1.3,2.6,"#9fd8ff");
+    BOX(-1.6,-31,3.2,4.4,"#5c5d66"); BOX(-0.7,-30.2,1.4,1.6,"#dff0ff");
+    if(G.light){ BOX(-3.2,-18,6.4,5,"#24252b"); BOX(-1.2,-19.6,2.4,2,"#ffe9b0"); }
+    G.muz={x:0,y:-32};
+  } else {
+    /* ================= suppressed carbine, seen from behind ================= */
+    const bolt=cyc*2.4;
+    armR(11,30); armL(-26,-14);
+    // stock and buffer tube nearest the camera
+    TR(72,18, 44,13.5,"#1d1e23");
+    TR(44,13.5, 30,10.5,"#26272e");
+    // receiver
+    TR(30,12.5, -2,9.6,"#2f3038");
+    TR(28,12.0, -2,9.2,"#393a43");                     // top face catches light
+    BOX(-9,26,6,16,"#22232a");                          // pistol grip
+    glove(3,24,17,17);                                  // firing hand
+    // magazine hanging below and forward
+    ctx.fillStyle="#24252c"; ctx.beginPath();
+    ctx.moveTo(-7*S,30*S); ctx.lineTo(7*S,30*S); ctx.lineTo(5*S,58*S); ctx.lineTo(-9*S,58*S);
+    ctx.closePath(); ctx.fill();
+    // handguard, then the can
+    TR(-2,9.6, -34,6.6,"#33343c");
+    for(let i=0;i<6;i++){ const t=i/6, y=-4-i*5, hw=9.4-t*2.6;
+      BOX(-hw,y,hw*2,1.4,"#2a2b32"); }                  // M-LOK slots
+    glove(-34,-18,15,15);                                // support hand forward
+    TR(-34,6.6, -52,5.0,"#1c1d22");                      // suppressor
+    for(let i=0;i<3;i++) BOX(-6.0+0.3*i,-38-i*4.5,12.0-0.6*i,1.3,"#141519");
+    BOX(-4.8,-53,9.6,2.0,"#3a3b43");                     // muzzle face
+    // optic sitting on the rail, dot floating on the crosshair
+    BOX(-7.5,-6,15,3,"#1e1f24");
+    BOX(-6.5,-16,13,10,"#202127"); BOX(-5.2,-15,10.4,7.6,"#0a1418");
+    ctx.fillStyle="#ff4d4d"; ctx.beginPath(); ctx.arc(0,-11*S,1.5*S,0,TAU); ctx.fill();
+    ctx.globalAlpha=.35; ctx.beginPath(); ctx.arc(0,-11*S,3.6*S,0,TAU); ctx.fill(); ctx.globalAlpha=1;
+    if(G.light){ BOX(9,-26,5,7,"#24252b"); BOX(10,-27.6,3,2,"#ffe9b0"); }
+    BOX(-2.2,-2-bolt,4.4,3,"#4a4b54");                   // charging handle
+    G.muz={x:0,y:-54};
   }
 
-  /* ---- ejected cases ---- */
+  /* ---------- ejected cases ---------- */
   for(const sh of G.shells){
-    ctx.save(); ctx.translate(sh.x*s,sh.y*s); ctx.rotate(sh.rot);
+    ctx.save(); ctx.translate(sh.x*S,sh.y*S); ctx.rotate(sh.rot);
     ctx.globalAlpha=clamp(sh.life,0,1);
-    ctx.fillStyle="#c9a24a"; ctx.fillRect(-1.1*s,-3.2*s,2.2*s,6.4*s);
-    ctx.fillStyle="#e4c274"; ctx.fillRect(-1.1*s,-3.2*s,2.2*s,1.5*s);
+    ctx.fillStyle="#c9a24a"; ctx.fillRect(-1.0*S,-2.9*S,2.0*S,5.8*S);
+    ctx.fillStyle="#e4c274"; ctx.fillRect(-1.0*S,-2.9*S,2.0*S,1.4*S);
     ctx.restore();
   }
   ctx.globalAlpha=1;
 
-  /* ---- muzzle flash ---- */
+  /* ---------- muzzle flash, at the far end ---------- */
   if(G.gun.flash>0.02){
-    const f=G.gun.flash, mx=(58+slide*0.3)*s, my=-11*s;
+    const f=G.gun.flash, mx=G.muz.x*S, my=G.muz.y*S;
+    const size=(w.sup?13:30)*S*(0.6+f*0.7);
     ctx.globalAlpha=Math.min(1,f*1.5);
-    const g=ctx.createRadialGradient(mx,my,0,mx,my,30*s*(0.6+f*0.7));
-    g.addColorStop(0,"#fff8e2"); g.addColorStop(0.32,"rgba(255,196,80,.9)");
+    const g=ctx.createRadialGradient(mx,my,0,mx,my,size);
+    g.addColorStop(0,"#fff8e2"); g.addColorStop(0.32,w.sup?"rgba(255,210,140,.55)":"rgba(255,196,80,.9)");
     g.addColorStop(1,"rgba(255,140,30,0)");
-    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(mx,my,30*s*(0.6+f*0.7),0,TAU); ctx.fill();
-    ctx.fillStyle="#fff6d4"; ctx.beginPath();
-    const rot=G.stat.shots*1.7;
-    for(let i=0;i<12;i++){
-      const a=rot+i*TAU/12, r=(i%2?5:17)*s*(0.7+f*0.6);
-      const px=mx+Math.cos(a)*r, py=my+Math.sin(a)*r*0.8;
-      i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(mx,my,size,0,TAU); ctx.fill();
+    if(!w.sup){
+      ctx.fillStyle="#fff6d4"; ctx.beginPath();
+      const rot=G.stat.shots*1.7;
+      for(let i=0;i<12;i++){
+        const a2=rot+i*TAU/12, r=(i%2?5:16)*S*(0.7+f*0.6);
+        const px=mx+Math.cos(a2)*r, py=my+Math.sin(a2)*r;
+        i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+      }
+      ctx.closePath(); ctx.fill();
     }
-    ctx.closePath(); ctx.fill();
     ctx.globalAlpha=1;
   }
   ctx.restore();
 
-  // room lit by the flash, from the muzzle outward
+  // the room lights up from the muzzle; the can keeps most of it in
   if(G.gun.flash>0.05){
-    const g=ctx.createRadialGradient(x,y-14*s,0,x,y-14*s,RW*0.62);
-    g.addColorStop(0,`rgba(255,205,120,${0.22*G.gun.flash})`);
-    g.addColorStop(1,"rgba(255,170,60,0)");
+    const g=ctx.createRadialGradient(RW/2,RH*0.55,0,RW/2,RH*0.55,RW*0.62);
+    const k=(w.sup?0.07:0.22)*G.gun.flash;
+    g.addColorStop(0,`rgba(255,205,120,${k})`); g.addColorStop(1,"rgba(255,170,60,0)");
     ctx.fillStyle=g; ctx.fillRect(0,0,RW,RH);
   }
 
-  // impact sparks where a round went wide
   if(G.sparks.length){
     const cx=RW/2, cy=RH/2;
     for(const sp of G.sparks){
-      ctx.globalAlpha=clamp(sp.life,0,1);
-      ctx.fillStyle="#ffd489";
+      ctx.globalAlpha=clamp(sp.life,0,1); ctx.fillStyle="#ffd489";
       ctx.fillRect(cx+sp.x*(RH/220), cy+sp.y*(RH/220), 1.6*(RH/220), 1.6*(RH/220));
     }
     ctx.globalAlpha=1;
   }
-
-  // hit marker
   if(G.hitMark>0){
-    const cx=RW/2, cy=RH/2, r=5*(RH/220), a=clamp(G.hitMark,0,1);
-    ctx.globalAlpha=a; ctx.strokeStyle="#fff"; ctx.lineWidth=1.4*(RH/300);
+    const cx=RW/2, cy=RH/2, r=5*(RH/220), a2=clamp(G.hitMark,0,1);
+    ctx.globalAlpha=a2; ctx.strokeStyle="#fff"; ctx.lineWidth=1.4*(RH/300);
     for(const [dx,dy] of [[-1,-1],[1,-1],[-1,1],[1,1]]){
       ctx.beginPath();
-      ctx.moveTo(cx+dx*r*(2-a), cy+dy*r*(2-a));
-      ctx.lineTo(cx+dx*r*(3.4-a), cy+dy*r*(3.4-a)); ctx.stroke();
+      ctx.moveTo(cx+dx*r*(2-a2), cy+dy*r*(2-a2));
+      ctx.lineTo(cx+dx*r*(3.4-a2), cy+dy*r*(3.4-a2)); ctx.stroke();
     }
     ctx.globalAlpha=1;
   }
-
-  // where the round came from
   if(G.dmgDir>0){
     let rel=(G.dmgFrom||0)-G.ang;
     while(rel>Math.PI)rel-=TAU; while(rel<-Math.PI)rel+=TAU;
@@ -895,6 +1075,82 @@ function drawGun(){
     ctx.beginPath(); ctx.arc(0,0,RH*0.22,-0.42-Math.PI/2,0.42-Math.PI/2); ctx.stroke();
     ctx.globalAlpha=1; ctx.restore();
   }
+}
+
+/* ---------------- teammate headcam ----------------
+   A real second render, not a decoration: it raycasts the same floor from
+   BRAVO's position and facing, at low resolution, into the corner panel. */
+let hcImg=null, hcZ=null;
+function drawHeadcam(){
+  const hc=$("hcam"); if(!hc||!G.mates.length) return;
+  const x=hc.getContext("2d"), HW=hc.width, HH=hc.height;
+  if(!hcImg||hcImg.width!==HW){ hcImg=x.createImageData(HW,HH); hcZ=new Float32Array(HW); }
+  const m=G.mates[0];
+  const d=hcImg.data;
+  const dirX=Math.cos(m.ang), dirY=Math.sin(m.ang);
+  const planeX=-dirY*0.80, planeY=dirX*0.80;
+  const hz=HH>>1;
+  for(let px=0;px<HW;px++){
+    const camX=2*px/HW-1;
+    const rdx=dirX+planeX*camX, rdy=dirY+planeY*camX;
+    let mx=Math.floor(m.x), my=Math.floor(m.y);
+    const ddx=Math.abs(1/(rdx||1e-9)), ddy=Math.abs(1/(rdy||1e-9));
+    let sx,sy,sdx,sdy;
+    if(rdx<0){ sx=-1; sdx=(m.x-mx)*ddx; } else { sx=1; sdx=(mx+1-m.x)*ddx; }
+    if(rdy<0){ sy=-1; sdy=(m.y-my)*ddy; } else { sy=1; sdy=(my+1-m.y)*ddy; }
+    let side=0,hit=0,tile=T.WALL,steps=0;
+    while(!hit&&steps++<60){
+      if(sdx<sdy){ sdx+=ddx; mx+=sx; side=0; } else { sdy+=ddy; my+=sy; side=1; }
+      if(mx<0||my<0||mx>=MW||my>=MH){ hit=1; break; }
+      const t=G.map.g[mx+my*MW];
+      if(t===T.WALL||t===T.VOID||t===T.GLASS||t===T.PROP){ hit=1; tile=t; }
+    }
+    const dist=side===0?(sdx-ddx):(sdy-ddy);
+    hcZ[px]=dist;
+    const full=Math.min(HH*4,HH/Math.max(dist,0.05));
+    const h=tile===T.PROP?full*0.52:full;
+    const top=tile===T.PROP?hz+full/2-h:hz-h/2;
+    const y0=Math.max(0,top|0), y1=Math.min(HH-1,(top+h)|0);
+    const th=theme();
+    const lit=clamp(0.14+2.0/(1+dist*0.7),0,1)*(side===1?0.62:1);
+    for(let y=0;y<HH;y++){
+      let r,g,b;
+      if(y<y0){ const l=clamp(0.05+0.24/(0.25+((hz-y)/HH)*4),0,1); r=16*l;g=16*l;b=19*l; }
+      else if(y>y1){ const l=clamp(0.10+0.62/(0.18+((y-hz)/HH)*3),0,1); r=40*l;g=37*l;b=34*l; }
+      else { r=th.wall[0]*lit; g=th.wall[1]*lit; b=th.wall[2]*lit; }
+      const i=(px+y*HW)*4; d[i]=r; d[i+1]=g; d[i+2]=b; d[i+3]=255;
+    }
+  }
+  // contacts, so the feed is actually worth watching
+  const invDet=1/(planeX*dirY-dirX*planeY);
+  const sorted=G.contacts.filter(c=>c.state!==S.OUT)
+    .map(c=>({c,dd:(c.x-m.x)**2+(c.y-m.y)**2})).sort((a,b)=>b.dd-a.dd);
+  for(const {c} of sorted){
+    const rx=c.x-m.x, ry=c.y-m.y;
+    const tx=invDet*(dirY*rx-dirX*ry), tyy=invDet*(-planeY*rx+planeX*ry);
+    if(tyy<=0.2) continue;
+    const spx=((HW/2)*(1+tx/tyy))|0;
+    const shh=Math.abs((HH/tyy)|0), sww=(shh*0.42)|0;
+    const col = c.state===S.DOWN?[70,60,60]
+      : (c.state===S.DRAW||c.state===S.HOSTILE)?[200,70,60]
+      : c.state===S.COMPLY?[100,190,130]:[150,150,165];
+    const yy0=Math.max(0,(hz-shh/2)|0), yy1=Math.min(HH-1,(hz+shh/2)|0);
+    for(let px=Math.max(0,spx-sww/2|0);px<Math.min(HW,spx+sww/2|0);px++){
+      if(tyy>=hcZ[px]) continue;
+      for(let y=yy0;y<yy1;y++){
+        const v=(y-yy0)/(yy1-yy0||1);
+        if(Math.abs((px-spx)/(sww||1))>0.30-(v*0.08)) continue;
+        const i=(px+y*HW)*4; const l=clamp(1.6/(1+tyy*0.6),0,1);
+        d[i]=col[0]*l; d[i+1]=col[1]*l; d[i+2]=col[2]*l;
+      }
+    }
+  }
+  x.putImageData(hcImg,0,0);
+  // interlace and a tick of static, so it reads as a relayed feed
+  x.fillStyle="rgba(0,0,0,.30)";
+  for(let y=0;y<HH;y+=2) x.fillRect(0,y,HW,1);
+  if(Math.random()<0.10){ x.fillStyle="rgba(255,255,255,.07)";
+    x.fillRect(0,(Math.random()*HH)|0,HW,2); }
 }
 
 /* ---------------- tactical map ----------------
@@ -1026,7 +1282,7 @@ function endGame(won){
 }
 
 /* ---------------- input ---------------- */
-const KEYMAP={KeyW:"w",KeyA:"a",KeyS:"s",KeyD:"d",KeyE:"e",KeyF:"f",KeyR:"r",KeyL:"l",
+const KEYMAP={KeyW:"w",KeyA:"a",KeyS:"s",KeyD:"d",KeyE:"e",KeyF:"f",KeyR:"r",KeyL:"l",Digit1:"1",Digit2:"2",KeyQ:"q",
   ControlLeft:"ctrl",ControlRight:"ctrl",
   ShiftLeft:"shift",ShiftRight:"shift",ArrowLeft:"arrowleft",ArrowRight:"arrowright"};
 addEventListener("keydown",e=>{
@@ -1035,17 +1291,19 @@ addEventListener("keydown",e=>{
   if(!G.keys[k]){
     if(k==="f"&&G.running) challenge();
     if(k==="r"&&G.running) reload();
+    if((k==="1"||k==="2"||k==="q")&&G.running) swapTo(k==="q"?(G.wi^1):(k==="1"?0:1));
     if(k==="l"&&G.running){ G.light=!G.light; sfx("click");
       say("OPERATOR",G.light?"Light on.":"Going dark.","c-op"); }
   }
   G.keys[k]=true;
 });
 addEventListener("keyup",e=>{ const k=KEYMAP[e.code]; if(k){ G.keys[k]=false; e.preventDefault(); } });
-cvs.addEventListener("click",()=>{
+cvs.addEventListener("mousedown",()=>{
   if(!G.running) return;
   if(document.pointerLockElement!==cvs){ cvs.requestPointerLock?.(); return; }
-  fire();
+  G.trigger=true; fire();
 });
+addEventListener("mouseup",()=>{ G.trigger=false; });
 addEventListener("mousemove",e=>{ if(document.pointerLockElement===cvs) G.mouse.dx+=e.movementX; });
 
 /* ---------------- boot ---------------- */

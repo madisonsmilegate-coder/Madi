@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bodycam Clear</title>
+<style>
+:root{ --amber:#ffb020; --red:#ff3b3b; --green:#4ade80; --ink:#e9e9ee; }
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#000;overflow:hidden;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:var(--ink)}
+#wrap{position:fixed;inset:0;background:#000}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:auto}
+#grain{position:absolute;inset:0;pointer-events:none;opacity:.055;mix-blend-mode:screen}
+#vig{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 50%,transparent 38%,rgba(0,0,0,.72) 100%)}
+#scan{position:absolute;inset:0;pointer-events:none;opacity:.18;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.5) 0 1px,transparent 1px 3px)}
+
+/* ---- bodycam HUD ---- */
+.hud{position:absolute;pointer-events:none;font-size:13px;letter-spacing:1px;
+  text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.9)}
+#tl{top:14px;left:16px}
+#tr{top:14px;right:16px;text-align:right}
+#bl{bottom:14px;left:16px}
+#br{bottom:14px;right:16px;text-align:right}
+.rec{color:var(--red);font-weight:700}
+.rec b{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--red);
+  margin-right:6px;vertical-align:0;animation:blink 1.4s steps(1) infinite}
+@keyframes blink{50%{opacity:.15}}
+.dim{color:#9a9aa8}
+#xh{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
+#xh div{position:absolute;background:rgba(255,255,255,.85);box-shadow:0 0 4px #000}
+.hp{position:absolute;left:50%;bottom:52px;transform:translateX(-50%);width:210px;height:5px;
+  background:rgba(255,255,255,.14);border-radius:99px;overflow:hidden}
+.hp i{display:block;height:100%;width:100%;background:var(--green);transition:width .18s}
+#log{position:absolute;left:16px;bottom:56px;width:min(430px,52vw);pointer-events:none}
+#log div{font-size:12.5px;margin:3px 0;opacity:.95;animation:in .25s ease both}
+@keyframes in{from{opacity:0;transform:translateX(-6px)}}
+.l-rad{color:#7fd1ff} .l-warn{color:var(--amber)} .l-bad{color:var(--red)} .l-ok{color:var(--green)}
+#prompt{position:absolute;left:50%;bottom:104px;transform:translateX(-50%);text-align:center;
+  font-size:14px;letter-spacing:2px;pointer-events:none}
+#prompt b{color:var(--amber)}
+#dmg{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,
+  transparent 40%,rgba(255,0,0,.55) 100%);opacity:0;transition:opacity .25s}
+#flash{position:absolute;inset:0;pointer-events:none;background:#fff;opacity:0}
+
+/* ---- screens ---- */
+.screen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.9);backdrop-filter:blur(3px);padding:22px;overflow:auto;z-index:20}
+.screen.hide{display:none}
+.panel{max-width:660px;width:100%;border:1px solid #2a2a33;background:#0c0c0f;border-radius:12px;padding:26px}
+h1{margin:0 0 4px;font-size:clamp(24px,5vw,38px);letter-spacing:-1px}
+h1 span{color:var(--amber)}
+h2{margin:0 0 14px;font-size:17px;letter-spacing:1px}
+.sub{color:#9a9aa8;font-size:12.5px;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px}
+p{font-size:14px;line-height:1.6;color:#c9c9d4}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:13.5px;margin:16px 0}
+.keys b{color:var(--amber)}
+button{font-family:inherit;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer;
+  background:var(--amber);color:#14140c;border:0;border-radius:8px;padding:12px 22px}
+button:hover{filter:brightness(1.12)}
+button.ghost{background:transparent;color:#9a9aa8;border:1px solid #2a2a33}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:14px 0}
+td,th{padding:7px 4px;text-align:left;border-bottom:1px solid #1e1e26}
+th{color:#9a9aa8;font-size:11px;letter-spacing:1.5px;text-transform:uppercase}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+.grade{font-size:52px;font-weight:800;letter-spacing:-2px;line-height:1}
+.g-A{color:var(--green)} .g-B{color:#a3e635} .g-C{color:var(--amber)}
+.g-D{color:#fb923c} .g-F{color:var(--red)}
+.tag{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#9a9aa8;margin:16px 0 8px}
+.warn{border-left:2px solid var(--amber);padding-left:12px;color:#c9c9d4;font-size:13px;margin:14px 0}
+@media (prefers-reduced-motion:reduce){ .rec b{animation:none} #log div{animation:none} }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+  <canvas id="grain"></canvas>
+  <div id="vig"></div><div id="scan"></div>
+  <div id="dmg"></div><div id="flash"></div>
+
+  <div class="hud" id="tl"><span class="rec"><b></b>REC</span> <span class="dim" id="tc">00:00:00</span></div>
+  <div class="hud" id="tr"><span id="unit">UNIT 4-ADAM-12</span><br><span class="dim" id="bat">BATT 98%</span></div>
+  <div class="hud" id="bl"><span class="dim">FLOOR</span> <span id="flr">01</span>
+    <span class="dim">/ CONTACTS</span> <span id="cnt">0</span></div>
+  <div class="hud" id="br"><span class="dim">AMMO</span> <span id="ammo">12</span>
+    <span class="dim">| MAG</span> <span id="mags">2</span></div>
+  <div id="xh"></div>
+  <div class="hp"><i id="hpbar"></i></div>
+  <div id="log"></div>
+  <div class="hud" id="prompt"></div>
+
+  <div class="screen" id="s-brief">
+    <div class="panel">
+      <h1>BODY<span>CAM</span></h1>
+      <div class="sub">Vertical Entry &middot; High-Rise Clearance</div>
+      <p>You are first through the door. Eight floors, dark, power cut. Civilians are still
+      inside and so is everyone else.</p>
+      <p><strong>The job is not shooting.</strong> Challenge every contact you find. Civilians
+      comply and are walked out. Some suspects surrender. Some do not &mdash; and only when a
+      weapon is out are you clear to fire. Shoot a civilian, or fire on someone who never drew,
+      and it goes in the report.</p>
+      <div class="keys">
+        <b>W A S D</b><span>Move</span>
+        <b>MOUSE</b><span>Look</span>
+        <b>SHIFT</b><span>Sprint</span>
+        <b>F</b><span>Challenge contact (shout commands)</span>
+        <b>CLICK</b><span>Fire</span>
+        <b>R</b><span>Reload</span>
+        <b>E</b><span>Use stairwell once floor is clear</span>
+      </div>
+      <div class="warn">Fiction, not training. Contacts are silhouettes; this is a discrimination
+      and de-escalation puzzle, not a simulation of real tactics.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
+        <button id="go">MAKE ENTRY</button>
+        <button class="ghost" id="mute">SOUND: ON</button>
+      </div>
+      <p class="dim" style="font-size:12px;margin-top:14px">Desktop, mouse + keyboard. Click the
+      view to capture the mouse; press ESC to release.</p>
+    </div>
+  </div>
+
+  <div class="screen hide" id="s-floor"><div class="panel" id="floorPanel"></div></div>
+  <div class="screen hide" id="s-end"><div class="panel" id="endPanel"></div></div>
+</div>
+
+<script>
+"use strict";
+/* ===========================================================
+   BODYCAM CLEAR - a first-person raycast building clearance.
+   One file: engine, floor generation, contact AI, HUD, scoring.
+   =========================================================== */
+
+const TAU=Math.PI*2, clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const rnd=(a,b)=>a+Math.random()*(b-a), pick=a=>a[Math.floor(Math.random()*a.length)];
+
+/* ---------------- map ---------------- */
+const MW=26, MH=20;                 // grid size per floor
+const T={VOID:0, WALL:1, FLOOR:2, DOOR:3, STAIR:4, GLASS:5};
+
+function makeFloor(n){
+  const g=new Uint8Array(MW*MH).fill(T.WALL);
+  const at=(x,y)=>x+y*MW;
+  const set=(x,y,v)=>{ if(x>0&&y>0&&x<MW-1&&y<MH-1) g[at(x,y)]=v; };
+
+  // central corridor
+  const cy=Math.floor(MH/2);
+  for(let x=2;x<MW-2;x++){ set(x,cy,T.FLOOR); set(x,cy-1,T.FLOOR); }
+
+  // rooms off both sides of the corridor
+  const rooms=[];
+  const spans=[[2,7],[8,13],[14,19],[20,24]];
+  for(const [x0,x1] of spans){
+    for(const side of [-1,1]){
+      const yTop = side<0 ? cy-2-5 : cy+1;
+      const yBot = side<0 ? cy-2   : cy+1+5;
+      for(let y=yTop;y<=yBot;y++) for(let x=x0;x<=x1;x++) set(x,y,T.FLOOR);
+      // doorway into the corridor
+      const dx=Math.floor((x0+x1)/2);
+      set(dx, side<0?cy-2:cy, T.DOOR);
+      // an interior divider so rooms are not empty boxes
+      if(Math.random()<0.55){
+        const wx=dx+(Math.random()<0.5?-2:2);
+        for(let y=yTop+1;y<=yBot-1;y++) if(Math.random()<0.8) set(wx,y,T.WALL);
+      }
+      // a window wall on the outside edge
+      const oy = side<0 ? yTop : yBot;
+      for(let x=x0;x<=x1;x++) if(Math.random()<0.7) set(x,oy,T.GLASS);
+      rooms.push({x0,x1,y0:Math.min(yTop,yBot),y1:Math.max(yTop,yBot),side});
+    }
+  }
+  // stairwell at the far end of the corridor
+  set(MW-3,cy,T.STAIR); set(MW-3,cy-1,T.STAIR);
+  return {g,rooms,cy,spawn:{x:3.5,y:cy+0.5},stair:{x:MW-3+0.5,y:cy+0.5}};
+}
+
+/* ---------------- contacts ---------------- */
+/* Each has: type civ|susp, state, and an intent that only resolves on challenge. */
+const S={IDLE:"idle",AWARE:"aware",COMPLY:"comply",DRAW:"draw",HOSTILE:"hostile",
+         DOWN:"down",OUT:"out"};
+
+function makeContacts(floor,n){
+  const list=[], used=new Set();
+  const hostileShare = clamp(0.28 + n*0.055, 0.28, 0.66);
+  const count = clamp(3+Math.floor(n*0.8)+Math.floor(Math.random()*2), 3, 8);
+  for(let i=0;i<count;i++){
+    let r, guard=0;
+    do{ r=pick(floor.rooms); guard++; }while(used.has(r)&&guard<40);
+    used.add(r);
+    // force a mix: the first is always armed, the second never is, so no floor
+    // is a free walk and no floor is a shooting gallery
+    const hostile = i===0 ? true : i===1 ? false : Math.random()<hostileShare;
+    list.push({
+      x:rnd(r.x0+0.6,r.x1+0.4), y:rnd(r.y0+0.6,r.y1+0.4),
+      type:hostile?"susp":"civ",
+      state:S.IDLE, t:0, armed:hostile,
+      // even a suspect may give up: decided when challenged, not before
+      willSurrender: hostile && Math.random()<0.42,
+      drawAt:0, bob:Math.random()*TAU, hitFlash:0
+    });
+  }
+  return list;
+}
+
+/* ---------------- game state ---------------- */
+const G={
+  running:false, floorNo:1, maxFloor:8,
+  map:null, contacts:[],
+  px:0, py:0, ang:0, vz:0,
+  hp:100, ammo:12, mags:2, magSize:12,
+  keys:{}, mouse:{dx:0}, muted:false,
+  t0:0, tNow:0, shake:0, fireCd:0, reloading:0, bat:98,
+  stat:{shots:0,hits:0,civShot:0,unjustified:0,detained:0,neutralized:0,evacuated:0,
+        hitsTaken:0,floors:0,time:0},
+  log:[]
+};
+
+const $=id=>document.getElementById(id);
+const cvs=$("c"), ctx=cvs.getContext("2d",{alpha:false});
+let W=0,H=0,RW=0,RH=0,img=null,zbuf=null;
+
+function resize(){
+  W=window.innerWidth; H=window.innerHeight;
+  const scale = W>1400?0.42:W>900?0.5:0.6;      // render small, upscale: bodycam softness
+  RW=Math.max(200,Math.floor(W*scale)); RH=Math.max(120,Math.floor(H*scale));
+  cvs.width=RW; cvs.height=RH;
+  img=ctx.createImageData(RW,RH); zbuf=new Float32Array(RW);
+  buildGrain();
+}
+window.addEventListener("resize",resize);
+
+/* ---------------- audio (synth, no assets) ---------------- */
+let AC=null;
+function ac(){ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); return AC; }
+function sfx(kind){
+  if(G.muted) return;
+  try{
+    const a=ac(), t=a.currentTime;
+    if(kind==="shot"){
+      const b=a.createBuffer(1,a.sampleRate*0.22,a.sampleRate), d=b.getChannelData(0);
+      for(let i=0;i<d.length;i++){ const k=1-i/d.length; d[i]=(Math.random()*2-1)*k*k; }
+      const s=a.createBufferSource(); s.buffer=b;
+      const f=a.createBiquadFilter(); f.type="lowpass"; f.frequency.setValueAtTime(2200,t);
+      f.frequency.exponentialRampToValueAtTime(240,t+0.2);
+      const g=a.createGain(); g.gain.setValueAtTime(0.5,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.22);
+      s.connect(f); f.connect(g); g.connect(a.destination); s.start(t);
+    } else if(kind==="click"||kind==="radio"){
+      const o=a.createOscillator(), g=a.createGain();
+      o.type="square"; o.frequency.setValueAtTime(kind==="radio"?880:300,t);
+      g.gain.setValueAtTime(0.05,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.09);
+      o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+0.1);
+    } else if(kind==="hit"){
+      const o=a.createOscillator(), g=a.createGain();
+      o.type="sawtooth"; o.frequency.setValueAtTime(150,t);
+      o.frequency.exponentialRampToValueAtTime(50,t+0.25);
+      g.gain.setValueAtTime(0.22,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.3);
+      o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+0.3);
+    } else if(kind==="reload"){
+      const o=a.createOscillator(), g=a.createGain();
+      o.type="square"; o.frequency.setValueAtTime(180,t);
+      g.gain.setValueAtTime(0.06,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.16);
+      o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+0.18);
+    }
+  }catch(e){}
+}
+
+/* ---------------- logging ---------------- */
+function log(text,cls){
+  const d=document.createElement("div");
+  d.className=cls||""; d.textContent=text;
+  $("log").appendChild(d);
+  while($("log").children.length>6) $("log").firstChild.remove();
+  setTimeout(()=>{ if(d.parentNode) d.style.opacity=".35"; },4200);
+  setTimeout(()=>{ if(d.parentNode) d.remove(); },9000);
+}
+
+/* ---------------- grain ---------------- */
+function buildGrain(){
+  const gc=$("grain"); gc.width=Math.floor(W/3); gc.height=Math.floor(H/3);
+  const g=gc.getContext("2d"), d=g.createImageData(gc.width,gc.height);
+  for(let i=0;i<d.data.length;i+=4){
+    const v=Math.random()*255; d.data[i]=d.data[i+1]=d.data[i+2]=v; d.data[i+3]=255;
+  }
+  g.putImageData(d,0,0);
+}
+
+/* ---------------- floor lifecycle ---------------- */
+function startFloor(n){
+  G.floorNo=n;
+  G.map=makeFloor(n);
+  G.contacts=makeContacts(G.map,n);
+  G.px=G.map.spawn.x; G.py=G.map.spawn.y; G.ang=0;
+  G.ammo=G.magSize; G.reloading=0; G.fireCd=0;
+  $("flr").textContent=String(n).padStart(2,"0");
+  updHUD();
+  log(`RADIO: Floor ${n}. ${G.contacts.length} heat signatures. Go slow.`,"l-rad");
+}
+
+const remaining=()=>G.contacts.filter(c=>c.state!==S.DOWN&&c.state!==S.OUT).length;
+
+function updHUD(){
+  $("ammo").textContent=G.ammo; $("mags").textContent=G.mags;
+  $("cnt").textContent=remaining();
+  $("hpbar").style.width=clamp(G.hp,0,100)+"%";
+  $("hpbar").style.background = G.hp>60?"var(--green)":G.hp>30?"var(--amber)":"var(--red)";
+  const s=Math.floor(G.tNow/1000);
+  $("tc").textContent=[Math.floor(s/3600),Math.floor(s/60)%60,s%60]
+    .map(v=>String(v).padStart(2,"0")).join(":");
+  $("bat").textContent="BATT "+Math.max(1,Math.floor(G.bat))+"%";
+}
+
+/* ---------------- interaction ---------------- */
+function inView(c){                       // contact in front, near crosshair, and close enough
+  const dx=c.x-G.px, dy=c.y-G.py, dist=Math.hypot(dx,dy);
+  if(dist>7) return 0;
+  let a=Math.atan2(dy,dx)-G.ang;
+  while(a>Math.PI)a-=TAU; while(a<-Math.PI)a+=TAU;
+  if(Math.abs(a)>0.30) return 0;
+  return dist;
+}
+function targeted(){
+  let best=null,bd=99;
+  for(const c of G.contacts){
+    if(c.state===S.DOWN||c.state===S.OUT) continue;
+    const d=inView(c);
+    if(d&&d<bd){ bd=d; best=c; }
+  }
+  return best;
+}
+
+function challenge(){
+  const c=targeted();
+  if(!c){ log("You shout into an empty room.","l-warn"); return; }
+  if(c.state===S.COMPLY||c.state===S.DRAW||c.state===S.HOSTILE) return;
+  sfx("radio");
+  log('YOU: "POLICE! HANDS! LET ME SEE YOUR HANDS!"');
+  c.state=S.AWARE; c.t=0;
+  setTimeout(()=>{
+    if(c.state===S.DOWN||c.state===S.OUT) return;
+    if(c.type==="civ"){
+      c.state=S.COMPLY; log("CONTACT: hands up. Civilian. Walking them out.","l-ok");
+      setTimeout(()=>{ if(c.state===S.COMPLY){ c.state=S.OUT; G.stat.evacuated++;
+        log("CIVILIAN EVACUATED.","l-ok"); updHUD(); } },900);
+    } else if(c.willSurrender){
+      c.state=S.COMPLY; log("CONTACT: weapon down. Hands out. Complying.","l-ok");
+      setTimeout(()=>{ if(c.state===S.COMPLY){ c.state=S.OUT; G.stat.detained++;
+        log("SUSPECT DETAINED. No shots fired.","l-ok"); updHUD(); } },1100);
+    } else {
+      c.state=S.DRAW; c.drawAt=performance.now();
+      log("CONTACT IS DRAWING. WEAPON. WEAPON.","l-bad");
+      sfx("click");
+    }
+  }, 380+Math.random()*420);
+}
+
+function fire(){
+  if(G.reloading>0) return;
+  if(G.ammo<=0){ sfx("click"); log("DRY. Reload (R).","l-warn"); return; }
+  G.ammo--; G.stat.shots++; G.fireCd=0.19; G.shake=1; sfx("shot");
+  $("flash").style.opacity=".5"; setTimeout(()=>$("flash").style.opacity="0",45);
+  const c=targeted();
+  updHUD();
+  if(!c){ log("Round into the drywall.","l-warn"); return; }
+  G.stat.hits++; c.hitFlash=1;
+  if(c.type==="civ"){
+    c.state=S.DOWN; G.stat.civShot++;
+    log("!! CIVILIAN DOWN. THAT WAS A CIVILIAN.","l-bad");
+  } else if(c.state===S.DRAW||c.state===S.HOSTILE){
+    c.state=S.DOWN; G.stat.neutralized++;
+    log("THREAT DOWN. Weapon was out.","l-ok");
+  } else {
+    c.state=S.DOWN; G.stat.unjustified++;
+    log("!! SUSPECT DOWN - no weapon shown. That is on the report.","l-bad");
+  }
+  updHUD();
+}
+
+function reload(){
+  if(G.reloading>0||G.ammo===G.magSize) return;
+  if(G.mags<=0){ log("No magazines left.","l-warn"); return; }
+  G.reloading=1.5; G.mags--; sfx("reload"); log("Reloading.","");
+}
+
+function hurt(n){
+  G.hp-=n; G.stat.hitsTaken++;
+  $("dmg").style.opacity=Math.min(0.9,(100-G.hp)/100+0.25);
+  setTimeout(()=>{ $("dmg").style.opacity=String(clamp((100-G.hp)/260,0,0.5)); },260);
+  G.shake=1.4; sfx("hit"); updHUD();
+  if(G.hp<=0){ endGame(false); }
+}
+
+/* ---------------- update ---------------- */
+function blockedByContact(x,y,ignore){
+  for(const c of G.contacts){
+    if(c.state===S.OUT||c.state===S.DOWN||c===ignore) continue;
+    if((c.x-x)**2+(c.y-y)**2 < 0.36) return true;      // 0.6 unit personal space
+  }
+  return false;
+}
+function solid(x,y){
+  const gx=Math.floor(x), gy=Math.floor(y);
+  if(gx<0||gy<0||gx>=MW||gy>=MH) return true;
+  const t=G.map.g[gx+gy*MW];
+  return t===T.WALL||t===T.VOID||t===T.GLASS;
+}
+
+function update(dt){
+  // movement with wall sliding
+  const sp=(G.keys.shift?3.4:2.1)*dt;
+  let fx=0,fy=0;
+  const f=(G.keys.w?1:0)-(G.keys.s?1:0), s=(G.keys.d?1:0)-(G.keys.a?1:0);
+  if(f||s){
+    const len=Math.hypot(f,s);
+    fx=(Math.cos(G.ang)*f - Math.sin(G.ang)*s)/len*sp;
+    fy=(Math.sin(G.ang)*f + Math.cos(G.ang)*s)/len*sp;
+  }
+  if(!solid(G.px+fx*1.6,G.py) && !blockedByContact(G.px+fx*1.6,G.py)) G.px+=fx;
+  if(!solid(G.px,G.py+fy*1.6) && !blockedByContact(G.px,G.py+fy*1.6)) G.py+=fy;
+  G.vz=(f||s)?Math.sin(performance.now()/135)*0.9:G.vz*0.9;   // head bob
+
+  // look
+  G.ang+=G.mouse.dx*0.0022; G.mouse.dx=0;
+  if(G.keys.arrowleft) G.ang-=2.0*dt;
+  if(G.keys.arrowright) G.ang+=2.0*dt;
+
+  if(G.fireCd>0) G.fireCd-=dt;
+  if(G.reloading>0){ G.reloading-=dt; if(G.reloading<=0){ G.ammo=G.magSize; updHUD(); log("Up.",""); } }
+  G.shake*=0.86;
+  G.bat=Math.max(1,98-(G.tNow/1000)*0.05);
+
+  // contacts
+  for(const c of G.contacts){
+    if(c.state===S.DOWN||c.state===S.OUT) continue;
+    c.t+=dt; c.bob+=dt*2; c.hitFlash*=0.9;
+    const d=Math.hypot(c.x-G.px,c.y-G.py);
+
+    // a suspect who sees you first may go for it unprompted
+    if(c.state===S.IDLE && c.type==="susp" && d<5.2 && inView(c)){
+      if(Math.random()<dt*0.55){ c.state=S.DRAW; c.drawAt=performance.now();
+        log("CONTACT REACHING. WEAPON.","l-bad"); sfx("click"); }
+    }
+    if(c.state===S.IDLE && c.type==="civ" && d<3.4 && inView(c)){
+      c.state=S.AWARE; log("CONTACT: someone's in here. Hands are empty.","l-warn");
+    }
+    // drawn weapon: a window to react, then they fire
+    if(c.state===S.DRAW){
+      if(performance.now()-c.drawAt>1250){
+        c.state=S.HOSTILE;
+        hurt(18+Math.random()*10);
+        log("YOU ARE TAKING FIRE.","l-bad");
+        c.drawAt=performance.now()+400;
+      }
+    } else if(c.state===S.HOSTILE){
+      if(performance.now()-c.drawAt>1500){ c.drawAt=performance.now(); hurt(12+Math.random()*8); }
+      const a=Math.atan2(G.py-c.y,G.px-c.x);
+      if(d>2.2){ const nx=c.x+Math.cos(a)*dt*0.9, ny=c.y+Math.sin(a)*dt*0.9;
+        if(!solid(nx,ny) && !blockedByContact(nx,ny,c)){ c.x=nx; c.y=ny; } }
+    }
+  }
+
+  // stairwell
+  const gx=Math.floor(G.px), gy=Math.floor(G.py);
+  const onStair = G.map.g[gx+gy*MW]===T.STAIR;
+  const clear = remaining()===0;
+  const tgt=targeted();
+  let p="";
+  if(onStair && clear) p="<b>[E]</b> ASCEND TO NEXT FLOOR";
+  else if(onStair && !clear) p=`${remaining()} CONTACT(S) UNACCOUNTED FOR`;
+  else if(tgt && tgt.state!==S.COMPLY) p="<b>[F]</b> CHALLENGE";
+  $("prompt").innerHTML=p;
+  if(onStair && clear && G.keys.e){ G.keys.e=false; nextFloor(); }
+  updHUD();
+}
+
+function nextFloor(){
+  G.stat.floors++;
+  if(G.floorNo>=G.maxFloor){ endGame(true); return; }
+  G.running=false; document.exitPointerLock?.();
+  showFloorReport();
+}
+
+/* ---------------- render ---------------- */
+function render(){
+  const d=img.data;
+  const shake=G.shake*3;
+  const dirX=Math.cos(G.ang), dirY=Math.sin(G.ang);
+  const planeX=-dirY*0.72, planeY=dirX*0.72;
+  const horizon=(RH>>1)+G.vz+shake*(Math.random()-0.5);
+
+  for(let x=0;x<RW;x++){
+    const camX=2*x/RW-1;
+    const rdx=dirX+planeX*camX, rdy=dirY+planeY*camX;
+    let mx=Math.floor(G.px), my=Math.floor(G.py);
+    const ddx=Math.abs(1/(rdx||1e-9)), ddy=Math.abs(1/(rdy||1e-9));
+    let sx,sy,sdx,sdy;
+    if(rdx<0){ sx=-1; sdx=(G.px-mx)*ddx; } else { sx=1; sdx=(mx+1-G.px)*ddx; }
+    if(rdy<0){ sy=-1; sdy=(G.py-my)*ddy; } else { sy=1; sdy=(my+1-G.py)*ddy; }
+    let side=0, hit=0, tile=T.WALL, steps=0;
+    while(!hit && steps++<80){
+      if(sdx<sdy){ sdx+=ddx; mx+=sx; side=0; } else { sdy+=ddy; my+=sy; side=1; }
+      if(mx<0||my<0||mx>=MW||my>=MH){ hit=1; tile=T.WALL; break; }
+      const t=G.map.g[mx+my*MW];
+      if(t===T.WALL||t===T.VOID||t===T.GLASS){ hit=1; tile=t; }
+    }
+    const dist = side===0 ? (sdx-ddx) : (sdy-ddy);
+    zbuf[x]=dist;
+    const h=Math.min(RH*4, RH/Math.max(dist,0.05));
+    const y0=Math.max(0,Math.floor(horizon-h/2)), y1=Math.min(RH-1,Math.floor(horizon+h/2));
+
+    // flashlight: bright at centre, falls off hard with distance
+    const cone=1-Math.min(1,Math.abs(camX)*1.25);
+    const lit=clamp((1.9/(1+dist*dist*0.30))*(0.35+cone*0.75),0,1);
+    let r,g,b;
+    if(tile===T.GLASS){ r=26;g=42;b=54; }
+    else { r=54;g=52;b=50; }
+    const shade=(side===1?0.62:1)*lit;
+    r*=shade; g*=shade; b*=shade;
+
+    for(let y=0;y<RH;y++){
+      let rr,gg,bb;
+      if(y<y0){                                  // ceiling
+        const f=(horizon-y)/RH;
+        const l=clamp(0.20/(0.25+f*5),0,1)*(0.4+cone*0.6);
+        rr=16*l; gg=16*l; bb=19*l;
+      } else if(y>y1){                           // floor
+        const f=(y-horizon)/RH;
+        const l=clamp(0.55/(0.15+f*4.2),0,1)*(0.35+cone*0.75);
+        rr=40*l; gg=37*l; bb=34*l;
+      } else { rr=r; gg=g; bb=b; }
+      const i=(x+y*RW)*4;
+      d[i]=rr; d[i+1]=gg; d[i+2]=bb; d[i+3]=255;
+    }
+  }
+
+  // sprites: contacts, painted as billboards, far to near
+  const list=G.contacts.filter(c=>c.state!==S.OUT)
+    .map(c=>({c,d:(c.x-G.px)**2+(c.y-G.py)**2})).sort((a,b)=>b.d-a.d);
+  const invDet=1/(planeX*dirY-dirX*planeY);
+  for(const {c} of list){
+    const rx=c.x-G.px, ry=c.y-G.py;
+    const tx=invDet*(dirY*rx-dirX*ry), ty=invDet*(-planeY*rx+planeX*ry);
+    if(ty<=0.15) continue;
+    const sxp=Math.floor((RW/2)*(1+tx/ty));
+    const sh=Math.min(RH*1.9, Math.abs(Math.floor(RH/ty))|0), sw=Math.floor(sh*0.42);
+    const down=c.state===S.DOWN;
+    const vOff=down?sh*0.36:0;
+    const y0=Math.floor(-sh/2+horizon+vOff), y1=Math.floor(sh/2+horizon+vOff);
+    const x0=Math.floor(-sw/2+sxp), x1=Math.floor(sw/2+sxp);
+    const lit=clamp(1.8/(1+ty*ty*0.26),0,1);
+    // colour reads the state, which is the whole game: who is dangerous
+    let base = c.type==="civ" ? [150,150,165] : [120,116,120];
+    if(c.state===S.COMPLY) base=[110,190,130];
+    if(c.state===S.DRAW||c.state===S.HOSTILE) base=[210,70,60];
+    if(down) base=[70,60,60];
+    for(let x=Math.max(0,x0);x<Math.min(RW,x1);x++){
+      if(ty>=zbuf[x]) continue;
+      const u=(x-x0)/(x1-x0||1);
+      for(let y=Math.max(0,y0);y<Math.min(RH,y1);y++){
+        const v=(y-y0)/(y1-y0||1);
+        // crude human silhouette: head, shoulders, torso taper
+        let inside;
+        if(down){
+          // prone: a low, wide mass with a head at one end
+          inside = (v>0.74 && v<0.94 && Math.abs(u-0.5)<0.46) ||
+                   (v>0.68 && v<0.80 && Math.abs(u-0.74)<0.12);
+        } else if(v<0.17){ inside=Math.abs(u-0.5)<0.15;              // head
+        } else if(v<0.24){ inside=Math.abs(u-0.5)<0.34;              // shoulders
+        } else { inside=Math.abs(u-0.5)<0.30-(v-0.24)*0.10; }        // torso
+        // hands up when complying
+        if(!down && c.state===S.COMPLY && v>0.06 && v<0.30 &&
+           (Math.abs(u-0.14)<0.09||Math.abs(u-0.86)<0.09)) inside=true;
+        // weapon arm when drawn
+        if(!down && (c.state===S.DRAW||c.state===S.HOSTILE) && v>0.30 && v<0.40 &&
+           u>0.5 && u<0.95) inside=true;
+        if(!inside) continue;
+        const i=(x+y*RW)*4;
+        const fl=c.hitFlash*160;
+        const sh2=lit*(0.55+0.45*(1-v));
+        d[i]=clamp(base[0]*sh2+fl,0,255);
+        d[i+1]=clamp(base[1]*sh2,0,255);
+        d[i+2]=clamp(base[2]*sh2,0,255);
+      }
+    }
+  }
+  ctx.putImageData(img,0,0);
+}
+
+/* ---------------- crosshair ---------------- */
+function buildXH(){
+  const xh=$("xh"); xh.innerHTML="";
+  const mk=(w,h,l,t)=>{ const e=document.createElement("div");
+    e.style.width=w+"px"; e.style.height=h+"px"; e.style.left=l+"px"; e.style.top=t+"px";
+    xh.appendChild(e); };
+  mk(2,9,-1,-17); mk(2,9,-1,8); mk(9,2,-17,-1); mk(9,2,8,-1);
+}
+
+/* ---------------- loop ---------------- */
+let last=0;
+function frame(ts){
+  if(!G.running) return;
+  const dt=Math.min(0.05,(ts-last)/1000||0); last=ts;
+  G.tNow=ts-G.t0;
+  update(dt); render();
+  requestAnimationFrame(frame);
+}
+
+/* ---------------- screens ---------------- */
+function grade(){
+  const s=G.stat;
+  let score=100;
+  score-=s.civShot*40; score-=s.unjustified*18; score-=s.hitsTaken*3;
+  score+=s.detained*6; score+=s.evacuated*4;
+  const acc=s.shots?s.hits/s.shots:1;
+  if(s.shots>0) score-=Math.round((1-acc)*14);
+  score=clamp(Math.round(score),0,100);
+  const g = score>=90?"A":score>=78?"B":score>=64?"C":score>=50?"D":"F";
+  return {score,g,acc};
+}
+function statTable(){
+  const s=G.stat, {acc}=grade();
+  return `<table>
+   <tr><th>Metric</th><th style="text-align:right">Value</th></tr>
+   <tr><td>Floors cleared</td><td class="n">${s.floors}</td></tr>
+   <tr><td>Civilians evacuated</td><td class="n">${s.evacuated}</td></tr>
+   <tr><td>Suspects detained without force</td><td class="n">${s.detained}</td></tr>
+   <tr><td>Threats neutralised</td><td class="n">${s.neutralized}</td></tr>
+   <tr><td>Rounds fired</td><td class="n">${s.shots}</td></tr>
+   <tr><td>Accuracy</td><td class="n">${s.shots?Math.round(acc*100)+"%":"-"}</td></tr>
+   <tr><td style="color:var(--red)">Civilians shot</td><td class="n">${s.civShot}</td></tr>
+   <tr><td style="color:var(--red)">Unjustified shootings</td><td class="n">${s.unjustified}</td></tr>
+   <tr><td>Rounds taken</td><td class="n">${s.hitsTaken}</td></tr>
+  </table>`;
+}
+function showFloorReport(){
+  const {score,g}=grade();
+  $("floorPanel").innerHTML=`
+    <div class="sub">Floor ${G.floorNo} secured</div>
+    <h2>STAIRWELL CLEAR &mdash; ASCENDING</h2>
+    <div class="grade g-${g}">${g}<span style="font-size:16px;color:#9a9aa8"> &middot; ${score}</span></div>
+    ${statTable()}
+    <div class="tag">Condition</div>
+    <p>Health ${Math.round(G.hp)}% &middot; ${G.mags} magazine(s) remaining.
+    ${G.hp<50?"You are hurt. Slow down and use your voice before your trigger.":"Holding up."}</p>
+    <div style="margin-top:16px"><button id="nf">STACK ON FLOOR ${G.floorNo+1}</button></div>`;
+  $("s-floor").classList.remove("hide");
+  $("nf").onclick=()=>{
+    $("s-floor").classList.add("hide");
+    G.hp=Math.min(100,G.hp+14); G.mags=Math.min(4,G.mags+1);
+    startFloor(G.floorNo+1); resumeRun();
+  };
+}
+function endGame(won){
+  G.running=false; document.exitPointerLock?.();
+  const {score,g}=grade();
+  const s=G.stat;
+  let verdict;
+  if(!won) verdict="You went down on floor "+G.floorNo+". The stack pulled you out.";
+  else if(s.civShot>0) verdict="Building cleared, but you shot a civilian. That is the headline, not the clearance.";
+  else if(s.unjustified>0) verdict="Building cleared. One or more subjects were shot before a weapon appeared - the review board will want to hear about it.";
+  else if(s.shots===0) verdict="Building cleared without a single round fired. Everyone walked out. That is the best possible night.";
+  else verdict="Building cleared. Every round you fired was fired at a weapon that was already out.";
+  $("endPanel").innerHTML=`
+    <div class="sub">${won?"Operation complete":"Officer down"}</div>
+    <h1>AFTER<span>-ACTION</span></h1>
+    <div class="grade g-${g}">${g}<span style="font-size:16px;color:#9a9aa8"> &middot; ${score}/100</span></div>
+    <p>${verdict}</p>
+    ${statTable()}
+    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+      <button id="again">RUN IT AGAIN</button></div>`;
+  $("s-end").classList.remove("hide");
+  $("again").onclick=()=>{ $("s-end").classList.add("hide"); newGame(); };
+}
+
+/* ---------------- input ---------------- */
+const KEYMAP={KeyW:"w",KeyA:"a",KeyS:"s",KeyD:"d",KeyE:"e",KeyF:"f",KeyR:"r",
+  ShiftLeft:"shift",ShiftRight:"shift",ArrowLeft:"arrowleft",ArrowRight:"arrowright"};
+addEventListener("keydown",e=>{
+  const k=KEYMAP[e.code]; if(!k) return;
+  e.preventDefault();
+  if(!G.keys[k]){
+    if(k==="f"&&G.running) challenge();
+    if(k==="r"&&G.running) reload();
+  }
+  G.keys[k]=true;
+});
+addEventListener("keyup",e=>{ const k=KEYMAP[e.code]; if(k){ G.keys[k]=false; e.preventDefault(); } });
+cvs.addEventListener("click",()=>{
+  if(!G.running) return;
+  if(document.pointerLockElement!==cvs){ cvs.requestPointerLock?.(); return; }
+  fire();
+});
+addEventListener("mousemove",e=>{ if(document.pointerLockElement===cvs) G.mouse.dx+=e.movementX; });
+
+/* ---------------- boot ---------------- */
+function resumeRun(){ G.running=true; last=performance.now(); cvs.requestPointerLock?.(); requestAnimationFrame(frame); }
+function newGame(){
+  G.hp=100; G.mags=2; G.bat=98;
+  G.stat={shots:0,hits:0,civShot:0,unjustified:0,detained:0,neutralized:0,evacuated:0,
+          hitsTaken:0,floors:0,time:0};
+  G.t0=performance.now();
+  startFloor(1); resumeRun();
+}
+$("go").onclick=()=>{ $("s-brief").classList.add("hide"); newGame(); };
+$("mute").onclick=e=>{ G.muted=!G.muted; e.target.textContent="SOUND: "+(G.muted?"OFF":"ON"); };
+resize(); buildXH();
+setInterval(buildGrain,90);
+</script>
+</body>
+</html>

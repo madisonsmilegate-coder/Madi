@@ -31,14 +31,14 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
 .dim{color:#9a9aa8}
 #xh{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
 #xh div{position:absolute;background:rgba(255,255,255,.85);box-shadow:0 0 4px #000}
-.hp{position:absolute;left:50%;bottom:52px;transform:translateX(-50%);width:210px;height:5px;
+.hp{position:absolute;left:16px;bottom:40px;width:200px;height:5px;
   background:rgba(255,255,255,.14);border-radius:99px;overflow:hidden}
 .hp i{display:block;height:100%;width:100%;background:var(--green);transition:width .18s}
-#log{position:absolute;left:16px;bottom:56px;width:min(430px,52vw);pointer-events:none}
+#log{position:absolute;left:16px;bottom:62px;width:min(430px,46vw);pointer-events:none}
 #log div{font-size:12.5px;margin:3px 0;opacity:.95;animation:in .25s ease both}
 @keyframes in{from{opacity:0;transform:translateX(-6px)}}
 .l-rad{color:#7fd1ff} .l-warn{color:var(--amber)} .l-bad{color:var(--red)} .l-ok{color:var(--green)}
-#prompt{position:absolute;left:50%;bottom:104px;transform:translateX(-50%);text-align:center;
+#prompt{position:absolute;left:50%;top:57%;transform:translateX(-50%);text-align:center;
   font-size:14px;letter-spacing:2px;pointer-events:none}
 #prompt b{color:var(--amber)}
 #dmg{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,
@@ -87,6 +87,7 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
   <div class="hud" id="br"><span class="dim">AMMO</span> <span id="ammo">12</span>
     <span class="dim">| MAG</span> <span id="mags">2</span></div>
   <div id="xh"></div>
+  <div class="hud" style="left:16px;bottom:50px"><span class="dim" style="font-size:11px">VITALS</span></div>
   <div class="hp"><i id="hpbar"></i></div>
   <div id="log"></div>
   <div class="hud" id="prompt"></div>
@@ -210,6 +211,7 @@ const G={
   px:0, py:0, ang:0, vz:0,
   hp:100, ammo:12, mags:2, magSize:12,
   keys:{}, mouse:{dx:0}, muted:false,
+  gun:{bob:0, recoil:0, flash:0, sway:0, dry:0},
   t0:0, tNow:0, shake:0, fireCd:0, reloading:0, bat:98,
   stat:{shots:0,hits:0,civShot:0,unjustified:0,detained:0,neutralized:0,evacuated:0,
         hitsTaken:0,floors:0,time:0},
@@ -358,7 +360,8 @@ function fire(){
   if(G.reloading>0) return;
   if(G.ammo<=0){ sfx("click"); log("DRY. Reload (R).","l-warn"); return; }
   G.ammo--; G.stat.shots++; G.fireCd=0.19; G.shake=1; sfx("shot");
-  $("flash").style.opacity=".5"; setTimeout(()=>$("flash").style.opacity="0",45);
+  G.gun.recoil=1; G.gun.flash=1;
+  $("flash").style.opacity=".16"; setTimeout(()=>$("flash").style.opacity="0",50);
   const c=targeted();
   updHUD();
   if(!c){ log("Round into the drywall.","l-warn"); return; }
@@ -418,9 +421,18 @@ function update(dt){
   if(!solid(G.px+fx*1.6,G.py) && !blockedByContact(G.px+fx*1.6,G.py)) G.px+=fx;
   if(!solid(G.px,G.py+fy*1.6) && !blockedByContact(G.px,G.py+fy*1.6)) G.py+=fy;
   G.vz=(f||s)?Math.sin(performance.now()/135)*0.9:G.vz*0.9;   // head bob
+  // weapon: bob while walking, sway when turning, recoil and flash decay
+  const moving=!!(f||s);
+  G.gun.bob += dt*(moving?(G.keys.shift?11:7.5):2.2);
+  G.gun.sway += ((moving?0:0) - G.gun.sway)*0.1;
+  G.gun.recoil*=Math.pow(0.0007,dt);
+  G.gun.flash*=Math.pow(0.000002,dt);
+  G.gun.dry = (G.ammo<=0&&G.reloading<=0)?1:0;
 
   // look
-  G.ang+=G.mouse.dx*0.0022; G.mouse.dx=0;
+  const look=G.mouse.dx*0.0022;
+  G.ang+=look; G.gun.sway+=(clamp(-look*14,-1.2,1.2)-G.gun.sway)*0.35;
+  G.mouse.dx=0;
   if(G.keys.arrowleft) G.ang-=2.0*dt;
   if(G.keys.arrowright) G.ang+=2.0*dt;
 
@@ -510,7 +522,7 @@ function render(){
 
     // flashlight: bright at centre, falls off hard with distance
     const cone=1-Math.min(1,Math.abs(camX)*1.25);
-    const lit=clamp((1.9/(1+dist*dist*0.30))*(0.35+cone*0.75),0,1);
+    const lit=clamp((0.16+2.4/(1+dist*0.60))*(0.40+cone*0.70),0,1);
     let r,g,b;
     if(tile===T.GLASS){ r=26;g=42;b=54; }
     else { r=54;g=52;b=50; }
@@ -521,11 +533,11 @@ function render(){
       let rr,gg,bb;
       if(y<y0){                                  // ceiling
         const f=(horizon-y)/RH;
-        const l=clamp(0.20/(0.25+f*5),0,1)*(0.4+cone*0.6);
+        const l=clamp(0.06+0.30/(0.25+f*4.0),0,1)*(0.42+cone*0.58);
         rr=16*l; gg=16*l; bb=19*l;
       } else if(y>y1){                           // floor
         const f=(y-horizon)/RH;
-        const l=clamp(0.55/(0.15+f*4.2),0,1)*(0.35+cone*0.75);
+        const l=clamp(0.10+0.72/(0.18+f*3.0),0,1)*(0.40+cone*0.70);
         rr=40*l; gg=37*l; bb=34*l;
       } else { rr=r; gg=g; bb=b; }
       const i=(x+y*RW)*4;
@@ -547,7 +559,7 @@ function render(){
     const vOff=down?sh*0.36:0;
     const y0=Math.floor(-sh/2+horizon+vOff), y1=Math.floor(sh/2+horizon+vOff);
     const x0=Math.floor(-sw/2+sxp), x1=Math.floor(sw/2+sxp);
-    const lit=clamp(1.8/(1+ty*ty*0.26),0,1);
+    const lit=clamp(0.18+2.2/(1+ty*0.55),0,1);
     // colour reads the state, which is the whole game: who is dangerous
     let base = c.type==="civ" ? [150,150,165] : [120,116,120];
     if(c.state===S.COMPLY) base=[110,190,130];
@@ -584,6 +596,83 @@ function render(){
     }
   }
   ctx.putImageData(img,0,0);
+  drawGun();
+}
+
+/* ---------------- weapon sprite (drawn, not an asset) ----------------
+   A Doom-style sidearm held centre-bottom: bobs with the walk cycle, swings
+   opposite the look direction, kicks on fire, dips out of frame to reload,
+   and locks its slide back when the magazine runs dry. */
+function drawGun(){
+  const s=RH/150;                                   // scales with the viewport
+  const rec=G.gun.recoil;
+  // reload: a smooth dip down and back up across the 1.5s timer
+  const rl = G.reloading>0 ? Math.sin((1-clamp(G.reloading/1.5,0,1))*Math.PI) : 0;
+  const bobX=Math.sin(G.gun.bob)*3.4*s;
+  const bobY=Math.abs(Math.cos(G.gun.bob))*3.0*s;
+  // the shape spans roughly -26..+40 in x, so bias left to sit on the centreline
+  const x=RW*0.5 - 7*s + bobX + G.gun.sway*9*s;
+  const y=RH - 28*s + bobY + rl*86*s - rec*9*s;     // recoil lifts, reload drops
+  const tilt=(-rec*0.1 + G.gun.sway*0.05);
+
+  ctx.save();
+  ctx.translate(x,y); ctx.rotate(tilt);
+  const P=(pts,fill)=>{ ctx.fillStyle=fill; ctx.beginPath();
+    ctx.moveTo(pts[0]*s,pts[1]*s);
+    for(let i=2;i<pts.length;i+=2) ctx.lineTo(pts[i]*s,pts[i+1]*s);
+    ctx.closePath(); ctx.fill(); };
+
+  // slide pulled back while dry or mid-recoil
+  const slide = (G.gun.dry?5:0) + rec*4;
+
+  // forearm and gloved hands, wrapped around the grip
+  P([-26,60, -12,4, 10,4, 22,60],"#23242a");
+  P([-14,10, 16,10, 19,34, -17,34],"#2f3037");
+  // grip
+  P([-11,36, 13,36, 9,4, -7,4],"#1b1c21");
+  P([-9,32, 11,32, 8,8, -6,8],"#26272d");
+  // frame
+  P([-20,6, 26,6, 26,-6, -20,-6],"#34353c");
+  // slide, offset back when the action is open
+  P([-22+slide,-6, 30+slide,-6, 30+slide,-20, -22+slide,-20],"#43444c");
+  P([-22+slide,-20, 30+slide,-20, 30+slide,-23, -22+slide,-23],"#54555f");
+  // ejection port shows as a dark gap once the slide is back
+  if(slide>2) P([6,-7, 6+slide,-7, 6+slide,-19, 6,-19],"#0d0d10");
+  // barrel and front sight
+  P([28+slide*0.4,-10, 40+slide*0.4,-10, 40+slide*0.4,-17, 28+slide*0.4,-17],"#3a3b42");
+  P([33,-23, 36,-23, 36,-27, 33,-27],"#5a5b64");
+  // trigger guard
+  ctx.strokeStyle="#2a2b31"; ctx.lineWidth=2.2*s;
+  ctx.beginPath(); ctx.arc(2*s,14*s,8*s,-0.2,Math.PI+0.6); ctx.stroke();
+
+  // muzzle flash
+  if(G.gun.flash>0.02){
+    const f=G.gun.flash, mx=42*s, my=-13.5*s;
+    ctx.globalAlpha=Math.min(1,f*1.5);
+    const g=ctx.createRadialGradient(mx,my,0,mx,my,26*s*(0.6+f*0.7));
+    g.addColorStop(0,"#fff6d8"); g.addColorStop(0.35,"rgba(255,190,70,.85)");
+    g.addColorStop(1,"rgba(255,140,30,0)");
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(mx,my,26*s*(0.6+f*0.7),0,TAU); ctx.fill();
+    // ragged star, rotated each shot so no two look identical
+    ctx.fillStyle="#fff4cf"; ctx.beginPath();
+    const rot=G.stat.shots*1.7;
+    for(let i=0;i<10;i++){
+      const a=rot+i*TAU/10, r=(i%2?5:15)*s*(0.7+f*0.6);
+      const px=mx+Math.cos(a)*r, py=my+Math.sin(a)*r*0.8;
+      i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.globalAlpha=1;
+  }
+  ctx.restore();
+
+  // the flash briefly lights the room, from the muzzle outward
+  if(G.gun.flash>0.05){
+    const g=ctx.createRadialGradient(x,y-14*s,0,x,y-14*s,RW*0.62);
+    g.addColorStop(0,`rgba(255,205,120,${0.20*G.gun.flash})`);
+    g.addColorStop(1,"rgba(255,170,60,0)");
+    ctx.fillStyle=g; ctx.fillRect(0,0,RW,RH);
+  }
 }
 
 /* ---------------- crosshair ---------------- */

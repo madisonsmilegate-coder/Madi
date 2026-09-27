@@ -31,10 +31,10 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
 .dim{color:#9a9aa8}
 #xh{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
 #xh div{position:absolute;background:rgba(255,255,255,.85);box-shadow:0 0 4px #000}
-#hcwrap{position:absolute;top:60px;right:16px;width:172px;height:132px;pointer-events:none}
+#hcwrap{position:absolute;top:60px;right:16px;width:172px;height:146px;pointer-events:none}
 .hclabel{font-size:9.5px;letter-spacing:1.6px;color:#9a9aa8;margin-bottom:3px;text-align:right}
 .hclabel .rec b{width:6px;height:6px;margin-right:4px}
-#hcam{position:static;inset:auto;width:172px;height:115px;
+#hcam{position:static;inset:auto;width:172px;height:126px;
   border:1px solid #2a2a33;border-radius:4px;background:#000;display:block}
 #map{position:absolute;top:auto;left:auto;right:16px;bottom:64px;width:150px;height:120px;
   border:1px solid #2a2a33;background:rgba(6,6,9,.72);border-radius:4px;pointer-events:none}
@@ -59,6 +59,9 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rend
 #prompt{position:absolute;left:50%;top:57%;transform:translateX(-50%);text-align:center;
   font-size:14px;letter-spacing:2px;pointer-events:none}
 #prompt b{color:var(--amber)}
+#roombanner{position:absolute;left:50%;top:38%;transform:translateX(-50%);pointer-events:none;
+  font-size:15px;letter-spacing:5px;color:var(--amber);opacity:0;transition:opacity .3s;
+  text-shadow:0 2px 8px #000}
 #dmg{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,
   transparent 40%,rgba(255,0,0,.55) 100%);opacity:0;transition:opacity .25s}
 #flash{position:absolute;inset:0;pointer-events:none;background:#fff;opacity:0}
@@ -102,11 +105,14 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
   <div class="hud" id="tr"><span id="unit">UNIT 4-ADAM-12</span><br><span class="dim" id="bat">BATT 98%</span></div>
   <div class="hud" id="bl"><span class="dim">FLOOR</span> <span id="flr">01</span>
     <span class="dim">/5 &middot;</span> <span id="flrname">LOBBY</span>
+    <span class="dim">&middot; ROOMS</span> <span id="rooms">0/8</span>
     <span class="dim">&middot; CONTACTS</span> <span id="cnt">0</span>
     <div class="dim" id="obj" style="font-size:11px;margin-top:3px;max-width:44vw"></div></div>
   <div class="hud" id="br"><span id="wepname">P226 SIDEARM</span><br>
     <span class="dim">AMMO</span> <span id="ammo">12</span>
-    <span class="dim">| MAG</span> <span id="mags">3</span></div>
+    <span class="dim">| MAG</span> <span id="mags">3</span><br>
+    <span class="dim">BANG</span> <span id="bangs">2</span>
+    <span class="dim">| KIT</span> <span id="meds">1</span></div>
   <div id="xh"></div>
   <div class="hud" style="left:16px;bottom:76px"><span class="dim" style="font-size:11px">VITALS</span></div>
   <div class="hp"><i id="hpbar"></i></div>
@@ -114,18 +120,22 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
   <canvas id="map" width="150" height="120"></canvas>
   <div id="hcwrap">
     <div class="hclabel"><span class="rec"><b></b></span> TEAMCAM &middot; <span id="hcname">BRAVO</span></div>
-    <canvas id="hcam" width="168" height="112"></canvas>
+    <canvas id="hcam" width="172" height="126"></canvas>
   </div>
   <div class="hud" id="roster"></div>
   <div class="hud" id="stance"><span class="dim">STANCE</span> <span id="stanceV">STAND</span>
     &middot; <span class="dim">LIGHT</span> <span id="lightV">ON</span></div>
   <div class="stam"><i id="stambar"></i></div>
   <div class="hud" id="prompt"></div>
+  <div id="roombanner"></div>
 
   <div class="screen" id="s-brief">
     <div class="panel">
       <h1>BODY<span>CAM</span></h1>
       <div class="sub">Vertical Entry &middot; High-Rise Clearance</div>
+      <p>Every room on a floor is sealed behind its own door. Open it slowly and you keep the
+      element; kick it and you are through in an instant, but everyone inside hears it.
+      A floor is done when every room is clear.</p>
       <p>You are first through the door. <strong>Five floors</strong>, dark, power cut &mdash;
       lobby, offices, the server plant, the residential suites, and whatever is waiting in the
       penthouse. Civilians are still inside and so is everyone else.</p>
@@ -152,6 +162,11 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
         <b>CTRL</b><span>Crouch &mdash; slower, steadier, lower profile</span>
         <b>L</b><span>Flashlight &mdash; off is near-blind, but it drains the battery</span>
         <b>1 / 2 / Q</b><span>Sidearm &harr; suppressed M4A1 carbine</span>
+        <b>RIGHT MOUSE</b><span>Aim down sights &mdash; zooms, steadies, slows you</span>
+        <b>G</b><span>Flashbang &mdash; everyone in that room complies</span>
+        <b>H</b><span>Medical kit</span>
+        <b>SHIFT+E</b><span>Kick a door &mdash; fast, loud, wakes the room</span>
+        <b>ESC</b><span>Pause &middot; controls &middot; sensitivity</span>
       </div>
       <div class="warn">Fiction, not training. Contacts are silhouettes; this is a discrimination
       and de-escalation puzzle, not a simulation of real tactics.</div>
@@ -165,6 +180,24 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
     </div>
   </div>
 
+  <div class="screen hide" id="s-pause"><div class="panel">
+      <div class="sub">Feed paused</div><h2>HOLDING POSITION</h2>
+      <p class="dim" style="font-size:13px">Recording continues. The building does not wait for long.</p>
+      <div class="keys">
+        <b>MOUSE</b><span>Look &middot; <b>RMB</b> aim down sights</span>
+        <b>W A S D</b><span>Move &middot; <b>SHIFT</b> sprint &middot; <b>CTRL</b> crouch</span>
+        <b>F</b><span>Challenge &middot; <b>E</b> open door &middot; <b>SHIFT+E</b> kick it</span>
+        <b>G</b><span>Flashbang &middot; <b>H</b> medical kit &middot; <b>L</b> light</span>
+        <b>1 2 Q</b><span>Sidearm / suppressed carbine</span>
+      </div>
+      <div style="margin:14px 0">
+        <label class="dim" style="font-size:12px">MOUSE SENSITIVITY</label><br>
+        <input id="sens" type="range" min="0.3" max="2.5" step="0.1" value="1" style="width:100%">
+      </div>
+      <div class="bar" style="display:flex;gap:10px">
+        <button id="resume">RESUME</button>
+        <button class="ghost" id="abort">ABORT MISSION</button></div>
+    </div></div>
   <div class="screen hide" id="s-floor"><div class="panel" id="floorPanel"></div></div>
   <div class="screen hide" id="s-end"><div class="panel" id="endPanel"></div></div>
 </div>
@@ -187,56 +220,73 @@ function makeFloor(n){
   const g=new Uint8Array(MW*MH).fill(T.WALL);
   const at=(x,y)=>x+y*MW;
   const set=(x,y,v)=>{ if(x>0&&y>0&&x<MW-1&&y<MH-1) g[at(x,y)]=v; };
+  const names=ROOMNAMES[clamp(n-1,0,ROOMNAMES.length-1)];
 
-  // central corridor
   const cy=Math.floor(MH/2);
   for(let x=2;x<MW-2;x++){ set(x,cy,T.FLOOR); set(x,cy-1,T.FLOOR); }
 
-  // rooms off both sides of the corridor
-  const rooms=[];
-  const spans=[[2,7],[8,13],[14,19],[20,24]];
+  /* Each room is a sealed box with exactly one door onto the corridor, so a
+     room really is a room: you cannot see in until the door is open, and the
+     only way in is through a threshold you have to commit to. */
+  const rooms=[], doors=new Map();
+  const spans=[[2,6],[8,12],[14,18],[20,23]];
+  let idx=0;
   for(const [x0,x1] of spans){
+    if(x1-x0<2) continue;
     for(const side of [-1,1]){
-      const yTop = side<0 ? cy-2-5 : cy+1;
-      const yBot = side<0 ? cy-2   : cy+1+5;
-      for(let y=yTop;y<=yBot;y++) for(let x=x0;x<=x1;x++) set(x,y,T.FLOOR);
-      // doorway into the corridor
+      const yIn0 = side<0 ? cy-2-4 : cy+2;
+      const yIn1 = side<0 ? cy-3   : cy+1+4;
+      const a=Math.min(yIn0,yIn1), b=Math.max(yIn0,yIn1);
+      for(let y=a;y<=b;y++) for(let x=x0;x<=x1;x++) set(x,y,T.FLOOR);
       const dx=Math.floor((x0+x1)/2);
-      set(dx, side<0?cy-2:cy, T.DOOR);
-      // an interior divider so rooms are not empty boxes
-      if(Math.random()<0.55){
-        const wx=dx+(Math.random()<0.5?-2:2);
-        for(let y=yTop+1;y<=yBot-1;y++) if(Math.random()<0.8) set(wx,y,T.WALL);
+      const dy= side<0 ? cy-2 : cy+1;
+      set(dx,dy,T.DOOR);
+      const room={x0,x1,y0:a,y1:b,side,name:names[idx%names.length],
+                  cleared:false,entered:false,door:[dx,dy],id:idx};
+      doors.set(dx+","+dy,{x:dx,y:dy,open:false,room});
+      rooms.push(room); idx++;
+      // windows on the outer face
+      const oy = side<0 ? a-1 : b+1;
+      for(let x=x0;x<=x1;x++) if(Math.random()<0.6) set(x,oy,T.GLASS);
+      // an internal partition, never blocking the door approach
+      if(Math.random()<0.5){
+        const wx=(Math.random()<0.5?x0+1:x1-1);
+        if(Math.abs(wx-dx)>1) for(let y=a;y<=b-1;y++) if(Math.random()<0.75) set(wx,y,T.WALL);
       }
-      // a window wall on the outside edge
-      const oy = side<0 ? yTop : yBot;
-      for(let x=x0;x<=x1;x++) if(Math.random()<0.7) set(x,oy,T.GLASS);
-      rooms.push({x0,x1,y0:Math.min(yTop,yBot),y1:Math.max(yTop,yBot),side});
     }
   }
-  // clutter: desks, cabinets, racks. Solid, so rooms have real cover and
-  // corners you cannot see past from the doorway.
+  // clutter
   for(const r of rooms){
-    const n=1+Math.floor(Math.random()*3);
-    for(let i=0;i<n;i++){
-      const px=r.x0+1+Math.floor(Math.random()*(r.x1-r.x0-1));
-      const py=r.y0+1+Math.floor(Math.random()*(r.y1-r.y0-1));
-      if(g[at(px,py)]===T.FLOOR) set(px,py,T.PROP);
-      if(Math.random()<0.45 && g[at(px+1,py)]===T.FLOOR) set(px+1,py,T.PROP);
+    const n2=1+Math.floor(Math.random()*3);
+    for(let i=0;i<n2;i++){
+      const px=r.x0+Math.floor(Math.random()*(r.x1-r.x0+1));
+      const py=r.y0+Math.floor(Math.random()*(r.y1-r.y0+1));
+      if(g[at(px,py)]===T.FLOOR && !(px===r.door[0]&&Math.abs(py-r.door[1])<2)) set(px,py,T.PROP);
     }
   }
-  // emergency lights along the corridor: the only colour in the building
   const lights=[];
-  for(let x=4;x<MW-3;x+=5){
-    lights.push({x:x+0.5,y:cy-1.05,ph:Math.random()*TAU});
-  }
-  // stairwell at the far end of the corridor
+  for(let x=4;x<MW-3;x+=5) lights.push({x:x+0.5,y:cy-1.05,ph:Math.random()*TAU});
   set(MW-3,cy,T.STAIR); set(MW-3,cy-1,T.STAIR);
-  return {g,rooms,cy,lights,spawn:{x:3.5,y:cy+0.5},stair:{x:MW-3+0.5,y:cy+0.5}};
+  return {g,rooms,doors,cy,lights,spawn:{x:3.5,y:cy+0.5},stair:{x:MW-3+0.5,y:cy+0.5}};
 }
+
+// which room a point is inside, if any
+function roomAt(x,y){
+  for(const r of G.map.rooms)
+    if(x>=r.x0&&x<=r.x1+1&&y>=r.y0&&y<=r.y1+1) return r;
+  return null;
+}
+const doorAt=(x,y)=>G.map.doors.get(Math.floor(x)+","+Math.floor(y));
 
 /* ---------------- contacts ---------------- */
 /* Each has: type civ|susp, state, and an intent that only resolves on challenge. */
+const ROOMNAMES=[
+ ["RECEPTION","MAIL ROOM","SECURITY OFFICE","LOUNGE","COAT CHECK","STORAGE","LOADING BAY","MEZZANINE"],
+ ["OFFICE 2A","OFFICE 2B","COPY ROOM","BOARDROOM","BREAK ROOM","IT CLOSET","ARCHIVE","OPEN PLAN"],
+ ["SERVER HALL","UPS ROOM","COOLING PLANT","PATCH ROOM","SWITCHGEAR","TAPE VAULT","NOC","RISER"],
+ ["SUITE 4A","SUITE 4B","SUITE 4C","LAUNDRY","NURSERY","KITCHEN","BALCONY ACCESS","SUITE 4D"],
+ ["GALLERY","MASTER SUITE","WINE ROOM","STUDY","POOL DECK","PANIC ROOM","TERRACE","VAULT"]
+];
 const FLOORS=[
   {n:"LOBBY & MEZZANINE", wall:[58,54,50], accent:[92,78,52], obj:"Sweep reception and the mezzanine."},
   {n:"OFFICE FLOOR",      wall:[52,54,58], accent:[70,84,96], obj:"Cubicle rows. Check under the desks."},
@@ -340,7 +390,8 @@ const G={
   px:0, py:0, ang:0, vz:0,
   hp:100, wi:0, ammo:12, mags:3, magSize:12,
   ammoStore:[{a:12,m:3},{a:30,m:4}],
-  crouch:0, light:true, stam:100,
+  crouch:0, light:true, stam:100, ads:0, bangs:2, meds:1, flashT:0,
+  paused:false, sens:1.0, nearDoor:null, roomTag:0, roomName:'',
   keys:{}, mouse:{dx:0}, muted:false, trigger:false, swap:0,
   gun:{bob:0, recoil:0, flash:0, sway:0, dry:0, slide:0},
   lowWarned:false, spotted:new Set(), shells:[], sparks:[], mates:[],
@@ -391,6 +442,18 @@ function sfx(kind,suppressed){
       o.frequency.exponentialRampToValueAtTime(50,t+0.25);
       g.gain.setValueAtTime(0.22,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.3);
       o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+0.3);
+    } else if(kind==="step"){
+      const o=a.createOscillator(), g=a.createGain(), f2=a.createBiquadFilter();
+      f2.type="lowpass"; f2.frequency.value=380;
+      o.type="triangle"; o.frequency.setValueAtTime(70+Math.random()*30,t);
+      g.gain.setValueAtTime(0.035,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.11);
+      o.connect(f2); f2.connect(g); g.connect(a.destination); o.start(t); o.stop(t+0.12);
+    } else if(kind==="beat"){
+      const o=a.createOscillator(), g=a.createGain();
+      o.type="sine"; o.frequency.setValueAtTime(58,t);
+      o.frequency.exponentialRampToValueAtTime(34,t+0.16);
+      g.gain.setValueAtTime(0.16,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.22);
+      o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+0.24);
     } else if(kind==="reload"){
       const o=a.createOscillator(), g=a.createGain();
       o.type="square"; o.frequency.setValueAtTime(180,t);
@@ -451,6 +514,8 @@ function exchange(opKey,tocKey,opCls,tocCls){
   setTimeout(()=>{ if(G.running||tocKey==="civHit") toc(tocKey,tocCls); }, 700+Math.random()*500);
 }
 
+const step=()=>sfx("step"), beat=()=>sfx("beat");
+
 /* ---------------- logging ---------------- */
 function log(text,cls){
   const d=document.createElement("div");
@@ -479,6 +544,7 @@ function startFloor(n){
   G.px=G.map.spawn.x; G.py=G.map.spawn.y; G.ang=0;
   G.magSize=wep().mag; G.ammo=G.magSize; G.reloading=0; G.fireCd=0; G.swap=0;
   G.ammoStore=[{a:12,m:3},{a:30,m:4}]; G.ammoStore[G.wi]={a:G.ammo,m:G.mags};
+  G.bangs=Math.min(3,G.bangs+1); G.meds=Math.min(2,G.meds+1); G.flashT=0; G.ads=0;
   G.clearCalled=false; G.spotted=new Set(); G.shells=[]; G.sparks=[]; seen=null;
   G.mates=makeMates();
   $("flr").textContent=String(n).padStart(2,"0");
@@ -495,7 +561,10 @@ const remaining=()=>G.contacts.filter(c=>c.state!==S.DOWN&&c.state!==S.OUT).leng
 function updHUD(){
   $("ammo").textContent=G.ammo; $("mags").textContent=G.mags;
   $("wepname").textContent=wep().name;
+  $("bangs").textContent=G.bangs; $("meds").textContent=G.meds;
   $("cnt").textContent=remaining();
+  if(G.map&&G.map.rooms) $("rooms").textContent=
+    G.map.rooms.filter(r=>r.cleared).length+"/"+G.map.rooms.length;
   $("hpbar").style.width=clamp(G.hp,0,100)+"%";
   $("hpbar").style.background = G.hp>60?"var(--green)":G.hp>30?"var(--amber)":"var(--red)";
   $("stambar").style.width=G.stam+"%";
@@ -504,6 +573,10 @@ function updHUD(){
   $("lightV").style.color=G.light?"var(--amber)":"#6a6a78";
   $("roster").innerHTML=G.mates.map(m=>
     `<span style="color:${m.hue}">&#9679;</span> <span class="dim">${m.cs}</span>`).join(" &nbsp; ");
+  const rb=$("roombanner");
+  if(rb){ rb.textContent=G.roomName||""; rb.style.opacity=(G.roomTag>0)?String(clamp(G.roomTag,0,1)):"0"; }
+  $("xh").style.opacity=String(clamp(1-G.ads*1.6,0,1));
+  $("flash").style.opacity=String(clamp(G.flashT*0.9,0,0.95));
   drawMap(); drawHeadcam();
   const s=Math.floor(G.tNow/1000);
   $("tc").textContent=[Math.floor(s/3600),Math.floor(s/60)%60,s%60]
@@ -593,6 +666,42 @@ function fire(){
   updHUD();
 }
 
+/* A flashbang thrown into a room makes every contact in it comply for a
+   window - the non-lethal answer to a room you cannot read. */
+function throwBang(){
+  if(G.bangs<=0){ say("OPERATOR","No bangs left.","c-op"); return; }
+  G.bangs--; say("OPERATOR","FLASHBANG OUT!","c-urg"); updHUD();
+  const tx=G.px+Math.cos(G.ang)*3.4, ty=G.py+Math.sin(G.ang)*3.4;
+  setTimeout(()=>{
+    if(!G.running) return;
+    sfx("hit"); G.flashT=1; G.shake=2;
+    const inRoom=roomAt(tx,ty);
+    for(const c of G.contacts){
+      if(c.state===S.OUT||c.state===S.DOWN) continue;
+      const near = inRoom ? (c.x>=inRoom.x0&&c.x<=inRoom.x1+1&&c.y>=inRoom.y0&&c.y<=inRoom.y1+1)
+                          : Math.hypot(c.x-tx,c.y-ty)<3.2;
+      if(!near) continue;
+      c.state=S.COMPLY;
+      setTimeout(()=>{ if(c.state===S.COMPLY){ c.state=S.OUT;
+        if(c.type==="civ"){ G.stat.evacuated++; } else { G.stat.detained++; }
+        updHUD(); } }, 1200+Math.random()*600);
+    }
+    say("TOC","Bang confirmed. Move in while they're down.","c-toc");
+  }, 1100);
+}
+function useMed(){
+  if(G.meds<=0){ say("OPERATOR","No kit left.","c-op"); return; }
+  if(G.hp>=100){ return; }
+  G.meds--; G.hp=Math.min(100,G.hp+42); G.lowWarned=false;
+  say("OPERATOR","Patching myself up.","c-op"); sfx("reload"); updHUD();
+}
+function togglePause(){
+  if(!G.running&&!G.paused) return;
+  G.paused=!G.paused;
+  $("s-pause").classList.toggle("hide",!G.paused);
+  if(G.paused){ G.running=false; document.exitPointerLock?.(); }
+  else { G.running=true; last=performance.now(); requestAnimationFrame(frame); cvs.requestPointerLock?.(); }
+}
 function swapTo(i){
   if(i===G.wi||G.reloading>0||G.swap>0) return;
   G.ammoStore[G.wi]={a:G.ammo,m:G.mags};          // remember what was left
@@ -633,6 +742,7 @@ function solid(x,y){
   const gx=Math.floor(x), gy=Math.floor(y);
   if(gx<0||gy<0||gx>=MW||gy>=MH) return true;
   const t=G.map.g[gx+gy*MW];
+  if(t===T.DOOR){ const d=G.map.doors.get(gx+","+gy); return d ? !d.open : false; }
   return t===T.WALL||t===T.VOID||t===T.GLASS||t===T.PROP;
 }
 
@@ -642,7 +752,7 @@ function update(dt){
   const wantSprint=G.keys.shift && G.stam>2 && !G.keys.ctrl;
   G.stam = clamp(G.stam + (wantSprint?-34:18)*dt, 0, 100);
   G.crouch += ((G.keys.ctrl?1:0)-G.crouch)*Math.min(1,dt*9);
-  const sp=(wantSprint?3.6:2.1)*(1-G.crouch*0.45)*dt;
+  const sp=(wantSprint?3.6:2.1)*(1-G.crouch*0.45)*(1-G.ads*0.45)*dt;
   let fx=0,fy=0;
   const f=(G.keys.w?1:0)-(G.keys.s?1:0), s=(G.keys.d?1:0)-(G.keys.a?1:0);
   if(f||s){
@@ -657,12 +767,13 @@ function update(dt){
   G.vz += G.crouch*RH*0.055;                                        // eye line drops
   // weapon: bob while walking, sway when turning, recoil and flash decay
   const moving=!!(f||s);
-  G.gun.bob += dt*(moving?(wantSprint?11:7.5):2.2);
+  G.gun.bob += dt*(moving?(wantSprint?11:7.5):2.2)*(1-G.ads*0.8);
   G.gun.sway += ((moving?0:0) - G.gun.sway)*0.1;
   G.gun.recoil*=Math.pow(0.0007,dt);
   G.gun.flash*=Math.pow(0.000002,dt);
   G.gun.slide*=Math.pow(1e-7,dt);                 // slide snaps back fast
   G.hitMark=Math.max(0,(G.hitMark||0)-dt*3.4);
+  G.flashT=Math.max(0,G.flashT-dt*0.75);
   G.dmgDir=Math.max(0,(G.dmgDir||0)-dt*1.2);
   // cases tumble and settle
   for(const sh of G.shells){ sh.vy+=170*dt; sh.x+=sh.vx*dt; sh.y+=sh.vy*dt;
@@ -673,7 +784,7 @@ function update(dt){
   G.gun.dry = (G.ammo<=0&&G.reloading<=0)?1:0;
 
   // look
-  const look=G.mouse.dx*0.0022;
+  const look=G.mouse.dx*0.0022*G.sens*(1-G.ads*0.45);
   G.ang+=look; G.gun.sway+=(clamp(-look*14,-1.2,1.2)-G.gun.sway)*0.35;
   G.mouse.dx=0;
   if(G.keys.arrowleft) G.ang-=2.0*dt;
@@ -681,9 +792,20 @@ function update(dt){
 
   if(G.fireCd>0) G.fireCd-=dt;
   if(G.trigger && wep().auto && G.fireCd<=0 && G.running) fire();   // carbine is full-auto
+  // aiming narrows the view, steadies the weapon and slows you down
+  G.ads += ((G.aim&&G.reloading<=0&&G.swap<=0?1:0)-G.ads)*Math.min(1,dt*10);
   if(G.swap>0) G.swap-=dt;
   if(G.reloading>0){ G.reloading-=dt; if(G.reloading<=0){ G.ammo=G.magSize; updHUD(); say("OPERATOR","Up. Back in the fight.","c-op"); } }
   G.shake*=0.86;
+  // footsteps, tied to the bob so they land on the stride
+  if(f||s){
+    const ph=Math.sin(G.gun.bob*0.5);
+    if(ph>0.985 && performance.now()-(G.lastStep||0)>210){ G.lastStep=performance.now(); step(); }
+  }
+  // heartbeat once you are hurt
+  if(G.hp<45 && performance.now()-(G.lastBeat||0) > (G.hp<25?620:900)){
+    G.lastBeat=performance.now(); beat();
+  }
   G.bat=Math.max(1,98-(G.tNow/1000)*0.05);
   if(G.light) G.bat=Math.max(1,G.bat-dt*0.20);
 
@@ -721,6 +843,29 @@ function update(dt){
     }
   }
 
+  // a door within reach, ahead of you
+  G.nearDoor=null;
+  for(const [,d] of G.map.doors){
+    if(d.open) continue;
+    const dd=Math.hypot(d.x+0.5-G.px, d.y+0.5-G.py);
+    if(dd<1.7){
+      let a2=Math.atan2(d.y+0.5-G.py, d.x+0.5-G.px)-G.ang;
+      while(a2>Math.PI)a2-=TAU; while(a2<-Math.PI)a2+=TAU;
+      if(Math.abs(a2)<1.1){ G.nearDoor=d; break; }
+    }
+  }
+  // room state: entering, and clearing once nothing is left inside
+  const rm=roomAt(G.px,G.py);
+  if(rm&&!rm.entered){ rm.entered=true; G.roomTag=1.6; G.roomName=rm.name;
+    say("OPERATOR",`Entering ${rm.name}.`,"c-op"); }
+  for(const r of G.map.rooms){
+    if(r.cleared||!r.entered) continue;
+    const inside=G.contacts.some(c=>c.state!==S.OUT&&c.state!==S.DOWN&&
+      c.x>=r.x0&&c.x<=r.x1+1&&c.y>=r.y0&&c.y<=r.y1+1);
+    if(!inside){ r.cleared=true; say("OPERATOR",`${r.name} clear.`,"c-op"); }
+  }
+  G.roomTag=Math.max(0,(G.roomTag||0)-dt);
+
   // stairwell
   const gx=Math.floor(G.px), gy=Math.floor(G.py);
   const onStair = G.map.g[gx+gy*MW]===T.STAIR;
@@ -731,9 +876,22 @@ function update(dt){
   else if(onStair && !clear) p=`${remaining()} CONTACT(S) UNACCOUNTED FOR`;
   if(clear && !G.clearCalled){ G.clearCalled=true; op("clear");
     setTimeout(()=>{ if(G.running) toc(TOC.clear(theme().n)); },900); }
+  else if(G.nearDoor) p="<b>[E]</b> OPEN &middot; <b>[SHIFT+E]</b> KICK IT";
   else if(tgt && tgt.state!==S.COMPLY) p="<b>[F]</b> CHALLENGE";
   $("prompt").innerHTML=p;
   if(onStair && clear && G.keys.e){ G.keys.e=false; op("stair"); nextFloor(); }
+  else if(G.nearDoor && G.keys.e){
+    const d=G.nearDoor; G.keys.e=false; d.open=true;
+    if(G.keys.shift){                                  // kicked: loud, and it wakes the room
+      sfx("hit"); say("OPERATOR","BREACHING! Door's open!","c-urg");
+      for(const c of G.contacts){
+        if(c.state!==S.IDLE) continue;
+        if(Math.hypot(c.x-d.x,c.y-d.y)<6 && c.type==="susp" && Math.random()<0.7){
+          c.state=S.DRAW; c.drawAt=performance.now();
+        }
+      }
+    } else { sfx("click"); say("OPERATOR","Door. Opening slow.","c-op"); }
+  }
   updHUD();
 }
 
@@ -749,7 +907,8 @@ function render(){
   const d=img.data;
   const shake=G.shake*3;
   const dirX=Math.cos(G.ang), dirY=Math.sin(G.ang);
-  const planeX=-dirY*0.72, planeY=dirX*0.72;
+  const fov=0.72-G.ads*0.30;                      // zooms in when aiming
+  const planeX=-dirY*fov, planeY=dirX*fov;
   const horizon=(RH>>1)+G.vz+shake*(Math.random()-0.5);
   const LP=G.light?1:0.22;                       // flashlight power
 
@@ -766,7 +925,9 @@ function render(){
       if(sdx<sdy){ sdx+=ddx; mx+=sx; side=0; } else { sdy+=ddy; my+=sy; side=1; }
       if(mx<0||my<0||mx>=MW||my>=MH){ hit=1; tile=T.WALL; break; }
       const t=G.map.g[mx+my*MW];
-      if(t===T.WALL||t===T.VOID||t===T.GLASS||t===T.PROP){ hit=1; tile=t; }
+      if(t===T.DOOR){ const dr=G.map.doors.get(mx+","+my);
+        if(dr&&!dr.open){ hit=1; tile=T.DOOR; } }
+      else if(t===T.WALL||t===T.VOID||t===T.GLASS||t===T.PROP){ hit=1; tile=t; }
     }
     const dist = side===0 ? (sdx-ddx) : (sdy-ddy);
     zbuf[x]=dist;
@@ -918,8 +1079,8 @@ function drawGun(){
   // origin: bottom centre. y grows downward, and "far" means up the screen.
   // weapons sit right of centre, as they do in the hand, so the muzzle
   // never covers the thing you are trying to identify
-  const ox=RW*0.5 + RW*0.085 + bobX + G.gun.sway*10*S;
-  const oy=RH - baseUp*S + bobY + (rl+sw)*92*S - rec*7*S + G.crouch*5*S;
+  const ox=RW*0.5 + RW*0.085*(1-G.ads) + bobX*(1-G.ads*0.85) + G.gun.sway*10*S*(1-G.ads*0.7);
+  const oy=RH - baseUp*S - G.ads*30*S + bobY*(1-G.ads*0.85) + (rl+sw)*92*S - rec*7*S + G.crouch*5*S;
   const tilt=(-rec*0.05 + G.gun.sway*0.035);
 
   ctx.save(); ctx.translate(ox,oy); ctx.rotate(tilt);
@@ -1103,7 +1264,9 @@ function drawHeadcam(){
       if(sdx<sdy){ sdx+=ddx; mx+=sx; side=0; } else { sdy+=ddy; my+=sy; side=1; }
       if(mx<0||my<0||mx>=MW||my>=MH){ hit=1; break; }
       const t=G.map.g[mx+my*MW];
-      if(t===T.WALL||t===T.VOID||t===T.GLASS||t===T.PROP){ hit=1; tile=t; }
+      if(t===T.DOOR){ const dr=G.map.doors.get(mx+","+my);
+        if(dr&&!dr.open){ hit=1; tile=T.DOOR; } }
+      else if(t===T.WALL||t===T.VOID||t===T.GLASS||t===T.PROP){ hit=1; tile=t; }
     }
     const dist=side===0?(sdx-ddx):(sdy-ddy);
     hcZ[px]=dist;
@@ -1146,11 +1309,71 @@ function drawHeadcam(){
     }
   }
   x.putImageData(hcImg,0,0);
+
+  /* BRAVO's face, inset over his own feed: helmet, NVG mount, ear cups,
+     balaclava and eye pro. He blinks, and the IR strobe on the shroud
+     pulses in time with the one on his sprite in the world. */
+  x.fillStyle="rgba(0,0,0,.55)"; x.fillRect(HW-58,HH-84,58,84);
+  x.strokeStyle="rgba(255,255,255,.14)"; x.lineWidth=1; x.strokeRect(HW-58.5,HH-84.5,58,84);
+  drawOperatorFace(x, HW-50, HH-76, 44, G.mates[0]);
+
   // interlace and a tick of static, so it reads as a relayed feed
   x.fillStyle="rgba(0,0,0,.30)";
   for(let y=0;y<HH;y+=2) x.fillRect(0,y,HW,1);
   if(Math.random()<0.10){ x.fillStyle="rgba(255,255,255,.07)";
     x.fillRect(0,(Math.random()*HH)|0,HW,2); }
+}
+
+/* A helmeted operator portrait, drawn from primitives. w is the head width;
+   everything else is proportional to it. */
+function drawOperatorFace(x, px, py, w, mate){
+  const h=w*1.26, t=performance.now()/1000;
+  const blink = (Math.sin(t*0.9+(mate?1.3:0))>0.985) ? 1 : 0;
+  x.save(); x.translate(px,py);
+
+  const R=(a,b,c,d,f)=>{ x.fillStyle=f; x.fillRect(a,b,c,d); };
+  // shoulders and collar, so the head is not floating
+  R(-w*0.10, h*0.86, w*1.20, h*0.22, "#1b2029");
+  R(-w*0.04, h*0.90, w*1.08, h*0.06, "#232a35");
+
+  // balaclava covering the lower face
+  R(w*0.06, h*0.30, w*0.88, h*0.60, "#191c22");
+  // skin: the strip around the eyes
+  R(w*0.10, h*0.34, w*0.80, h*0.20, "#c49a76");
+  // eye pro, a dark band with a highlight
+  R(w*0.07, h*0.36, w*0.86, h*0.15, "#12161c");
+  R(w*0.09, h*0.375, w*0.32, h*0.05, "#2b3a48");
+  if(!blink){
+    R(w*0.24, h*0.405, w*0.10, h*0.045, "#e8eef5");   // eyes catching light
+    R(w*0.62, h*0.405, w*0.10, h*0.045, "#e8eef5");
+  }
+  // helmet shell over the top
+  x.fillStyle="#2c3340"; x.beginPath();
+  x.ellipse(w*0.50, h*0.32, w*0.56, h*0.36, 0, Math.PI, 0); x.fill();
+  R(-w*0.06, h*0.28, w*1.12, h*0.07, "#333b49");
+  R(-w*0.06, h*0.325, w*1.12, h*0.02, "#1d232c");     // brim shadow
+  // NVG shroud and mount
+  R(w*0.36, h*0.02, w*0.28, h*0.12, "#1e242e");
+  R(w*0.42, h*-0.06, w*0.16, h*0.09, "#39424f");
+  // rail cutouts and the velcro panel
+  for(let i=0;i<4;i++) R(w*(0.04+i*0.10), h*0.16, w*0.06, h*0.05, "#232a34");
+  for(let i=0;i<4;i++) R(w*(0.58+i*0.10), h*0.16, w*0.06, h*0.05, "#232a34");
+  // ear cup and boom mic
+  R(-w*0.10, h*0.42, w*0.20, h*0.26, "#222831");
+  R(-w*0.06, h*0.47, w*0.12, h*0.16, "#2e3644");
+  x.strokeStyle="#242b35"; x.lineWidth=Math.max(1,w*0.045);
+  x.beginPath(); x.moveTo(w*0.02,h*0.66); x.quadraticCurveTo(w*0.10,h*0.86,w*0.34,h*0.80); x.stroke();
+  R(w*0.30, h*0.76, w*0.10, h*0.07, "#39424f");        // mic capsule
+  // IR strobe, pulsing
+  const pulse=(Math.sin(t*4.2)>0.6)?1:0.25;
+  x.globalAlpha=pulse; R(w*0.74, h*0.10, w*0.10, h*0.05, "#8fd3ff"); x.globalAlpha=1;
+  // callsign tab
+  x.fillStyle="#0c0f14"; x.fillRect(-w*0.10, h*1.06, w*1.20, h*0.17);
+  x.fillStyle=mate?mate.hue:"#7fd1ff";
+  x.font=`bold ${Math.round(w*0.26)}px ui-monospace,monospace`;
+  x.textAlign="center"; x.textBaseline="middle";
+  x.fillText(mate?mate.cs:"BRAVO", w*0.50, h*1.15);
+  x.restore();
 }
 
 /* ---------------- tactical map ----------------
@@ -1282,7 +1505,7 @@ function endGame(won){
 }
 
 /* ---------------- input ---------------- */
-const KEYMAP={KeyW:"w",KeyA:"a",KeyS:"s",KeyD:"d",KeyE:"e",KeyF:"f",KeyR:"r",KeyL:"l",Digit1:"1",Digit2:"2",KeyQ:"q",
+const KEYMAP={KeyW:"w",KeyA:"a",KeyS:"s",KeyD:"d",KeyE:"e",KeyF:"f",KeyR:"r",KeyL:"l",KeyG:"g",KeyH:"h",Escape:"esc",Digit1:"1",Digit2:"2",KeyQ:"q",
   ControlLeft:"ctrl",ControlRight:"ctrl",
   ShiftLeft:"shift",ShiftRight:"shift",ArrowLeft:"arrowleft",ArrowRight:"arrowright"};
 addEventListener("keydown",e=>{
@@ -1292,6 +1515,9 @@ addEventListener("keydown",e=>{
     if(k==="f"&&G.running) challenge();
     if(k==="r"&&G.running) reload();
     if((k==="1"||k==="2"||k==="q")&&G.running) swapTo(k==="q"?(G.wi^1):(k==="1"?0:1));
+    if(k==="g"&&G.running) throwBang();
+    if(k==="h"&&G.running) useMed();
+    if(k==="esc") togglePause();
     if(k==="l"&&G.running){ G.light=!G.light; sfx("click");
       say("OPERATOR",G.light?"Light on.":"Going dark.","c-op"); }
   }
@@ -1303,7 +1529,9 @@ cvs.addEventListener("mousedown",()=>{
   if(document.pointerLockElement!==cvs){ cvs.requestPointerLock?.(); return; }
   G.trigger=true; fire();
 });
-addEventListener("mouseup",()=>{ G.trigger=false; });
+addEventListener("mouseup",e=>{ if(e.button===2) G.aim=false; else G.trigger=false; });
+addEventListener("mousedown",e=>{ if(e.button===2&&G.running){ G.aim=true; e.preventDefault(); } });
+addEventListener("contextmenu",e=>{ if(G.running) e.preventDefault(); });
 addEventListener("mousemove",e=>{ if(document.pointerLockElement===cvs) G.mouse.dx+=e.movementX; });
 
 /* ---------------- boot ---------------- */
@@ -1316,6 +1544,9 @@ function newGame(){
   startFloor(1); resumeRun();
 }
 $("go").onclick=()=>{ $("s-brief").classList.add("hide"); newGame(); };
+$("resume").onclick=()=>togglePause();
+$("abort").onclick=()=>{ G.paused=false; $("s-pause").classList.add("hide"); endGame(false); };
+$("sens").oninput=e=>{ G.sens=parseFloat(e.target.value); };
 $("mute").onclick=e=>{ G.muted=!G.muted; e.target.textContent="SOUND: "+(G.muted?"OFF":"ON"); };
 resize(); buildXH();
 setInterval(buildGrain,90);

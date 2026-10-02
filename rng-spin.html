@@ -5,537 +5,689 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aether Roll</title>
 <style>
-:root{
-  --bg:#06060b; --panel:#0e0e18; --line:#22223a; --ink:#e8e8f4; --dim:#8a8aa6;
-  --gold:#ffc857; --acc:#8b6cff;
-}
+:root{--bg:#06060b;--panel:#0e0e18;--line:#22223a;--ink:#e8e8f4;--dim:#8a8aa6;
+ --gold:#ffc857;--acc:#8b6cff}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hidden;
-  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;-webkit-font-smoothing:antialiased}
+ font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;-webkit-font-smoothing:antialiased}
 #bg{position:fixed;inset:0;z-index:0}
-#app{position:fixed;inset:0;z-index:1;display:flex;flex-direction:column;
-  padding:14px;gap:12px}
-
-/* ---------- top bar ---------- */
-.top{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}
-.chip{background:rgba(14,14,24,.82);border:1px solid var(--line);border-radius:10px;
-  padding:8px 12px;font-size:12px;letter-spacing:.5px;display:flex;flex-direction:column;gap:2px;
-  min-width:94px}
-.chip b{font-size:15px;letter-spacing:0}
-.chip span{color:var(--dim);font-size:10px;letter-spacing:1.4px;text-transform:uppercase}
+#app{position:fixed;inset:0;z-index:1;display:flex;flex-direction:column;padding:12px;gap:10px}
+.top{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
+.chip{background:rgba(14,14,24,.85);border:1px solid var(--line);border-radius:10px;
+ padding:7px 11px;display:flex;flex-direction:column;gap:1px;min-width:88px}
+.chip b{font-size:14px} .chip span{color:var(--dim);font-size:9.5px;letter-spacing:1.3px;
+ text-transform:uppercase}
 .grow{flex:1}
-.biome{border-color:#2d2a4d}
-#biomeName{color:var(--gold)}
-.btn{font:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;border-radius:10px;
-  border:1px solid var(--line);background:rgba(20,20,34,.9);color:var(--ink);padding:9px 14px;
-  transition:border-color .15s,transform .08s}
-.btn:hover{border-color:#4a4a6e}
-.btn:active{transform:translateY(1px)}
-.btn.on{border-color:var(--acc);color:#cbb8ff;box-shadow:0 0 14px rgba(139,108,255,.28)}
+#biomeName{color:var(--gold);font-size:14px}
+.btn{font:inherit;font-size:11.5px;letter-spacing:1px;cursor:pointer;border-radius:10px;
+ border:1px solid var(--line);background:rgba(20,20,34,.9);color:var(--ink);padding:8px 13px;
+ transition:border-color .15s,transform .08s}
+.btn:hover{border-color:#4a4a6e} .btn:active{transform:translateY(1px)}
+.btn.on{border-color:var(--acc);color:#cbb8ff;box-shadow:0 0 14px rgba(139,108,255,.3)}
+
+/* ---------- main split ---------- */
+.main{flex:1;display:flex;gap:12px;min-height:0}
+.left{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:8px;min-width:0;position:relative}
+#show{border-radius:16px;border:1px solid var(--line);background:rgba(7,7,13,.6);
+ max-width:100%;max-height:100%}
+#showName{font-size:clamp(17px,2.6vw,25px);font-weight:800;letter-spacing:1px;text-align:center}
+#showMeta{font-size:11px;color:var(--dim);letter-spacing:1.6px;text-align:center}
+#showFx{font-size:10px;color:var(--acc);letter-spacing:2px;text-transform:uppercase}
+.right{width:236px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.fi{background:rgba(10,10,18,.85);border:1px solid var(--line);border-left-width:3px;
+ border-radius:8px;padding:5px 9px;animation:sl .3s ease both}
+.fi b{display:block;font-size:11.5px} .fi span{color:var(--dim);font-size:9px;letter-spacing:1px}
+@keyframes sl{from{opacity:0;transform:translateX(16px)}}
 
 /* ---------- reel ---------- */
-.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:18px;min-height:0;position:relative}
-#reelWrap{position:relative;width:min(880px,96vw);height:138px;overflow:hidden;
-  border:1px solid var(--line);border-radius:14px;background:rgba(8,8,14,.74);
-  -webkit-mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);
-          mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent)}
-#reel{position:absolute;top:0;left:0;height:100%;display:flex;align-items:center;gap:10px;
-  will-change:transform}
-.tile{width:126px;height:104px;flex:0 0 126px;border-radius:11px;position:relative;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
-  border:1px solid rgba(255,255,255,.1);overflow:hidden}
-.tile .nm{font-size:11.5px;font-weight:700;letter-spacing:.4px;text-align:center;padding:0 6px;
-  text-shadow:0 1px 4px rgba(0,0,0,.95);z-index:1;line-height:1.2}
-.tile .od{font-size:9.5px;color:rgba(255,255,255,.82);letter-spacing:.6px;z-index:1;
-  text-shadow:0 1px 4px #000}
-#needle{position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;
-  background:linear-gradient(180deg,transparent,var(--gold) 14%,var(--gold) 86%,transparent);
-  box-shadow:0 0 16px var(--gold);z-index:3;pointer-events:none}
-#needle::before,#needle::after{content:"";position:absolute;left:-5px;border:6px solid transparent}
-#needle::before{top:-1px;border-top-color:var(--gold)}
-#needle::after{bottom:-1px;border-bottom-color:var(--gold)}
-
-/* ---------- roll row ---------- */
-#fx{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;min-height:22px}
-.fx{border:1px solid var(--line);border-radius:99px;padding:3px 11px;font-size:10.5px;
-  letter-spacing:1.2px;color:var(--gold);background:rgba(255,200,87,.08)}
-#rarest{font-size:11px;color:var(--dim);letter-spacing:1.4px;text-align:center}
-#rarest b{color:var(--ink)}
-.rollRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
-#rollBtn{font-size:16px;font-weight:800;letter-spacing:3px;padding:14px 42px;border-radius:12px;
-  background:linear-gradient(180deg,#8b6cff,#5a3fd6);border:0;color:#fff;cursor:pointer;
-  box-shadow:0 6px 24px rgba(139,108,255,.36);transition:transform .08s,filter .15s}
-#rollBtn:hover{filter:brightness(1.1)}
-#rollBtn:active{transform:translateY(2px)}
-#rollBtn:disabled{filter:grayscale(.8) brightness(.6);cursor:default;box-shadow:none}
-#cdBar{width:min(880px,96vw);height:3px;background:rgba(255,255,255,.08);border-radius:99px;
-  overflow:hidden}
+#reelWrap{position:relative;width:100%;height:112px;overflow:hidden;border:1px solid var(--line);
+ border-radius:13px;background:rgba(8,8,14,.74);
+ -webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+ mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+#reel{position:absolute;top:0;left:0;height:100%;display:flex;align-items:center;gap:9px;
+ will-change:transform}
+.tile{width:120px;height:88px;flex:0 0 120px;border-radius:10px;display:flex;flex-direction:column;
+ align-items:center;justify-content:center;gap:3px;border:1px solid rgba(255,255,255,.1);
+ overflow:hidden;position:relative}
+.tile .nm{font-size:10.5px;font-weight:700;text-align:center;padding:0 5px;line-height:1.15;
+ text-shadow:0 1px 4px rgba(0,0,0,.95);z-index:1}
+.tile .od{font-size:8.5px;color:rgba(255,255,255,.85);z-index:1;text-shadow:0 1px 4px #000}
+#needle{position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;z-index:3;
+ background:linear-gradient(180deg,transparent,var(--gold) 14%,var(--gold) 86%,transparent);
+ box-shadow:0 0 16px var(--gold);pointer-events:none}
+.bottom{display:flex;flex-direction:column;gap:8px;align-items:center}
+#cdBar{width:100%;height:3px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden}
 #cdBar i{display:block;height:100%;width:0;background:var(--acc)}
-
-/* ---------- equipped ---------- */
-#equipped{display:flex;align-items:center;gap:12px;background:rgba(14,14,24,.8);
-  border:1px solid var(--line);border-radius:12px;padding:10px 16px;min-width:300px;
-  justify-content:center}
-#eqOrb{width:40px;height:40px;border-radius:50%;flex:0 0 40px;position:relative}
-#eqName{font-size:14px;font-weight:700;letter-spacing:.6px}
-#eqOdds{font-size:10.5px;color:var(--dim);letter-spacing:1.2px}
-
-/* ---------- feed ---------- */
-#feed{position:absolute;right:0;top:0;width:252px;max-height:100%;overflow:hidden;
-  display:flex;flex-direction:column;gap:5px;pointer-events:none}
-.fi{background:rgba(10,10,18,.84);border:1px solid var(--line);border-left-width:3px;
-  border-radius:8px;padding:6px 10px;font-size:11px;animation:slide .3s ease both}
-.fi b{display:block;font-size:12px;letter-spacing:.3px}
-.fi span{color:var(--dim);font-size:9.5px;letter-spacing:1px}
-@keyframes slide{from{opacity:0;transform:translateX(18px)}}
+.rollRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+#rollBtn{font:inherit;font-size:15px;font-weight:800;letter-spacing:3px;padding:12px 40px;
+ border-radius:12px;background:linear-gradient(180deg,#8b6cff,#5a3fd6);border:0;color:#fff;
+ cursor:pointer;box-shadow:0 6px 24px rgba(139,108,255,.36)}
+#rollBtn:disabled{filter:grayscale(.8) brightness(.6);cursor:default;box-shadow:none}
+#fx{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.fxp{border:1px solid var(--line);border-radius:99px;padding:2px 10px;font-size:10px;
+ letter-spacing:1.1px;color:var(--gold);background:rgba(255,200,87,.08)}
 
 /* ---------- reveal ---------- */
 #reveal{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;
-  flex-direction:column;gap:10px;pointer-events:none}
+ flex-direction:column;gap:8px;pointer-events:none}
 #reveal.show{display:flex}
 #revBack{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,
-  rgba(4,4,9,.88),rgba(0,0,0,.985));backdrop-filter:none}
+ rgba(4,4,9,.9),rgba(0,0,0,.99))}
 .bar{position:absolute;left:0;right:0;height:0;background:#000;transition:height .45s ease}
-.bar.t{top:0} .bar.b{bottom:0}
+.bar.t{top:0}.bar.b{bottom:0}
 #reveal.cine .bar{height:12vh}
-#revName{position:relative;font-size:clamp(30px,8vw,76px);font-weight:900;letter-spacing:4px;
-  text-align:center;line-height:1.05;padding:0 16px}
-#revOdds{position:relative;font-size:clamp(12px,2.4vw,18px);letter-spacing:6px;color:#cfcfe6}
-#revTag{position:relative;font-size:11px;letter-spacing:5px;color:var(--gold);text-transform:uppercase}
+#revCv{position:relative;border-radius:50%}
+#revName{position:relative;font-size:clamp(26px,7vw,66px);font-weight:900;letter-spacing:3px;
+ text-align:center;padding:0 14px;line-height:1.05}
+#revOdds{position:relative;font-size:clamp(11px,2.2vw,17px);letter-spacing:5px;color:#cfcfe6}
+#revTag{position:relative;font-size:10px;letter-spacing:5px;color:var(--gold);text-transform:uppercase}
 
 /* ---------- modal ---------- */
-.modal{position:fixed;inset:0;z-index:40;background:rgba(3,3,7,.9);display:none;
-  align-items:center;justify-content:center;padding:18px}
+.modal{position:fixed;inset:0;z-index:40;background:rgba(3,3,7,.92);display:none;
+ align-items:center;justify-content:center;padding:16px}
 .modal.show{display:flex}
 .sheet{background:var(--panel);border:1px solid var(--line);border-radius:16px;
-  width:min(900px,100%);max-height:88vh;display:flex;flex-direction:column;overflow:hidden}
-.sheetTop{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}
-.sheetTop h2{margin:0;font-size:16px;letter-spacing:2px;flex:1}
-.sheetBody{overflow:auto;padding:16px 20px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:9px}
-.card{border:1px solid var(--line);border-radius:11px;padding:10px;position:relative;
-  overflow:hidden;cursor:pointer;min-height:84px;display:flex;flex-direction:column;
-  justify-content:flex-end;gap:3px}
-.card.locked{opacity:.3;cursor:default}
-.card .cn{font-size:12px;font-weight:700;z-index:1;text-shadow:0 1px 4px #000}
-.card .co{font-size:9.5px;color:rgba(255,255,255,.75);z-index:1;letter-spacing:.8px}
-.card .cc{position:absolute;top:7px;right:9px;font-size:10px;color:rgba(255,255,255,.9);z-index:1;
-  background:rgba(0,0,0,.45);border-radius:99px;padding:1px 7px}
+ width:min(1080px,100%);max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+.sheetTop{display:flex;align-items:center;gap:10px;padding:13px 18px;border-bottom:1px solid var(--line);
+ flex-wrap:wrap}
+.sheetTop h2{margin:0;font-size:15px;letter-spacing:2px}
+.sheetBody{overflow:auto;padding:14px 18px}
+input,select{font:inherit;font-size:12px;background:#14141f;border:1px solid var(--line);
+ color:var(--ink);border-radius:8px;padding:7px 10px;outline:none}
+input:focus,select:focus{border-color:var(--acc)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:7px}
+.card{border:1px solid var(--line);border-radius:10px;padding:8px;position:relative;overflow:hidden;
+ cursor:pointer;min-height:70px;display:flex;flex-direction:column;justify-content:flex-end;gap:2px}
+.card.locked{opacity:.26;cursor:default}
+.card .cn{font-size:11px;font-weight:700;z-index:1;text-shadow:0 1px 4px #000;line-height:1.15}
+.card .co{font-size:8.5px;color:rgba(255,255,255,.8);z-index:1}
+.card .cc{position:absolute;top:5px;right:7px;font-size:9px;z-index:1;background:rgba(0,0,0,.5);
+ border-radius:99px;padding:0 6px}
 .card.eq{outline:2px solid var(--gold);outline-offset:-2px}
-.shopRow{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);
-  border-radius:11px;margin-bottom:9px}
-.shopRow .si{flex:1}
-.shopRow .si b{display:block;font-size:13px}
-.shopRow .si span{font-size:10.5px;color:var(--dim);letter-spacing:.6px}
-@media (max-width:760px){ #feed{display:none} #reelWrap{height:120px} .tile{height:92px} }
+.shopRow{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid var(--line);
+ border-radius:10px;margin-bottom:8px}
+.shopRow .si{flex:1}.shopRow .si b{display:block;font-size:12.5px}
+.shopRow .si span{font-size:10px;color:var(--dim)}
+@media (max-width:860px){.right{display:none}#show{max-height:40vh}}
 </style>
 </head>
 <body>
 <canvas id="bg"></canvas>
-
 <div id="app">
   <div class="top">
     <div class="chip"><span>Rolls</span><b id="sRolls">0</b></div>
-    <div class="chip"><span>Luck</span><b id="sLuck">1.00x</b></div>
+    <div class="chip"><span>Luck</span><b id="sLuck">1x</b></div>
     <div class="chip"><span>Shards</span><b id="sShards">0</b></div>
-    <div class="chip"><span>Index</span><b id="sIndex">0/0</b></div>
-    <div class="chip biome grow"><span>Biome &middot; <i id="biomeT">2:00</i></span><b id="biomeName">SERENE</b></div>
+    <div class="chip"><span>Index</span><b id="sIndex">0/700</b></div>
+    <div class="chip grow"><span>Biome &middot; <i id="biomeT">2:00</i></span><b id="biomeName">SERENE</b></div>
     <button class="btn" id="btnIndex">INDEX</button>
     <button class="btn" id="btnShop">POTIONS</button>
     <button class="btn" id="btnAuto">AUTO</button>
+    <button class="btn" id="btnFast">FAST</button>
     <button class="btn" id="btnMute">SOUND</button>
   </div>
 
-  <div class="stage">
-    <div id="feed"></div>
-    <div id="equipped">
-      <div id="eqOrb"></div>
-      <div><div id="eqName">Nothing equipped</div><div id="eqOdds">roll to begin</div></div>
+  <div class="main">
+    <div class="left">
+      <canvas id="show" width="520" height="340"></canvas>
+      <div id="showName">Nothing equipped</div>
+      <div id="showMeta">roll to begin</div>
+      <div id="showFx"></div>
+      <div id="fx"></div>
     </div>
-    <div id="fx"></div>
+    <div class="right" id="feed"></div>
+  </div>
+
+  <div class="bottom">
     <div id="reelWrap"><div id="reel"></div><div id="needle"></div></div>
     <div id="cdBar"><i></i></div>
     <div class="rollRow">
       <button id="rollBtn">ROLL</button>
-      <div style="font-size:11px;color:var(--dim);letter-spacing:1.4px">SPACE TO ROLL</div>
+      <div style="font-size:10.5px;color:var(--dim);letter-spacing:1.3px">SPACE ROLL &middot; I INDEX</div>
     </div>
-    <div id="rarest"></div>
   </div>
 </div>
 
 <div id="reveal">
   <div id="revBack"></div><div class="bar t"></div><div class="bar b"></div>
-  <div id="revTag"></div><div id="revName"></div><div id="revOdds"></div>
+  <div id="revTag"></div><canvas id="revCv" width="260" height="260"></canvas>
+  <div id="revName"></div><div id="revOdds"></div>
 </div>
 
 <div class="modal" id="mIndex"><div class="sheet">
   <div class="sheetTop"><h2>INDEX</h2>
-    <div style="font-size:11px;color:var(--dim)" id="idxPct"></div>
+    <input id="idxQ" placeholder="search name..." style="width:170px">
+    <select id="idxF">
+      <option value="all">all</option><option value="owned">owned</option>
+      <option value="missing">missing</option><option value="biome">biome-locked</option>
+    </select>
+    <div style="font-size:10.5px;color:var(--dim)" id="idxPct"></div>
+    <div class="grow"></div>
     <button class="btn" data-close>CLOSE</button></div>
-  <div class="sheetBody"><div class="grid" id="idxGrid"></div></div>
+  <div class="sheetBody"><div class="grid" id="idxGrid"></div>
+    <div id="idxMore" style="text-align:center;padding:14px"></div></div>
 </div></div>
 
 <div class="modal" id="mShop"><div class="sheet">
   <div class="sheetTop"><h2>POTIONS</h2>
     <div style="font-size:12px;color:var(--gold)" id="shopShards"></div>
-    <button class="btn" data-close>CLOSE</button></div>
+    <div class="grow"></div><button class="btn" data-close>CLOSE</button></div>
   <div class="sheetBody" id="shopBody"></div>
 </div></div>
 
 <script>
 "use strict";
-/* ============================================================
-   AETHER ROLL - an RNG roller. Spin the reel, pull an aura,
-   fill the index. Rarity is expressed the way these games do:
-   "1 in N", where N climbs to a billion.
-   ============================================================ */
-
+/* ==========================================================================
+   AETHER ROLL - 700 auras, rarest 1 in 12,500,000,000.
+   The table is generated, not typed: a fixed-seed PRNG builds every name,
+   palette, effect and biome lock, so the index is identical on every machine
+   and across every reload while still being far larger than anything
+   hand-written would be.
+   ========================================================================== */
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
-const fmt=n=>n.toLocaleString("en-US");
+const fmt=n=>Math.round(n).toLocaleString("en-US");
+const TAU=Math.PI*2;
 
-/* ---------------- auras ----------------
-   Ordered by odds ascending. `o` is the N in "1 in N". `c` is a two-stop
-   gradient; `rb` marks the ones that cycle hue instead of sitting still.
-   `b` restricts an aura to a biome, which is what makes biomes worth
-   waiting for rather than just a colour wash. */
-const AURAS=[
- {id:"ember",      n:"Ember",         o:2,          c:["#ff8a4c","#a52c08"]},
- {id:"tide",       n:"Tide",          o:4,          c:["#5fc9ff","#0f4c87"]},
- {id:"verdant",    n:"Verdant",       o:8,          c:["#86df86","#16682c"]},
- {id:"gust",       n:"Gust",          o:16,         c:["#dff1fa","#6d93a9"]},
- {id:"quartz",     n:"Quartz",        o:32,         c:["#f6edff","#a98fd4"]},
- {id:"cinder",     n:"Cinder",        o:64,         c:["#ff6334","#4a0e00"]},
- {id:"frostbite",  n:"Frostbite",     o:128,        c:["#a9ecff","#226b91"]},
- {id:"static",     n:"Static",        o:256,        c:["#fff386","#7d6c0c"]},
- {id:"monsoon",    n:"Monsoon",       o:512,        c:["#45b4d4","#0c2f41"]},
- {id:"zephyr",     n:"Zephyr",        o:1500,       c:["#e8fbff","#4e8fa8"], b:"GALE"},
- {id:"obsidian",   n:"Obsidian",      o:1024,       c:["#616177","#07070c"]},
- {id:"aurora",     n:"Aurora",        o:2048,       c:["#80ffcb","#5a7cf5"]},
- {id:"solar",      n:"Solar Flare",   o:4096,       c:["#ffd95e","#ff4400"]},
- {id:"glacier",    n:"Glacier Heart", o:6000,       c:["#ddfaff","#2e7fa8"], b:"RIME"},
- {id:"permafrost", n:"Permafrost",    o:8192,       c:["#e2f9ff","#3f8fb5"]},
- {id:"meteor",     n:"Meteor",        o:12000,      c:["#ffb570","#5c1c00"], b:"STARFALL"},
- {id:"nebula",     n:"Nebula",        o:16384,      c:["#cf7bf7","#241664"]},
- {id:"blight",     n:"Blight",        o:24000,      c:["#9de04a","#1d2d07"], b:"HOLLOW"},
- {id:"starfall",   n:"Starfall",      o:32768,      c:["#ffeeb4","#6b4ed8"]},
- {id:"gravity",    n:"Gravity Well",  o:65536,      c:["#99a4ff","#05020b"]},
- {id:"prism",      n:"Prism",         o:100000,     c:["#ff7ad9","#7affd9"], rb:1},
- {id:"eclipse",    n:"Eclipse",       o:250000,     c:["#ffbe56","#0d0716"]},
- {id:"nullform",   n:"Nullform",      o:400000,     c:["#b9b9c6","#000000"], b:"NULL"},
- {id:"quasar",     n:"Quasar",        o:500000,     c:["#7df4ff","#07215c"]},
- {id:"singularity",n:"Singularity",   o:1000000,    c:["#bd7cff","#000000"]},
- {id:"glitch",     n:"Glitch",        o:2000000,    c:["#00ffc8","#ff0066"], b:"FRACTURE", rb:1},
- {id:"chronos",    n:"Chronos",       o:5000000,    c:["#f0d487","#3a2a0a"]},
- {id:"oblivion",   n:"Oblivion",      o:10000000,   c:["#44445a","#000000"]},
- {id:"genesis",    n:"Genesis",       o:50000000,   c:["#fff8e0","#ffb000"]},
- {id:"apotheosis", n:"Apotheosis",    o:100000000,  c:["#ffffff","#9b6cff"], rb:1},
- {id:"origin",     n:"ORIGIN",        o:1000000000, c:["#ffffff","#1a1a1a"], rb:1}
-].sort((a,b)=>a.o-b.o);
+/* fixed-seed PRNG - the whole catalogue hangs off this */
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+ t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+const N_AURAS=700, MAX_ODDS=12.5e9;
+
+const PRE=("Ashen Astral Umbral Lunar Solar Gilded Hollow Verdant Crimson Azure Obsidian Prismatic "+
+"Spectral Ancient Frozen Molten Twilight Dawnlit Duskborn Stormbound Searing Silent Shattered "+
+"Radiant Withered Eternal Fleeting Abyssal Celestial Ferrous Velvet Opaline Cindered Glacial "+
+"Tempest Starlit Voidtouched Emberlit Mirrored Fractured Woven Drowned Blooming Rusted Gleaming "+
+"Murmuring Hallowed Profane Weeping Laughing Sleeping Waking Burning Falling Rising Turning "+
+"Singing Howling Whispering Breathing Bleeding Dreaming Forgotten Remembered Nameless Endless "+
+"Boundless Restless Sunless Moonless Starless Hungering").split(" ");
+const CORE=("Ember Tide Gale Quartz Shard Veil Bloom Pulse Mire Halo Thorn Frost Spark Dune Fang "+
+"Wisp Rift Coil Prism Drift Crest Vault Husk Loom Brand Gleam Murk Flare Shroud Cascade Echo "+
+"Lantern Mantle Omen Relic Sigil Tether Vigil Current Fathom Garnet Ivory Keystone Lattice "+
+"Monolith Nimbus Oath Pyre Quill Ripple Spire Tempo Umbra Vector Warden Zenith Cradle Dirge "+
+"Effigy Feather Glyph Ingot Juniper Kiln Lumen Marrow Nectar Orbit Plume Quarry Reverie Solstice "+
+"Talon Undertow Vesper Wake Zephyr Aegis Bastion Chasm").split(" ");
+/* the last 24 are named rather than generated - the endgame should not read
+   like the other 676 */
+const APEX=["Chronos Unbound","Requiem","Cataclysm","Revelation","Ascension","Transcendence",
+ "Oblivion","Paradox","Axiom","Terminus","Genesis","Entropy","Event Horizon","Omega Point",
+ "Singularity","Apotheosis","Eschaton","Null Theorem","First Cause","Heat Death","The Last Light",
+ "Primordial","Aleph","ORIGIN"];
+
+const FX=["motes","orbit","rain","flame","spark","shard","ring","vortex","beam","glitch","nova",
+ "petal","storm","halo","voidfx","bubble","lattice","comet"];
+const FX_RARE=["nova","glitch","beam","vortex","lattice","comet","voidfx","storm"];
+
+const BIOME_IDS=["GALE","RIME","STARFALL","HOLLOW","NULL","FRACTURE"];
+
+/* round to 3 significant figures so the ladder reads as deliberate numbers
+   rather than 1 in 4,817,223 */
+function sig(v){
+  if(v<10) return Math.max(2,Math.round(v));
+  const m=Math.pow(10,Math.floor(Math.log10(v))-2);
+  return Math.round(v/m)*m;
+}
+/* Palette entries are hex, not hsl(), because several call sites append a
+   two-digit alpha to them (gradients, glows, the tile pulse). Appending to
+   an hsl() string yields an unparseable colour and throws inside the render
+   loop, which takes the whole showcase down with it. */
+function hsl(h,s,l){
+  h=((h%360)+360)%360; s/=100; l/=100;
+  const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
+  const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
+  const hx=v=>Math.round(v*255).toString(16).padStart(2,"0");
+  return "#"+hx(f(0))+hx(f(8))+hx(f(4));
+}
+
+const AURAS=(()=>{
+  const R=mulberry(20261002), out=[], used=new Set();
+  let prev=1;
+  for(let i=0;i<N_AURAS;i++){
+    const t=i/(N_AURAS-1);
+    let o=sig(2*Math.pow(MAX_ODDS/2,t));
+    if(o<=prev) o=prev+1;                       // keep the ladder strictly rising
+    prev=o;
+    if(i===N_AURAS-1) o=MAX_ODDS;
+
+    let name;
+    if(i>=N_AURAS-APEX.length) name=APEX[i-(N_AURAS-APEX.length)];
+    else{
+      let guard=0;
+      do{ name=PRE[(R()*PRE.length)|0]+" "+CORE[(R()*CORE.length)|0]; guard++; }
+      while(used.has(name)&&guard<200);
+    }
+    used.add(name);
+
+    const h=R()*360, h2=h+(R()*120-60)+(R()<0.3?180:0);
+    const lift=Math.min(0.42,t*0.55);            // rarer auras run brighter
+    const c=[hsl(h,62+lift*38,54+lift*26), hsl(h2,58+lift*34,22+lift*30)];
+    const rb=t>0.78&&R()<0.45;
+    const fx=(t>0.6&&R()<0.72)
+      ? FX_RARE[(R()*FX_RARE.length)|0]
+      : FX[(R()*FX.length)|0];
+    const b=(R()<0.14)?BIOME_IDS[(R()*BIOME_IDS.length)|0]:null;
+    out.push({id:"a"+i,n:name,o,c,fx,rb,b,i});
+  }
+  return out;
+})();
 const BY_ID=Object.fromEntries(AURAS.map(a=>[a.id,a]));
+const MAXI=AURAS.length-1;
 
-/* How loud a result should be. Everything downstream - reel length, screen
-   shake, whether the bars come in - keys off this one number. */
-function tierOf(o){ return o>=10000000?4 : o>=500000?3 : o>=50000?2 : o>=2048?1 : 0; }
+function tierOf(o){return o>=1e9?5:o>=1e7?4:o>=5e5?3:o>=5e4?2:o>=2048?1:0}
+const TIERNAME=["found","rare","very rare","exceptional","transcendent","origin-class"];
 
-/* ---------------- biomes ----------------
-   One is always active. Each tilts the odds and most unlock an aura that
-   cannot drop anywhere else. */
+/* ---------------- biomes ---------------- */
 const BIOMES=[
-  {id:"SERENE",  w:54, tint:"#6a7ad8", boost:{} },
-  {id:"GALE",    w:16, tint:"#8fc8e0", boost:{gust:3,zephyr:1,monsoon:2} },
-  {id:"RIME",    w:13, tint:"#9fdcf2", boost:{frostbite:3,permafrost:3,glacier:1} },
-  {id:"STARFALL",w:9,  tint:"#c7a4ff", boost:{starfall:4,nebula:3,meteor:1} },
-  {id:"HOLLOW",  w:5,  tint:"#8fbf4a", boost:{blight:1,obsidian:3,oblivion:2} },
-  {id:"NULL",    w:2.4,tint:"#b9b9c6", boost:{nullform:1,gravity:4,singularity:2} },
-  {id:"FRACTURE",w:0.6,tint:"#00ffc8", boost:{glitch:1,prism:5,apotheosis:3} }
+  {id:"SERENE",w:52,tint:"#6a7ad8"},{id:"GALE",w:16,tint:"#8fc8e0"},
+  {id:"RIME",w:13,tint:"#9fdcf2"},{id:"STARFALL",w:9,tint:"#c7a4ff"},
+  {id:"HOLLOW",w:5,tint:"#8fbf4a"},{id:"NULL",w:3,tint:"#b9b9c6"},
+  {id:"FRACTURE",w:2,tint:"#00ffc8"}
 ];
 const BIOME_MS=120000;
 
-/* ---------------- potions ---------------- */
+/* ---------------- potions ----------------
+   The ladder runs to x25,000 because the far end of a 12.5-billion table is
+   otherwise unreachable in a human lifetime of clicking. */
 const POTIONS=[
-  {id:"luck1", n:"Lucky Draught",  d:"x2 luck for 90 seconds",   cost:60,   luck:2,  ms:90000},
-  {id:"luck2", n:"Greater Draught",d:"x5 luck for 120 seconds",  cost:320,  luck:5,  ms:120000},
-  {id:"luck3", n:"Mythic Draught", d:"x20 luck for 90 seconds",  cost:1800, luck:20, ms:90000},
-  {id:"luck4", n:"Aether Draught", d:"x100 luck for 60 seconds", cost:12000,luck:100,ms:60000},
-  {id:"haste", n:"Haste Tonic",    d:"half roll delay, 2 minutes",cost:240, haste:1, ms:120000}
+  {id:"p1",n:"Lucky Draught",   d:"x5 luck, 90s",      cost:40,    luck:5,     ms:90000},
+  {id:"p2",n:"Greater Draught", d:"x25 luck, 120s",    cost:260,   luck:25,    ms:120000},
+  {id:"p3",n:"Mythic Draught",  d:"x250 luck, 120s",   cost:1600,  luck:250,   ms:120000},
+  {id:"p4",n:"Aether Draught",  d:"x2,500 luck, 90s",  cost:9000,  luck:2500,  ms:90000},
+  {id:"p5",n:"Origin Draught",  d:"x25,000 luck, 60s", cost:48000, luck:25000, ms:60000},
+  {id:"h1",n:"Haste Tonic",     d:"half roll delay, 3m",cost:150,  haste:1,    ms:180000}
 ];
 
 /* ---------------- state ---------------- */
-const SAVE_KEY="aether-roll-v1";
-const BASE_CD=1100;
-let S={ rolls:0, shards:0, inv:{}, equipped:null, rarest:null,
-        biome:"SERENE", biomeEnd:0, effects:[], muted:false, auto:false };
-
-function save(){
-  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){}
-}
+const KEY="aether-roll-v2", BASE_CD=900;
+let S={rolls:0,shards:250,inv:{},equipped:null,rarest:null,biome:"SERENE",biomeEnd:0,
+       effects:[],muted:false,auto:false,fast:false};
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){
   try{
-    const raw=localStorage.getItem(SAVE_KEY); if(!raw) return;
+    const raw=localStorage.getItem(KEY); if(!raw) return;
     const d=JSON.parse(raw); if(!d||typeof d!=="object") return;
-    // merge field by field: a save written by an older build must not be able
-    // to delete keys this build depends on
     S.rolls=+d.rolls||0; S.shards=+d.shards||0;
     S.inv=(d.inv&&typeof d.inv==="object")?d.inv:{};
     S.equipped=BY_ID[d.equipped]?d.equipped:null;
     S.rarest=BY_ID[d.rarest]?d.rarest:null;
-    S.muted=!!d.muted;
+    S.muted=!!d.muted; S.fast=!!d.fast;
     S.effects=Array.isArray(d.effects)?d.effects.filter(e=>e&&e.until>Date.now()):[];
-  }catch(e){ S.inv={}; }
+  }catch(e){S.inv={}}
 }
 load();
-
 const owned=()=>Object.keys(S.inv).filter(k=>BY_ID[k]).length;
+/* Luck compounds: potions multiply, and every 500 rolls adds a permanent
+   half-multiplier so a long session is never pure stasis. */
 function luck(){
-  let L=1;
-  for(const e of S.effects) if(e.luck && e.until>Date.now()) L*=e.luck;
+  let L=1+Math.floor(S.rolls/500)*0.5;
+  for(const e of S.effects) if(e.luck&&e.until>Date.now()) L*=e.luck;
   return L;
 }
-const hasted=()=>S.effects.some(e=>e.haste && e.until>Date.now());
-const cooldown=()=>BASE_CD*(hasted()?0.5:1);
+const hasted=()=>S.effects.some(e=>e.haste&&e.until>Date.now());
+const cooldown=()=>(S.fast?240:BASE_CD)*(hasted()?0.5:1);
+const fmtLuck=L=>L>=1e6?(L/1e6).toFixed(1)+"M":L>=1000?(L/1000).toFixed(1)+"k":L.toFixed(2);
 
 /* ---------------- audio ---------------- */
-let AC=null;
-const ac=()=>AC||(AC=new (window.AudioContext||window.webkitAudioContext)());
+let AC=null; const ac=()=>AC||(AC=new (window.AudioContext||window.webkitAudioContext)());
 function tone(f,dur,type,vol){
   if(S.muted) return;
-  try{
-    const a=ac(),t=a.currentTime,o=a.createOscillator(),g=a.createGain();
-    o.type=type||"sine"; o.frequency.setValueAtTime(f,t);
-    g.gain.setValueAtTime(vol||0.05,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
-    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+dur+0.02);
-  }catch(e){}
+  try{const a=ac(),t=a.currentTime,o=a.createOscillator(),g=a.createGain();
+    o.type=type||"sine";o.frequency.setValueAtTime(f,t);
+    g.gain.setValueAtTime(vol||0.05,t);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+dur+0.02)}catch(e){}
 }
-const tick=()=>tone(1200+Math.random()*300,0.03,"square",0.018);
-function fanfare(tier){
+const tick=()=>tone(1150+Math.random()*320,0.025,"square",0.014);
+function fanfare(t){
   if(S.muted) return;
-  const seq=[[523,0],[659,90],[784,180],[1047,270],[1319,380]].slice(0,2+tier);
-  seq.forEach(([f,d])=>setTimeout(()=>tone(f,0.5,"triangle",0.07),d));
-  if(tier>=3) setTimeout(()=>tone(130,1.4,"sawtooth",0.07),0);
+  [[523,0],[659,80],[784,160],[1047,250],[1319,350],[1568,460]].slice(0,2+t)
+    .forEach(([f,d])=>setTimeout(()=>tone(f,0.5,"triangle",0.07),d));
+  if(t>=3) tone(120,1.6,"sawtooth",0.07);
+}
+
+/* ======================================================================
+   THE AURA RENDERER
+   One function draws any aura, so the same code paints the showcase, the
+   reveal and the index preview. Particles are stateless where they can be:
+   position is a function of time and index, which means an effect can be
+   drawn at any size without carrying a simulation around with it.
+   ====================================================================== */
+function drawAura(ctx,W,H,a,t,scale){
+  const cx=W/2, cy=H/2, R=Math.min(W,H)*0.5*(scale||1);
+  const hue=t*0.00006;
+  const col=k=>{
+    if(!a.rb) return a.c[k];
+    const base=k?200:40;
+    return hsl((hue*360+base)%360,85,k?42:66);
+  };
+  const c0=col(0), c1=col(1);
+  ctx.save();
+  switch(a.fx){
+    case "motes": for(let i=0;i<46;i++){
+        const p=(t*0.00022+i/46)%1, x=cx+Math.sin(i*2.3+t*0.0006)*R*0.62, y=cy+R-p*R*2;
+        ctx.globalAlpha=(1-p)*0.85; ctx.fillStyle=i%2?c0:c1;
+        ctx.beginPath(); ctx.arc(x,y,2+(i%3),0,TAU); ctx.fill(); } break;
+    case "orbit": for(let i=0;i<22;i++){
+        const an=t*0.0011+i/22*TAU, rr=R*(0.42+0.3*Math.sin(i+t*0.0007));
+        ctx.globalAlpha=.9; ctx.fillStyle=i%2?c0:c1;
+        ctx.beginPath(); ctx.arc(cx+Math.cos(an)*rr,cy+Math.sin(an)*rr*0.52,3.2,0,TAU); ctx.fill(); } break;
+    case "rain": for(let i=0;i<60;i++){
+        const p=(t*0.0009+i*0.137)%1, x=cx+((i*83)%200-100)/100*R, y=cy-R+p*R*2;
+        ctx.globalAlpha=.75; ctx.strokeStyle=i%3?c0:c1; ctx.lineWidth=1.6;
+        ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,y+10); ctx.stroke(); } break;
+    case "flame": for(let i=0;i<40;i++){
+        const p=(t*0.0013+i/40)%1, w=(1-p)*R*0.4;
+        const x=cx+Math.sin(i*4+t*0.004)*w*0.6, y=cy+R*0.75-p*R*1.5;
+        ctx.globalAlpha=(1-p)*0.8; ctx.fillStyle=p<0.4?c0:c1;
+        ctx.beginPath(); ctx.arc(x,y,(1-p)*9+2,0,TAU); ctx.fill(); } break;
+    case "spark": ctx.lineWidth=1.8;
+      for(let i=0;i<9;i++){ const an=i/9*TAU+t*0.0004;
+        ctx.globalAlpha=.3+Math.abs(Math.sin(t*0.006+i))*0.7; ctx.strokeStyle=i%2?c0:c1;
+        ctx.beginPath(); ctx.moveTo(cx,cy);
+        let x=cx,y=cy; for(let k=0;k<5;k++){ const r2=R*(k+1)/5;
+          x=cx+Math.cos(an+Math.sin(k+t*0.002)*0.4)*r2;
+          y=cy+Math.sin(an+Math.sin(k+t*0.002)*0.4)*r2; ctx.lineTo(x,y);} ctx.stroke(); } break;
+    case "shard": for(let i=0;i<16;i++){
+        const an=t*0.0006+i/16*TAU, rr=R*0.6;
+        const x=cx+Math.cos(an)*rr, y=cy+Math.sin(an)*rr*0.6;
+        ctx.save(); ctx.translate(x,y); ctx.rotate(an*2);
+        ctx.globalAlpha=.9; ctx.fillStyle=i%2?c0:c1;
+        ctx.beginPath(); ctx.moveTo(0,-11); ctx.lineTo(5,0); ctx.lineTo(0,11); ctx.lineTo(-5,0);
+        ctx.closePath(); ctx.fill(); ctx.restore(); } break;
+    case "ring": for(let i=0;i<5;i++){
+        const p=((t*0.0007+i/5)%1);
+        ctx.globalAlpha=(1-p)*0.75; ctx.strokeStyle=i%2?c0:c1; ctx.lineWidth=3-(p*2.4);
+        ctx.beginPath(); ctx.ellipse(cx,cy,p*R*1.1,p*R*0.55,0,0,TAU); ctx.stroke(); } break;
+    case "vortex": for(let i=0;i<80;i++){
+        const p=((t*0.0008+i/80)%1), an=p*TAU*3+i, rr=(1-p)*R;
+        ctx.globalAlpha=p*0.8; ctx.fillStyle=i%2?c0:c1;
+        ctx.beginPath(); ctx.arc(cx+Math.cos(an)*rr,cy+Math.sin(an)*rr*0.6,2.2,0,TAU); ctx.fill(); } break;
+    case "beam": for(let i=0;i<12;i++){
+        const an=i/12*TAU+t*0.0003, len=R*(0.7+0.3*Math.sin(t*0.002+i));
+        const g=ctx.createLinearGradient(cx,cy,cx+Math.cos(an)*len,cy+Math.sin(an)*len);
+        g.addColorStop(0,c0); g.addColorStop(1,"transparent");
+        ctx.globalAlpha=.6; ctx.strokeStyle=g; ctx.lineWidth=4;
+        ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(an)*len,cy+Math.sin(an)*len);
+        ctx.stroke(); } break;
+    case "glitch": for(let i=0;i<34;i++){
+        const y=cy-R+((i*37+((t*0.05)|0))%(R*2));
+        const w=10+((i*53)%90), x=cx-w/2+Math.sin(i+t*0.01)*R*0.5;
+        ctx.globalAlpha=.55; ctx.fillStyle=i%3===0?c0:(i%3===1?c1:"#fff");
+        ctx.fillRect(x,y,w,3+(i%4)); } break;
+    case "nova": { const p=(t*0.0006)%1;
+        const g=ctx.createRadialGradient(cx,cy,0,cx,cy,R*(0.3+p));
+        g.addColorStop(0,c0); g.addColorStop(0.5,c1); g.addColorStop(1,"transparent");
+        ctx.globalAlpha=1-p*0.85; ctx.fillStyle=g;
+        ctx.beginPath(); ctx.arc(cx,cy,R*(0.3+p),0,TAU); ctx.fill();
+        for(let i=0;i<26;i++){ const an=i/26*TAU;
+          ctx.globalAlpha=(1-p)*0.9; ctx.fillStyle=c0;
+          ctx.beginPath(); ctx.arc(cx+Math.cos(an)*R*p*1.2,cy+Math.sin(an)*R*p*1.2,3,0,TAU);
+          ctx.fill(); } } break;
+    case "petal": for(let i=0;i<34;i++){
+        const p=(t*0.00018+i/34)%1, x=cx+Math.sin(i*3+t*0.0009)*R*0.7, y=cy-R+p*R*2;
+        ctx.save(); ctx.translate(x,y); ctx.rotate(t*0.001+i);
+        ctx.globalAlpha=.8; ctx.fillStyle=i%2?c0:c1;
+        ctx.beginPath(); ctx.ellipse(0,0,6,3,0,0,TAU); ctx.fill(); ctx.restore(); } break;
+    case "storm": { ctx.globalAlpha=.3; ctx.fillStyle=c1;
+        for(let i=0;i<5;i++){ ctx.beginPath();
+          ctx.ellipse(cx+Math.sin(i+t*0.0004)*R*0.5,cy-R*0.55,R*0.42,R*0.13,0,0,TAU); ctx.fill(); }
+        if(Math.sin(t*0.004)>0.93){ ctx.globalAlpha=.95; ctx.strokeStyle=c0; ctx.lineWidth=2.4;
+          ctx.beginPath(); let x=cx+Math.sin(t)*R*0.4,y=cy-R*0.4; ctx.moveTo(x,y);
+          for(let k=0;k<5;k++){ x+=Math.sin(k*9+t)*16; y+=R*0.2; ctx.lineTo(x,y);} ctx.stroke(); }
+        for(let i=0;i<30;i++){ const p=(t*0.0012+i*0.21)%1;
+          ctx.globalAlpha=.5; ctx.strokeStyle=c1; ctx.lineWidth=1.3; ctx.beginPath();
+          const x2=cx+((i*61)%180-90)/90*R, y2=cy-R*0.3+p*R*1.5;
+          ctx.moveTo(x2,y2); ctx.lineTo(x2-3,y2+9); ctx.stroke(); } } break;
+    case "halo": for(let i=0;i<3;i++){
+        const an=t*0.0009*(i%2?1:-1)+i;
+        ctx.globalAlpha=.8; ctx.strokeStyle=i%2?c0:c1; ctx.lineWidth=3;
+        ctx.beginPath(); ctx.ellipse(cx,cy,R*(0.55+i*0.14),R*0.2,an,0,TAU); ctx.stroke(); } break;
+    case "voidfx": { const g=ctx.createRadialGradient(cx,cy,R*0.1,cx,cy,R*0.9);
+        g.addColorStop(0,"#000"); g.addColorStop(0.65,c1); g.addColorStop(1,"transparent");
+        ctx.globalAlpha=.95; ctx.fillStyle=g;
+        ctx.beginPath(); ctx.arc(cx,cy,R*0.9,0,TAU); ctx.fill();
+        for(let i=0;i<40;i++){ const p=1-((t*0.0009+i/40)%1), an=i/40*TAU+t*0.0009;
+          ctx.globalAlpha=(1-p)*0.9; ctx.fillStyle=c0;
+          ctx.beginPath(); ctx.arc(cx+Math.cos(an)*R*p,cy+Math.sin(an)*R*p,2.4,0,TAU); ctx.fill(); } } break;
+    case "bubble": for(let i=0;i<30;i++){
+        const p=(t*0.0004+i/30)%1, x=cx+Math.sin(i*5+t*0.0008)*R*0.6, y=cy+R-p*R*2;
+        ctx.globalAlpha=(1-p)*0.7; ctx.strokeStyle=i%2?c0:c1; ctx.lineWidth=1.6;
+        ctx.beginPath(); ctx.arc(x,y,4+(i%5)*2.5,0,TAU); ctx.stroke(); } break;
+    case "lattice": { ctx.globalAlpha=.55; ctx.lineWidth=1.4;
+        for(let i=0;i<14;i++){ const an=i/14*TAU+t*0.0004;
+          ctx.strokeStyle=i%2?c0:c1; ctx.beginPath();
+          for(let k=0;k<=14;k++){ const a2=k/14*TAU;
+            const rr=R*(0.55+0.18*Math.sin(a2*3+t*0.0015+i));
+            const x=cx+Math.cos(a2)*rr*Math.cos(an), y=cy+Math.sin(a2)*rr*0.75;
+            k?ctx.lineTo(x,y):ctx.moveTo(x,y); } ctx.closePath(); ctx.stroke(); } } break;
+    case "comet": for(let i=0;i<16;i++){
+        const p=(t*0.0011+i/16)%1, an=i*2.1;
+        const x=cx+Math.cos(an)*R*(1-p)*1.2, y=cy+Math.sin(an)*R*(1-p)*0.8;
+        const g=ctx.createLinearGradient(x,y,cx,cy);
+        g.addColorStop(0,c0); g.addColorStop(1,"transparent");
+        ctx.globalAlpha=.85; ctx.strokeStyle=g; ctx.lineWidth=3;
+        ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(cx+(x-cx)*0.55,cy+(y-cy)*0.55); ctx.stroke();
+        ctx.fillStyle=c0; ctx.beginPath(); ctx.arc(x,y,2.6,0,TAU); ctx.fill(); } break;
+  }
+  ctx.restore();
+}
+/* the figure the aura plays around, so scale and placement read as "worn" */
+function drawFigure(ctx,W,H,a){
+  const cx=W/2, cy=H/2, s=Math.min(W,H)/340;
+  ctx.save(); ctx.translate(cx,cy+H*0.1); ctx.scale(s,s);
+  const g=ctx.createLinearGradient(0,-120,0,110);
+  g.addColorStop(0,"#2b2b3e"); g.addColorStop(1,"#111119");
+  ctx.fillStyle=g;
+  ctx.beginPath(); ctx.ellipse(0,-92,24,27,0,0,TAU); ctx.fill();          // head
+  ctx.beginPath();                                                        // cloaked body
+  ctx.moveTo(-20,-66); ctx.quadraticCurveTo(-52,0,-44,104);
+  ctx.lineTo(44,104); ctx.quadraticCurveTo(52,0,20,-66); ctx.closePath(); ctx.fill();
+  if(a){ ctx.globalAlpha=.9; ctx.fillStyle=a.c[0];
+    ctx.beginPath(); ctx.ellipse(-8,-94,4,5,0,0,TAU); ctx.ellipse(8,-94,4,5,0,0,TAU); ctx.fill(); }
+  ctx.restore();
+}
+function paintShowcase(ctx,W,H,a,t){
+  ctx.clearRect(0,0,W,H);
+  if(!a){ drawFigure(ctx,W,H,null); return; }
+  const g=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.min(W,H)*0.6);
+  g.addColorStop(0,a.c[1]+"55"); g.addColorStop(1,"transparent");
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.globalCompositeOperation="lighter";
+  drawAura(ctx,W,H,a,t,0.92);
+  ctx.globalCompositeOperation="source-over";
+  drawFigure(ctx,W,H,a);
+  ctx.globalCompositeOperation="lighter";
+  ctx.globalAlpha=0.45; drawAura(ctx,W,H,a,t+900,0.62); ctx.globalAlpha=1;
+  ctx.globalCompositeOperation="source-over";
 }
 
 /* ---------------- background ---------------- */
-const bg=$("bg"), bx=bg.getContext("2d");
-let BW=0,BH=0,stars=[],motes=[];
-function sizeBg(){
-  BW=bg.width=innerWidth; BH=bg.height=innerHeight;
-  stars=Array.from({length:150},()=>({x:Math.random()*BW,y:Math.random()*BH,
-    r:Math.random()*1.3+0.2,p:Math.random()*6.28,s:0.3+Math.random()*0.7}));
-}
+const bg=$("bg"),bx=bg.getContext("2d");
+let BW=0,BH=0,stars=[];
+function sizeBg(){BW=bg.width=innerWidth;BH=bg.height=innerHeight;
+  stars=Array.from({length:140},()=>({x:Math.random()*BW,y:Math.random()*BH,
+    r:Math.random()*1.3+0.2,p:Math.random()*6.28,s:0.3+Math.random()*0.7}))}
 addEventListener("resize",sizeBg); sizeBg();
-function biome(){ return BIOMES.find(b=>b.id===S.biome)||BIOMES[0]; }
-function eqColors(){
-  const a=S.equipped?BY_ID[S.equipped]:null;
-  return a?a.c:["#5a5a7a","#15151f"];
-}
+const biome=()=>BIOMES.find(b=>b.id===S.biome)||BIOMES[0];
 function drawBg(t){
   bx.fillStyle="#06060b"; bx.fillRect(0,0,BW,BH);
-  const bi=biome();
-  // biome wash from the top
   const g=bx.createLinearGradient(0,0,0,BH);
-  g.addColorStop(0,bi.tint+"26"); g.addColorStop(0.55,"#06060b00"); g.addColorStop(1,"#00000000");
+  g.addColorStop(0,biome().tint+"24"); g.addColorStop(.6,"#06060b00");
   bx.fillStyle=g; bx.fillRect(0,0,BW,BH);
-  for(const s of stars){
-    const a=0.25+Math.abs(Math.sin(t*0.0011*s.s+s.p))*0.6;
-    bx.globalAlpha=a; bx.fillStyle="#cfd6ff";
-    bx.fillRect(s.x,s.y,s.r,s.r);
-  }
-  bx.globalAlpha=1;
-  // motes carrying the equipped aura's colour, so the choice is visible
-  const [c1,c2]=eqColors();
-  if(motes.length<70 && S.equipped) motes.push({x:Math.random()*BW,y:BH+20,
-    v:0.25+Math.random()*0.7,r:1+Math.random()*2.6,a:0.5+Math.random()*0.5,
-    sw:Math.random()*6.28});
-  for(let i=motes.length-1;i>=0;i--){
-    const m=motes[i]; m.y-=m.v; m.x+=Math.sin(t*0.001+m.sw)*0.35;
-    if(m.y<-20){ motes.splice(i,1); continue; }
-    bx.globalAlpha=m.a*clamp(m.y/BH,0,1)*0.75;
-    bx.fillStyle=i%2?c1:c2;
-    bx.beginPath(); bx.arc(m.x,m.y,m.r,0,6.2832); bx.fill();
-  }
+  for(const s of stars){ bx.globalAlpha=.25+Math.abs(Math.sin(t*.0011*s.s+s.p))*.6;
+    bx.fillStyle="#cfd6ff"; bx.fillRect(s.x,s.y,s.r,s.r); }
   bx.globalAlpha=1;
 }
 
 /* ---------------- biome cycle ---------------- */
-function pickBiome(){
-  const tot=BIOMES.reduce((a,b)=>a+b.w,0);
-  let r=Math.random()*tot;
-  for(const b of BIOMES){ r-=b.w; if(r<=0) return b.id; }
-  return "SERENE";
-}
+function pickBiome(){const tot=BIOMES.reduce((a,b)=>a+b.w,0);let r=Math.random()*tot;
+  for(const b of BIOMES){r-=b.w;if(r<=0)return b.id}return "SERENE"}
 function rollBiome(){
-  const prev=S.biome;
-  S.biome=pickBiome(); S.biomeEnd=Date.now()+BIOME_MS;
-  if(S.biome!==prev){
-    feed({n:S.biome+" BIOME",o:0,c:[biome().tint,"#0b0b14"]},"biome");
-    tone(300,0.5,"sine",0.05);
-  }
+  const prev=S.biome; S.biome=pickBiome(); S.biomeEnd=Date.now()+BIOME_MS;
+  if(S.biome!==prev){ feedRaw(S.biome+" BIOME","biome shift",biome().tint); tone(300,.5,"sine",.05); }
   save();
 }
 if(!S.biomeEnd||S.biomeEnd<Date.now()) rollBiome();
 
-/* ---------------- the roll ----------------
-   Walk the table from rarest to most common and take the first hit. Written
-   this way, luck multiplies your shot at every rare tier at once, which is
-   what a luck potion is supposed to feel like. */
+/* ---------------- roll ----------------
+   Rarest first, first hit wins: luck lifts every tier at once. With 700
+   entries a linear scan per roll is 700 comparisons, which is nothing, and
+   it keeps the odds exactly readable off the table. */
 function rollAura(){
-  const L=luck(), bi=biome();
-  const pool=AURAS.filter(a=>!a.b||a.b===bi.id);
-  for(let i=pool.length-1;i>=0;i--){
-    const a=pool[i];
-    const mult=bi.boost[a.id]||1;
-    if(Math.random() < (L*mult)/a.o) return a;
+  const L=luck(), bi=S.biome;
+  for(let i=MAXI;i>=0;i--){
+    const a=AURAS[i];
+    if(a.b&&a.b!==bi) continue;
+    if(Math.random()<L/a.o) return a;
   }
-  return pool[0];
+  return AURAS[0];
 }
-const shardsFor=o=>Math.max(1,Math.round(Math.log2(o)));
+const shardsFor=o=>Math.max(1,Math.round(Math.log2(o)*1.6));
 
 /* ---------------- reel ---------------- */
-const reel=$("reel"), reelWrap=$("reelWrap");
-const TILE=126, GAP=10, STEP=TILE+GAP;
-function tileHTML(a){
-  const bgc=a.rb
-    ? `background:linear-gradient(135deg,${a.c[0]},${a.c[1]});filter:saturate(1.3)`
-    : `background:linear-gradient(135deg,${a.c[0]},${a.c[1]})`;
-  return `<div class="tile" style="${bgc}">
-    <div class="nm">${a.n}</div><div class="od">1 in ${fmt(a.o)}</div></div>`;
-}
-/* Filler is drawn from what you could plausibly hit, weighted toward the
-   common end, so the strip reads as a real spin rather than a parade of
-   legendaries that never land. */
+const reel=$("reel"),reelWrap=$("reelWrap");
+const TILE=120,GAP=9,STEP=TILE+GAP,WIN_AT=52,STRIP=60;
+const tileHTML=a=>`<div class="tile" style="background:linear-gradient(135deg,${a.c[0]},${a.c[1]})">
+  <div class="nm">${a.n}</div><div class="od">1 in ${fmt(a.o)}</div></div>`;
+/* filler weighted to the common end, or a 700-long table would parade
+   legendaries past the needle that never land */
 function filler(){
-  const pool=AURAS.filter(a=>!a.b||a.b===S.biome);
   const r=Math.random();
-  const span=r<0.72?Math.min(10,pool.length):r<0.95?Math.min(18,pool.length):pool.length;
-  return pool[Math.floor(Math.random()*span)];
+  const span=r<.7?60:r<.93?220:MAXI+1;
+  let a,guard=0;
+  do{ a=AURAS[(Math.random()*span)|0]; guard++; }while(a.b&&a.b!==S.biome&&guard<12);
+  return a;
 }
-const WIN_AT=52, STRIP=60;
-function buildStrip(winner){
-  const items=[];
-  for(let i=0;i<STRIP;i++) items.push(i===WIN_AT?winner:filler());
-  reel.innerHTML=items.map(tileHTML).join("");
-  return items;
+function buildStrip(w){
+  const it=[]; for(let i=0;i<STRIP;i++) it.push(i===WIN_AT?w:filler());
+  reel.innerHTML=it.map(tileHTML).join("");
 }
 let spinning=false;
-function spin(winner,dur){
+function spin(w,dur){
   return new Promise(res=>{
-    buildStrip(winner);
+    buildStrip(w);
     const center=reelWrap.clientWidth/2;
-    const end=-(WIN_AT*STEP)-TILE/2+center;
-    const start=center+STEP*2;
-    const t0=performance.now();
-    let lastIdx=-1;
-    reel.style.transform=`translateX(${start}px)`;
-    (function frame(now){
-      const p=clamp((now-t0)/dur,0,1);
-      const e=1-Math.pow(1-p,5);                       // quintic ease-out
-      const x=start+(end-start)*e;
+    const end=-(WIN_AT*STEP)-TILE/2+center, start=center+STEP*2, t0=performance.now();
+    let last=-1;
+    (function f(now){
+      const p=clamp((now-t0)/dur,0,1), e=1-Math.pow(1-p,5), x=start+(end-start)*e;
       reel.style.transform=`translateX(${x}px)`;
       const idx=Math.round((center-x-TILE/2)/STEP);
-      if(idx!==lastIdx){ lastIdx=idx; tick(); }
-      if(p<1) requestAnimationFrame(frame); else res();
+      if(idx!==last){last=idx;tick()}
+      p<1?requestAnimationFrame(f):res();
     })(t0);
   });
 }
 
 /* ---------------- reveal ---------------- */
-/* Only a genuinely rare pull earns the full screen. Commons get a pulse on
-   the tile they landed on, which keeps a session of auto-rolling watchable
-   instead of forcing a cutscene on every 1 in 2. */
+const revCv=$("revCv"),rvx=revCv.getContext("2d");
+let revAura=null;
 function pulse(a){
   const tile=reel.children[WIN_AT]; if(!tile) return;
   tile.animate([{boxShadow:`0 0 0 0 ${a.c[0]}00`,transform:"scale(1)"},
-                {boxShadow:`0 0 34px 10px ${a.c[0]}cc`,transform:"scale(1.07)"},
+                {boxShadow:`0 0 32px 10px ${a.c[0]}cc`,transform:"scale(1.07)"},
                 {boxShadow:`0 0 0 0 ${a.c[0]}00`,transform:"scale(1)"}],
-               {duration:620,easing:"ease-out"});
-  tone(520+Math.min(a.o,4096)/18,0.18,"triangle",0.05);
+               {duration:560,easing:"ease-out"});
+  tone(520+Math.min(a.o,4096)/18,.16,"triangle",.05);
 }
 function reveal(a){
-  const t=tierOf(a.o), R=$("reveal");
-  if(t<2){ pulse(a); return new Promise(r=>setTimeout(r,260)); }
+  const t=tierOf(a.o),R=$("reveal");
+  if(t<2){ pulse(a); return new Promise(r=>setTimeout(r,S.fast?90:240)); }
+  revAura=a;
   $("revName").textContent=a.n;
-  $("revName").style.cssText=
-    `background:linear-gradient(90deg,${a.c[0]},${a.c[1]});-webkit-background-clip:text;`+
-    `background-clip:text;color:transparent;filter:drop-shadow(0 0 22px ${a.c[0]}aa)`;
+  $("revName").style.cssText=`background:linear-gradient(90deg,${a.c[0]},${a.c[1]});`+
+    `-webkit-background-clip:text;background-clip:text;color:transparent;`+
+    `filter:drop-shadow(0 0 22px ${a.c[0]}aa)`;
   $("revOdds").textContent="1 IN "+fmt(a.o);
-  $("revTag").textContent=["found","rare","very rare","exceptional","transcendent"][t];
-  R.classList.toggle("cine",t>=3);
-  R.classList.add("show");
-  if(t>=2) document.body.animate(
+  $("revTag").textContent=TIERNAME[t];
+  R.classList.toggle("cine",t>=4); R.classList.add("show");
+  if(t>=3) document.body.animate(
     [{transform:"translate(0,0)"},{transform:`translate(${t*2}px,${-t*2}px)`},
      {transform:`translate(${-t*2}px,${t}px)`},{transform:"translate(0,0)"}],
     {duration:140,iterations:t*2});
   fanfare(t);
-  const hold=[1000,1300,1800,2600,3600][t];
-  return new Promise(r=>setTimeout(()=>{ R.classList.remove("show","cine"); r(); },hold));
+  const hold=(S.fast?400:1)*[0,0,1500,2200,3200,4600][t]||1500;
+  return new Promise(r=>setTimeout(()=>{R.classList.remove("show","cine");revAura=null;r()},
+    S.fast?Math.min(hold,700):hold));
 }
 
 /* ---------------- feed ---------------- */
-function feed(a,kind){
+function feedRaw(title,sub,color){
   const d=document.createElement("div");
-  d.className="fi"; d.style.borderLeftColor=a.c[0];
-  d.innerHTML=kind==="biome"
-    ? `<b style="color:${a.c[0]}">${a.n}</b><span>biome shift</span>`
-    : `<b style="color:${a.c[0]}">${a.n}</b><span>1 in ${fmt(a.o)}</span>`;
+  d.className="fi"; d.style.borderLeftColor=color;
+  d.innerHTML=`<b style="color:${color}">${title}</b><span>${sub}</span>`;
   $("feed").prepend(d);
-  while($("feed").children.length>9) $("feed").lastChild.remove();
-  setTimeout(()=>{ d.style.transition="opacity .5s"; d.style.opacity="0"; },7000);
+  while($("feed").children.length>11) $("feed").lastChild.remove();
+  setTimeout(()=>{d.style.transition="opacity .5s";d.style.opacity="0"},7000);
   setTimeout(()=>d.remove(),7600);
 }
+const feed=a=>feedRaw(a.n,"1 in "+fmt(a.o),a.c[0]);
 
-/* ---------------- a single roll ---------------- */
+/* ---------------- a roll ---------------- */
 let cdUntil=0;
 async function doRoll(){
   if(spinning) return;
   spinning=true; $("rollBtn").disabled=true;
   const a=rollAura(), t=tierOf(a.o);
-  await spin(a, [2600,3200,3900,4800,6000][t]);
-  S.rolls++;
-  S.inv[a.id]=(S.inv[a.id]||0)+1;
-  S.shards+=shardsFor(a.o);
+  await spin(a, S.fast?420:[2200,2800,3500,4300,5200,6400][t]);
+  S.rolls++; S.inv[a.id]=(S.inv[a.id]||0)+1; S.shards+=shardsFor(a.o);
   if(!S.rarest||a.o>BY_ID[S.rarest].o) S.rarest=a.id;
-  // first of its kind equips itself, so the background reacts immediately
-  if(S.inv[a.id]===1 && (!S.equipped||a.o>=BY_ID[S.equipped].o)) S.equipped=a.id;
+  if(S.inv[a.id]===1&&(!S.equipped||a.o>=BY_ID[S.equipped].o)) S.equipped=a.id;
   feed(a); save(); paint();
   await reveal(a);
-  cdUntil=Date.now()+cooldown();
-  spinning=false; paint();
-  if(S.auto) setTimeout(()=>{ if(S.auto&&!spinning) doRoll(); }, cooldown()+60);
+  cdUntil=Date.now()+cooldown(); spinning=false; paint();
+  if(S.auto) setTimeout(()=>{if(S.auto&&!spinning)doRoll()},cooldown()+40);
 }
 
 /* ---------------- paint ---------------- */
+let previewId=null;
+const shown=()=>BY_ID[previewId]||BY_ID[S.equipped]||null;
 function paint(){
   $("sRolls").textContent=fmt(S.rolls);
-  $("sLuck").textContent=luck().toFixed(2)+"x";
+  $("sLuck").textContent=fmtLuck(luck())+"x";
   $("sLuck").style.color=luck()>1?"var(--gold)":"";
   $("sShards").textContent=fmt(S.shards);
-  $("sIndex").textContent=owned()+"/"+AURAS.length;
+  $("sIndex").textContent=owned()+"/"+N_AURAS;
   $("biomeName").textContent=S.biome;
   $("biomeName").style.color=biome().tint;
-  const a=S.equipped?BY_ID[S.equipped]:null;
-  $("eqName").textContent=a?a.n:"Nothing equipped";
-  $("eqOdds").textContent=a?("1 IN "+fmt(a.o)):"roll to begin";
-  $("eqOrb").style.background=a?`radial-gradient(circle at 34% 30%,${a.c[0]},${a.c[1]})`:"#1a1a26";
-  $("eqOrb").style.boxShadow=a?`0 0 22px ${a.c[0]}88`:"none";
+  const a=shown();
+  $("showName").textContent=a?a.n:"Nothing equipped";
+  $("showName").style.color=a?a.c[0]:"";
+  $("showMeta").textContent=a
+    ?("1 IN "+fmt(a.o)+" · "+TIERNAME[tierOf(a.o)].toUpperCase()+(a.b?" · "+a.b:"")
+      +(previewId&&previewId!==S.equipped?" · PREVIEW":""))
+    :"roll to begin";
+  $("showFx").textContent=a?("effect: "+a.fx):"";
   const now=Date.now();
   $("fx").innerHTML=S.effects.filter(e=>e.until>now).map(e=>{
     const p=POTIONS.find(x=>x.id===e.id)||{n:e.id};
-    return `<div class="fx">${p.n} &middot; ${Math.ceil((e.until-now)/1000)}s</div>`;
-  }).join("");
-  $("rarest").innerHTML = S.rarest
-    ? `rarest pull &middot; <b>${BY_ID[S.rarest].n}</b> at 1 in ${fmt(BY_ID[S.rarest].o)}`
-    : "nothing pulled yet";
+    return `<div class="fxp">${p.n} &middot; ${Math.ceil((e.until-now)/1000)}s</div>`}).join("");
   $("btnAuto").classList.toggle("on",S.auto);
+  $("btnFast").classList.toggle("on",S.fast);
   $("btnMute").textContent=S.muted?"MUTED":"SOUND";
   $("btnMute").classList.toggle("on",!S.muted);
 }
 
-/* ---------------- index ---------------- */
-function openIndex(){
-  const g=$("idxGrid"); g.innerHTML="";
-  for(const a of AURAS){
+/* ---------------- index ----------------
+   700 cards is more than a grid wants to hold at once, so it renders in
+   pages of 240 behind a search box and a filter. */
+const PAGE=240; let idxShown=PAGE;
+function idxList(){
+  const q=$("idxQ").value.trim().toLowerCase(), f=$("idxF").value;
+  return AURAS.filter(a=>{
+    if(q&&!a.n.toLowerCase().includes(q)) return false;
+    if(f==="owned") return !!S.inv[a.id];
+    if(f==="missing") return !S.inv[a.id];
+    if(f==="biome") return !!a.b;
+    return true;
+  });
+}
+function renderIndex(){
+  const list=idxList(), g=$("idxGrid");
+  g.innerHTML="";
+  const frag=document.createDocumentFragment();
+  for(const a of list.slice(0,idxShown)){
     const have=S.inv[a.id]|0;
     const d=document.createElement("div");
     d.className="card"+(have?"":" locked")+(S.equipped===a.id?" eq":"");
@@ -543,43 +695,50 @@ function openIndex(){
     d.innerHTML=`${have?`<div class="cc">x${fmt(have)}</div>`:""}
       <div class="cn">${have?a.n:"???"}</div>
       <div class="co">1 in ${fmt(a.o)}${a.b?" &middot; "+a.b:""}</div>`;
-    if(have) d.onclick=()=>{ S.equipped=a.id; save(); paint(); openIndex(); tone(700,0.12,"sine",0.05); };
-    g.appendChild(d);
+    if(have) d.onclick=()=>{
+      if(previewId===a.id){ S.equipped=a.id; previewId=null; tone(760,.14,"sine",.05); }
+      else { previewId=a.id; tone(640,.1,"sine",.04); }
+      save(); paint(); renderIndex();
+    };
+    frag.appendChild(d);
   }
-  $("idxPct").textContent=Math.round(owned()/AURAS.length*100)+"% complete"+
-    (S.rarest?" · rarest: "+BY_ID[S.rarest].n:"");
-  $("mIndex").classList.add("show");
+  g.appendChild(frag);
+  $("idxMore").innerHTML = list.length>idxShown
+    ? `<button class="btn" id="moreBtn">SHOW MORE (${fmt(list.length-idxShown)} left)</button>`
+    : `<span style="font-size:11px;color:var(--dim)">${fmt(list.length)} shown</span>`;
+  const mb=$("moreBtn"); if(mb) mb.onclick=()=>{idxShown+=PAGE;renderIndex()};
+  $("idxPct").textContent=(owned()/N_AURAS*100).toFixed(1)+"% · click to preview, again to equip";
 }
+function openIndex(){ idxShown=PAGE; renderIndex(); $("mIndex").classList.add("show"); }
+$("idxQ").oninput=()=>{idxShown=PAGE;renderIndex()};
+$("idxF").onchange=()=>{idxShown=PAGE;renderIndex()};
 
 /* ---------------- shop ---------------- */
 function openShop(){
   const b=$("shopBody"); b.innerHTML="";
   $("shopShards").textContent=fmt(S.shards)+" shards";
   for(const p of POTIONS){
-    const active=S.effects.find(e=>e.id===p.id&&e.until>Date.now());
-    const row=document.createElement("div");
-    row.className="shopRow";
+    const act=S.effects.find(e=>e.id===p.id&&e.until>Date.now());
+    const row=document.createElement("div"); row.className="shopRow";
     row.innerHTML=`<div class="si"><b>${p.n}</b><span>${p.d}</span></div>`;
-    const btn=document.createElement("button");
-    btn.className="btn";
-    btn.textContent=active?Math.ceil((active.until-Date.now())/1000)+"s":fmt(p.cost);
-    btn.disabled=!!active||S.shards<p.cost;
+    const btn=document.createElement("button"); btn.className="btn";
+    btn.textContent=act?Math.ceil((act.until-Date.now())/1000)+"s":fmt(p.cost);
+    btn.disabled=!!act||S.shards<p.cost;
     if(btn.disabled) btn.style.opacity=".45";
     btn.onclick=()=>{
       if(S.shards<p.cost) return;
-      S.shards-=p.cost;
-      S.effects=S.effects.filter(e=>e.id!==p.id);
+      S.shards-=p.cost; S.effects=S.effects.filter(e=>e.id!==p.id);
       S.effects.push({id:p.id,luck:p.luck,haste:p.haste,until:Date.now()+p.ms});
-      save(); paint(); openShop(); tone(880,0.25,"triangle",0.06);
+      save(); paint(); openShop(); tone(880,.25,"triangle",.06);
     };
     row.appendChild(btn); b.appendChild(row);
   }
-  const note=document.createElement("div");
-  note.style.cssText="font-size:11px;color:var(--dim);margin-top:10px;line-height:1.6";
-  note.textContent="Shards come from every roll, scaled to how rare it was. "+
-    "Luck multiplies your chance at every tier at once, so a potion is worth "+
-    "saving for a rare biome.";
-  b.appendChild(note);
+  const n=document.createElement("div");
+  n.style.cssText="font-size:11px;color:var(--dim);margin-top:10px;line-height:1.7";
+  n.innerHTML="Luck multiplies your chance at every tier at once, and the multipliers stack, "+
+    "so drinking two at once is the only realistic route to the deep end of the table.<br>"+
+    "Every 500 rolls also adds a permanent +0.5x.";
+  b.appendChild(n);
   $("mShop").classList.add("show");
 }
 
@@ -587,41 +746,61 @@ function openShop(){
 $("rollBtn").onclick=()=>doRoll();
 $("btnIndex").onclick=openIndex;
 $("btnShop").onclick=openShop;
-$("btnAuto").onclick=()=>{ S.auto=!S.auto; paint();
-  if(S.auto&&!spinning&&Date.now()>=cdUntil) doRoll(); };
-$("btnMute").onclick=()=>{ S.muted=!S.muted; save(); paint(); };
-document.querySelectorAll("[data-close]").forEach(b=>
-  b.onclick=()=>document.querySelectorAll(".modal").forEach(m=>m.classList.remove("show")));
-document.querySelectorAll(".modal").forEach(m=>
-  m.onclick=e=>{ if(e.target===m) m.classList.remove("show"); });
+$("btnAuto").onclick=()=>{S.auto=!S.auto;paint();if(S.auto&&!spinning&&Date.now()>=cdUntil)doRoll()};
+$("btnFast").onclick=()=>{S.fast=!S.fast;save();paint()};
+$("btnMute").onclick=()=>{S.muted=!S.muted;save();paint()};
+document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>
+  document.querySelectorAll(".modal").forEach(m=>m.classList.remove("show")));
+document.querySelectorAll(".modal").forEach(m=>m.onclick=e=>{
+  if(e.target===m) m.classList.remove("show")});
 addEventListener("keydown",e=>{
-  if(e.code==="Space"){ e.preventDefault();
-    if(!spinning&&Date.now()>=cdUntil) doRoll(); }
-  if(e.key==="Escape") document.querySelectorAll(".modal").forEach(m=>m.classList.remove("show"));
+  // Escape is handled before the input guard: typing in the index search box
+  // should still let you back out of the modal
+  if(e.key==="Escape"){
+    e.target.blur&&e.target.blur(); previewId=null; paint();
+    document.querySelectorAll(".modal").forEach(m=>m.classList.remove("show"));
+    return;
+  }
+  if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT") return;
+  if(e.code==="Space"){e.preventDefault();if(!spinning&&Date.now()>=cdUntil)doRoll()}
   if(e.key==="i"||e.key==="I") openIndex();
 });
 
-/* ---------------- main loop ---------------- */
+/* ---------------- loop ---------------- */
+const show=$("show"), sx=show.getContext("2d");
 const cdFill=document.querySelector("#cdBar i");
+function fitShow(){
+  const L=document.querySelector(".left");
+  const w=clamp(L.clientWidth-8,240,560), h=clamp(L.clientHeight-130,180,380);
+  show.width=w; show.height=h; show.style.width=w+"px"; show.style.height=h+"px";
+}
+addEventListener("resize",fitShow);
 function loop(t){
   drawBg(t);
+  paintShowcase(sx,show.width,show.height,shown(),t);
+  if(revAura){ rvx.clearRect(0,0,260,260); paintShowcase(rvx,260,260,revAura,t); }
   if(Date.now()>S.biomeEnd) rollBiome();
   const left=Math.max(0,S.biomeEnd-Date.now());
-  $("biomeT").textContent=Math.floor(left/60000)+":"+
-    String(Math.floor(left/1000)%60).padStart(2,"0");
+  $("biomeT").textContent=Math.floor(left/60000)+":"+String(Math.floor(left/1000)%60).padStart(2,"0");
   S.effects=S.effects.filter(e=>e.until>Date.now());
-  if(t-(loop.last||0)>500){ loop.last=t; paint(); }
+  if(t-(loop.last||0)>500){loop.last=t;paint()}
   if(!spinning){
     const rem=cdUntil-Date.now();
-    if(rem>0){ cdFill.style.width=(100-rem/cooldown()*100)+"%"; $("rollBtn").disabled=true; }
-    else { cdFill.style.width="0%"; $("rollBtn").disabled=false; }
+    if(rem>0){cdFill.style.width=(100-rem/cooldown()*100)+"%";$("rollBtn").disabled=true}
+    else{cdFill.style.width="0%";$("rollBtn").disabled=false}
   }
   requestAnimationFrame(loop);
 }
-buildStrip(AURAS[0]);
-reel.style.transform=`translateX(${reelWrap.clientWidth/2-TILE/2-STEP*3}px)`;
-paint();
-requestAnimationFrame(loop);
+fitShow(); buildStrip(AURAS[0]);
+/* park the strip deep enough that tiles fill the whole width at rest, not
+   just the right half */
+function parkReel(){
+  const c=reelWrap.clientWidth/2;
+  const k=Math.min(STRIP-6,Math.max(3,Math.ceil(c/STEP)+1));
+  reel.style.transform=`translateX(${c-TILE/2-k*STEP}px)`;
+}
+parkReel(); addEventListener("resize",parkReel);
+paint(); requestAnimationFrame(loop);
 </script>
 </body>
 </html>

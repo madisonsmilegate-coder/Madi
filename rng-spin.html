@@ -69,7 +69,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hi
  letter-spacing:1.1px;color:var(--gold);background:rgba(255,200,87,.08)}
 
 /* ---------- reveal ---------- */
-#cut{position:fixed;inset:0;z-index:34;display:none;pointer-events:none}
+#cut{position:fixed;inset:0;width:100%;height:100%;z-index:34;display:none;
+  pointer-events:none}
 #cut.show{display:block}
 #reveal{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;
  flex-direction:column;gap:8px;pointer-events:none}
@@ -1601,161 +1602,345 @@ async function reveal(a){
    quality of the star is itself the readout of what you pulled.
    ========================================================================== */
 const cutCv=$("cut"), cx2=cutCv.getContext("2d");
-function cutTier(o){ return o>=1e9?5 : o>=1e7?4 : o>=5e5?3 : o>=8e4?2 : o>=5e3?1 : 0; }
 
-/* A star built in layers. `q` is 1..4 and each step adds construction rather
-   than just scaling the last one up. */
-function drawStar(x,W,H,a,t,q,grow){
-  const cx=W/2, cy=H/2, R=Math.min(W,H)*0.5;
-  const c0=a.c[0], c1=a.c[1];
-  const g0=clamp(grow,0,1), pulse=0.92+Math.sin(t*0.006)*0.08;
-  const core=R*0.075*g0*pulse, reach=R*(0.42+q*0.17)*g0;
-  x.save(); x.globalCompositeOperation="lighter";
+/* easing - every transition in the cutscene runs through one of these rather
+   than a raw ratio, which is most of what "smooth" actually means here */
+const easeOutCubic =p=>1-Math.pow(1-p,3);
+const easeInOutSine=p=>-(Math.cos(Math.PI*p)-1)/2;
+const easeOutExpo  =p=>p>=1?1:1-Math.pow(2,-9*p);
+const easeOutBack  =p=>{const c=1.4;return 1+(c+1)*Math.pow(p-1,3)+c*Math.pow(p-1,2)};
+const span=(p,a,b)=>clamp((p-a)/(b-a),0,1);
 
-  // god rays behind everything, from q3
-  if(q>=3){
-    x.globalAlpha=0.13*g0;
-    for(let i=0;i<22;i++){
-      const an=t*0.00016+i/22*TAU, len=reach*(1.5+0.5*Math.sin(i*3+t*0.001));
-      const g=x.createLinearGradient(cx,cy,cx+Math.cos(an)*len,cy+Math.sin(an)*len);
-      g.addColorStop(0,c0); g.addColorStop(1,"transparent");
-      x.strokeStyle=g; x.lineWidth=10+(i%3)*9;
-      x.beginPath(); x.moveTo(cx,cy); x.lineTo(cx+Math.cos(an)*len,cy+Math.sin(an)*len); x.stroke();
+/* ==========================================================================
+   STAR TYPES
+   Not one star with more layers bolted on at each step: ten different stars.
+   What ignites tells you the bracket at a glance, before the number appears.
+   ========================================================================== */
+function spikes(x,cx,cy,n,len,wid,rot,c0,c1,g,longEvery){
+  for(let i=0;i<n;i++){
+    const an=rot+i/n*TAU;
+    const L=len*((longEvery&&i%longEvery===0)?1:0.54);
+    const gr=x.createLinearGradient(cx,cy,cx+Math.cos(an)*L,cy+Math.sin(an)*L);
+    gr.addColorStop(0,"#ffffff"); gr.addColorStop(.1,c0);
+    gr.addColorStop(.5,c1); gr.addColorStop(1,"transparent");
+    x.strokeStyle=gr; x.lineWidth=wid*g; x.lineCap="round";
+    x.beginPath(); x.moveTo(cx,cy); x.lineTo(cx+Math.cos(an)*L,cy+Math.sin(an)*L); x.stroke();
+  }
+}
+function coreGlow(x,cx,cy,r,c0,c1,g){
+  const cg=x.createRadialGradient(cx,cy,0,cx,cy,r);
+  cg.addColorStop(0,"#ffffff"); cg.addColorStop(.15,c0);
+  cg.addColorStop(.45,c1); cg.addColorStop(1,"transparent");
+  x.globalAlpha=g; x.fillStyle=cg;
+  x.beginPath(); x.arc(cx,cy,r,0,TAU); x.fill();
+}
+
+const STAR_TYPES=[
+{min:5e3, name:"SPARK", dur:2000, draw(x,W,H,a,t,g){
+  // barely a star: one point, a hair cross, a slow twinkle
+  const cx=W/2,cy=H/2,R=Math.min(W,H)*0.5, c0=a.c[0],c1=a.c[1];
+  const tw=0.72+Math.sin(t*0.004)*0.28;
+  spikes(x,cx,cy,4,R*0.2*g*tw,2.6,Math.PI/4,c0,c1,g,0);
+  coreGlow(x,cx,cy,R*0.085*g*tw,c0,c1,g);
+}},
+
+{min:5e4, name:"GLIMMER", dur:2600, draw(x,W,H,a,t,g){
+  // the classic four-point, softened, with one slow halo
+  const cx=W/2,cy=H/2,R=Math.min(W,H)*0.5, c0=a.c[0],c1=a.c[1];
+  const tw=0.88+Math.sin(t*0.0026)*0.12;
+  x.globalAlpha=g*0.3; x.strokeStyle=c1; x.lineWidth=1.4;
+  x.beginPath(); x.arc(cx,cy,R*0.26*g,0,TAU); x.stroke();
+  x.globalAlpha=g;
+  spikes(x,cx,cy,4,R*0.46*g*tw,5,t*0.00008,c0,c1,g,1);
+  spikes(x,cx,cy,4,R*0.2*g*tw,3,t*0.00008+Math.PI/4,c0,c1,g,1);
+  coreGlow(x,cx,cy,R*0.13*g*tw,c0,c1,g);
+}},
+
+{min:1.5e5, name:"CRYSTAL", dur:3000, draw(x,W,H,a,t,g){
+  // faceted: six solid diamond rays instead of soft gradients
+  const cx=W/2,cy=H/2,R=Math.min(W,H)*0.5, c0=a.c[0],c1=a.c[1];
+  const rot=t*0.00016;
+  for(let i=0;i<6;i++){
+    const an=rot+i/6*TAU, L=R*(i%2?0.34:0.56)*g, w=R*0.045*g;
+    x.save(); x.translate(cx,cy); x.rotate(an);
+    const gr=x.createLinearGradient(0,0,L,0);
+    gr.addColorStop(0,"#ffffff"); gr.addColorStop(.35,c0); gr.addColorStop(1,c1+"00");
+    x.fillStyle=gr; x.globalAlpha=g*0.95;
+    x.beginPath(); x.moveTo(0,0); x.lineTo(L*0.3,-w); x.lineTo(L,0); x.lineTo(L*0.3,w);
+    x.closePath(); x.fill();
+    x.restore();
+  }
+  // facet outline
+  x.globalAlpha=g*0.5; x.strokeStyle="#ffffff"; x.lineWidth=1.2;
+  x.beginPath();
+  for(let i=0;i<=6;i++){ const an=rot+i/6*TAU, rr=R*0.17*g;
+    i?x.lineTo(cx+Math.cos(an)*rr,cy+Math.sin(an)*rr):x.moveTo(cx+Math.cos(an)*rr,cy+Math.sin(an)*rr); }
+  x.closePath(); x.stroke();
+  coreGlow(x,cx,cy,R*0.16*g,c0,c1,g);
+}},
+
+{min:5e5, name:"NOVA", dur:3400, draw(x,W,H,a,t,g){
+  // eight points and a shockwave that keeps leaving
+  const cx=W/2,cy=H/2,R=Math.min(W,H)*0.5, c0=a.c[0],c1=a.c[1];
+  const sw=(t*0.00055)%1;
+  x.globalAlpha=(1-sw)*g*0.7; x.strokeStyle=c0; x.lineWidth=(1-sw)*7+1;
+  x.beginPath(); x.arc(cx,cy,R*sw*1.15*g,0,TAU); x.stroke();
+  x.globalAlpha=g*0.34; x.strokeStyle=c1; x.lineWidth=1.6;
+  for(let i=0;i<2;i++){ x.beginPath(); x.arc(cx,cy,R*(0.22+i*0.13)*g,0,TAU); x.stroke(); }
+  x.globalAlpha=g;
+  spikes(x,cx,cy,8,R*0.66*g,7,t*0.00012,c0,c1,g,2);
+  coreGlow(x,cx,cy,R*0.2*g,c0,c1,g);
+}},
+
+{min:1e6, name:"PULSAR", dur:3800, draw(x,W,H,a,t,g){
+  // a lighthouse: two opposed beams sweeping, rings pulsing out in time
+  const cx=W/2,cy=H/2,R=Math.min(W,H)*0.5, c0=a.c[0],c1=a.c[1];
+  const sweep=t*0.0011;
+  for(const s2 of [0,Math.PI]){
+    const an=sweep+s2;
+    x.save(); x.translate(cx,cy); x.rotate(an);
+    const gr=x.createLinearGradient(0,0,R*1.5*g,0);
+    gr.addColorStop(0,"#ffffff"); gr.addColorStop(.12,c0);
+    gr.addColorStop(.6,c1+"88"); gr.addColorStop(1,"transparent");
+    x.fillStyle=gr; x.globalAlpha=g*0.85;
+    x.beginPath(); x.moveTo(0,0);
+    x.lineTo(R*1.5*g, -R*0.17*g); x.lineTo(R*1.5*g, R*0.17*g); x.closePath(); x.fill();
+    x.restore();
+  }
+  for(let i=0;i<4;i++){
+    const ph=((t*0.0007+i/4)%1);
+    x.globalAlpha=(1-ph)*g*0.55; x.strokeStyle=i%2?c0:c1; x.lineWidth=2.6;
+    x.beginPath(); x.ellipse(cx,cy,R*ph*0.95*g,R*ph*0.3*g,0,0,TAU); x.stroke();
+  }
+  x.globalAlpha=g;
+  spikes(x,cx,cy,4,R*0.3*g,5,sweep,c0,c1,g,1);
+  coreGlow(x,cx,cy,R*0.17*g*(0.9+Math.sin(t*0.012)*0.1),c0,c1,g);
+}},
+
+{min:1e7, name:"PRISM", dur:4200, draw(x,W,H,a,t,g){
+  // the light splits: three offset spike sets that recombine to white
+  const cx=W/2,cy=H/2,R=Math.min(W,H)*0.5;
+  const rot=t*0.00013;
+  const chans=[["#ff2b4d",-0.045],["#2bff8a",0],["#2b8aff",0.045]];
+  for(const [col,off] of chans){
+    x.globalAlpha=g*0.62;
+    for(let i=0;i<6;i++){
+      const an=rot+off+i/6*TAU, L=R*0.72*g*(i%2?0.56:1);
+      const gr=x.createLinearGradient(cx,cy,cx+Math.cos(an)*L,cy+Math.sin(an)*L);
+      gr.addColorStop(0,"#ffffff"); gr.addColorStop(.18,col); gr.addColorStop(1,"transparent");
+      x.strokeStyle=gr; x.lineWidth=7*g; x.lineCap="round";
+      x.beginPath(); x.moveTo(cx,cy); x.lineTo(cx+Math.cos(an)*L,cy+Math.sin(an)*L); x.stroke();
     }
   }
-  // halo rings, from q2; chromatic separation from q4
-  if(q>=2){
-    const rings=q>=4?4:2;
-    for(let i=0;i<rings;i++){
-      const rr=reach*(0.30+i*0.17)*(1+Math.sin(t*0.0018+i)*0.035);
-      x.globalAlpha=(0.34-i*0.06)*g0;
-      x.strokeStyle=q>=4?[c0,"#ff6b8a","#6bd5ff",c1][i%4]:(i%2?c0:c1);
-      x.lineWidth=q>=4?2.2:1.6;
-      x.beginPath(); x.arc(cx,cy,rr,0,TAU); x.stroke();
-    }
+  for(let i=0;i<6;i++){                               // spectrum ring
+    x.globalAlpha=g*0.42; x.strokeStyle=`hsl(${(i*60+t*0.04)%360} 95% 62%)`;
+    x.lineWidth=2.4;
+    x.beginPath(); x.arc(cx,cy,R*(0.26+i*0.028)*g,i*1.05,i*1.05+1.5); x.stroke();
   }
-  // diffraction spikes: 4 at q1, then +2 per step, with a counter-rotating set at q3+
-  const spikes=4+(q-1)*2;
-  const spin=t*0.00012;
-  for(let pass=0; pass<(q>=3?2:1); pass++){
-    const rot=spin*(pass?-1.7:1), lenMul=pass?0.62:1, wid=pass?0.5:1;
-    for(let i=0;i<spikes;i++){
-      const an=rot+i/spikes*TAU;
-      const long=(i%2===0)?1:0.52;
-      const len=reach*long*lenMul*(0.94+Math.sin(t*0.004+i)*0.06);
-      const g=x.createLinearGradient(cx,cy,cx+Math.cos(an)*len,cy+Math.sin(an)*len);
-      g.addColorStop(0,"#ffffff"); g.addColorStop(0.12,c0);
-      g.addColorStop(0.55,c1); g.addColorStop(1,"transparent");
-      x.globalAlpha=0.9*g0;
-      x.strokeStyle=g; x.lineWidth=(core*0.55*wid)*(long>0.6?1:0.6)+1.2;
-      x.lineCap="round";
-      x.beginPath(); x.moveTo(cx,cy); x.lineTo(cx+Math.cos(an)*len,cy+Math.sin(an)*len); x.stroke();
-    }
+  coreGlow(x,cx,cy,R*0.19*g,"#ffffff",a.c[0],g);
+}},
+
+{min:2e7, name:"SUPERNOVA", dur:4800, draw(x,W,H,a,t,g){
+  // it is coming apart: shockwave plus debris thrown clear
+  const cx=W/2,cy=H/2,R=Math.min(W,H)*0.5, c0=a.c[0],c1=a.c[1];
+  const sw=(t*0.00042)%1, e=easeOutCubic(sw);
+  const rg=x.createRadialGradient(cx,cy,R*e*0.78*g,cx,cy,R*e*1.25*g);
+  rg.addColorStop(0,"transparent"); rg.addColorStop(.6,c0+"aa"); rg.addColorStop(1,"transparent");
+  x.globalAlpha=(1-sw)*g; x.fillStyle=rg;
+  x.beginPath(); x.arc(cx,cy,R*e*1.25*g,0,TAU); x.fill();
+  for(let i=0;i<38;i++){                               // debris
+    const an=i*2.399*1.4+t*0.0001, ph=((t*0.0006+((i*37)%100)/100)%1), d=easeOutCubic(ph);
+    x.globalAlpha=(1-ph)*g*0.9; x.fillStyle=i%3?c0:"#fff";
+    const px=cx+Math.cos(an)*R*d*1.1*g, py=cy+Math.sin(an)*R*d*1.1*g;
+    x.save(); x.translate(px,py); x.rotate(an);
+    x.fillRect(-(2+ph*8),-1.4,(4+ph*16),2.8); x.restore();
   }
-  // lens ghosts along the optical axis, from q3
-  if(q>=3){
-    for(let i=1;i<=5;i++){
-      const d=(i-2.5)*reach*0.26, rr=reach*0.055*(1+i*0.22);
-      x.globalAlpha=0.16*g0;
-      x.fillStyle=[c0,c1,"#ffd9a0","#a0d9ff",c0][i%5];
-      x.beginPath(); x.arc(cx+d*0.8,cy+d*0.42,rr,0,TAU); x.fill();
-    }
+  x.globalAlpha=g;
+  spikes(x,cx,cy,12,R*0.9*g,8,t*0.00009,c0,c1,g,2);
+  coreGlow(x,cx,cy,R*0.26*g*(0.94+Math.sin(t*0.009)*0.06),c0,c1,g);
+}},
+
+{min:1e8, name:"ECLIPSE", dur:5200, draw(x,W,H,a,t,g){
+  // a black sun: the core is absence, the ring is everything
+  const cx=W/2,cy=H/2,R=Math.min(W,H)*0.5, c0=a.c[0],c1=a.c[1];
+  const r0=R*0.2*g;
+  const cor=x.createRadialGradient(cx,cy,r0*0.98,cx,cy,r0*3.3);
+  cor.addColorStop(0,"#ffffff"); cor.addColorStop(.08,c0);
+  cor.addColorStop(.42,c1+"77"); cor.addColorStop(1,"transparent");
+  x.globalAlpha=g; x.fillStyle=cor;
+  x.beginPath(); x.arc(cx,cy,r0*3.3,0,TAU); x.fill();
+  for(let i=0;i<30;i++){                               // prominences
+    const an=i*2.399+t*0.00022, L=r0*(1.08+Math.abs(Math.sin(t*0.0016+i))*0.5);
+    x.globalAlpha=g*0.75; x.strokeStyle=c0; x.lineWidth=3.2;
+    x.beginPath(); x.moveTo(cx+Math.cos(an)*r0,cy+Math.sin(an)*r0);
+    x.quadraticCurveTo(cx+Math.cos(an+0.1)*L*1.1,cy+Math.sin(an+0.1)*L*1.1,
+                       cx+Math.cos(an+0.22)*r0,cy+Math.sin(an+0.22)*r0);
+    x.stroke();
   }
-  // sparkles, from q4
-  if(q>=4){
-    for(let i=0;i<40;i++){
-      const an=i*2.399+t*0.0005, rr=reach*(0.2+((i*37)%100)/100*0.95);
-      const tw=Math.abs(Math.sin(t*0.004+i*1.7));
-      x.globalAlpha=tw*0.85*g0; x.fillStyle=i%3?"#fff":c0;
-      const sx=cx+Math.cos(an)*rr, sy=cy+Math.sin(an)*rr, sz=1+tw*2.4;
-      x.fillRect(sx-sz/2,sy-0.5,sz,1); x.fillRect(sx-0.5,sy-sz/2,1,sz);
-    }
+  spikes(x,cx,cy,6,R*0.8*g,5,t*0.00007,c0,c1,g*0.7,1);
+}, occlude(x,W,H,a,t,g){
+  // the dark core is cut after the additive layers are composited: "lighter"
+  // cannot darken, so punching it earlier just leaves a hole for whatever is
+  // behind to shine through
+  const cx=W/2,cy=H/2,r0=Math.min(W,H)*0.5*0.2*g;
+  x.fillStyle="#000"; x.beginPath(); x.arc(cx,cy,r0,0,TAU); x.fill();
+  x.globalCompositeOperation="lighter";
+  x.globalAlpha=g; x.strokeStyle="#fff"; x.lineWidth=2.4;
+  x.beginPath(); x.arc(cx,cy,r0,0,TAU); x.stroke();
+}},
+
+{min:1e9, name:"SINGULARITY", dur:5800, draw(x,W,H,a,t,g){
+  // an accretion disc winding into something that gives nothing back
+  const cx=W/2,cy=H/2,R=Math.min(W,H)*0.5, c0=a.c[0],c1=a.c[1];
+  const r0=R*0.13*g;
+  x.save(); x.translate(cx,cy); x.rotate(-0.42);
+  for(let i=0;i<96;i++){
+    const u=i/96, ph=((t*0.0009+u)%1);
+    const rr=(r0*1.25+(1-ph)*R*0.78*g);
+    const an=u*TAU*2.4+ph*5.4+t*0.0011;
+    x.globalAlpha=g*(0.22+(1-ph)*0.72);
+    x.fillStyle=ph<0.35?"#ffffff":(i%2?c0:c1);
+    const px=Math.cos(an)*rr, py=Math.sin(an)*rr*0.3;
+    x.beginPath(); x.arc(px,py,(1-ph)*3.4+0.9,0,TAU); x.fill();
   }
-  // the core last, so it sits on top of its own spikes
-  const cg=x.createRadialGradient(cx,cy,0,cx,cy,core*4.2);
-  cg.addColorStop(0,"#ffffff"); cg.addColorStop(0.16,c0);
-  cg.addColorStop(0.46,c1); cg.addColorStop(1,"transparent");
-  x.globalAlpha=g0; x.fillStyle=cg;
-  x.beginPath(); x.arc(cx,cy,core*4.2,0,TAU); x.fill();
+  x.globalAlpha=g*0.6; x.strokeStyle=c0; x.lineWidth=2;   // lensing arc over the top
+  x.beginPath(); x.arc(0,0,r0*1.9,Math.PI*1.08,Math.PI*1.92); x.stroke();
   x.restore();
+  coreGlow(x,cx,cy,r0*2.6,c0,c1,g*0.8);
+}, occlude(x,W,H,a,t,g){
+  const cx=W/2,cy=H/2,r0=Math.min(W,H)*0.5*0.13*g;
+  x.fillStyle="#000"; x.beginPath(); x.arc(cx,cy,r0,0,TAU); x.fill();
+}},
+
+{min:1e10, name:"GENESIS", dur:7000, draw(x,W,H,a,t,g){
+  // a galaxy forming, and then the light that made it
+  const cx=W/2,cy=H/2,R=Math.min(W,H)*0.5, c0=a.c[0],c1=a.c[1];
+  x.save(); x.translate(cx,cy); x.rotate(t*0.00014);
+  for(let arm=0;arm<4;arm++){
+    for(let i=0;i<68;i++){
+      const u=i/68, an=arm/4*TAU+u*2.3, rr=u*R*1.05*g;
+      const wob=Math.sin(u*14+t*0.001+arm)*0.05;
+      x.globalAlpha=g*(1-u)*0.78;
+      x.fillStyle=u<0.2?"#ffffff":(i%3?c0:c1);
+      x.beginPath();
+      x.arc(Math.cos(an+wob)*rr,Math.sin(an+wob)*rr*0.52,(1-u)*5.4+0.9,0,TAU); x.fill();
+    }
+  }
+  x.restore();
+  x.globalAlpha=g*0.16;                                 // god rays
+  for(let i=0;i<15;i++){
+    const an=t*0.00009+i/15*TAU, L=R*2;
+    const gr=x.createLinearGradient(cx,cy,cx+Math.cos(an)*L,cy+Math.sin(an)*L);
+    gr.addColorStop(0,c0); gr.addColorStop(1,"transparent");
+    x.strokeStyle=gr; x.lineWidth=12+(i%3)*12;
+    x.beginPath(); x.moveTo(cx,cy); x.lineTo(cx+Math.cos(an)*L,cy+Math.sin(an)*L); x.stroke();
+  }
+  x.globalAlpha=g;
+  spikes(x,cx,cy,16,R*1.1*g,9,t*0.00006,c0,c1,g,2);
+  spikes(x,cx,cy,8,R*0.58*g,5,-t*0.00011,"#ffffff",c0,g,1);
+  coreGlow(x,cx,cy,R*0.3*g*(0.95+Math.sin(t*0.006)*0.05),"#ffffff",c0,g);
+}}
+];
+function starFor(o){
+  let k=-1;
+  for(let i=0;i<STAR_TYPES.length;i++) if(o>=STAR_TYPES[i].min) k=i;
+  return k;
+}
+function cutTier(o){ return starFor(o)+1; }        // 0 = no cutscene
+
+/* Flicker eased rather than switched: bursts rise and fall instead of
+   snapping, which is the difference between a strobe and a dying lamp. */
+function flickerAlpha(p){
+  const env=Math.pow(Math.sin(p*Math.PI),0.5);
+  const burst=easeInOutSine(clamp(Math.sin(p*Math.PI*6.5)*0.5+0.5,0,1));
+  const fast=(Math.sin(p*190)*0.5+0.5)*(Math.sin(p*97)*0.5+0.5);
+  return clamp(env*(burst*0.45+fast*0.85),0,1);
 }
 
-/* Flicker that behaves like a failing lamp rather than a square wave: bursts
-   of rapid strobing separated by beats of black. */
-function flickerAlpha(p){
-  const burst=Math.sin(p*Math.PI*7)>0.1 ? 1 : 0.15;
-  const fast=(Math.sin(p*260)*0.5+0.5)*(Math.sin(p*131)*0.5+0.5);
-  return clamp(burst*fast*1.5,0,1);
-}
+/* The cutscene keeps its own trail buffer: the star is drawn into a layer
+   that fades instead of clearing, so sweeps and debris leave smooth arcs
+   rather than stepping frame to frame. */
+let cutTrail=null, cutTx=null;
 function runCutscene(a){
-  const q=cutTier(a.o);
-  if(q===0) return Promise.resolve(false);
-  const DUR=S.skipCut?0:[0,1500,2400,3200,4200,5600][q];
-  if(!DUR) return Promise.resolve(false);
-  const W=cutCv.width=innerWidth, H=cutCv.height=innerHeight;
+  const k=starFor(a.o);
+  if(k<0||S.skipCut) return Promise.resolve(false);
+  const ST=STAR_TYPES[k], DUR=ST.dur;
+  /* Half resolution. Every pixel of this scene is soft glow, gradient or
+     bloom, so halving the backing store is visually indistinguishable and
+     costs a quarter as much to fill - which is the difference between the
+     heaviest star running at 33fps and running at the display rate. */
+  const SS=0.5;
+  const W=cutCv.width=Math.round(innerWidth*SS), H=cutCv.height=Math.round(innerHeight*SS);
+  if(!cutTrail||cutTrail.width!==W||cutTrail.height!==H){
+    cutTrail=document.createElement("canvas"); cutTrail.width=W; cutTrail.height=H;
+    cutTx=cutTrail.getContext("2d");
+  }
+  cutTx.clearRect(0,0,W,H);
   cutCv.classList.add("show");
   const t0=performance.now();
-  // phase boundaries as fractions of the whole
-  const BLACK=0.14, FLICK=q>=2?0.46:0.86;
-  if(!S.muted){ tone(70,0.5,"sawtooth",0.08);
-    setTimeout(()=>tone(a.o>=1e7?55:90,1.2,"sawtooth",0.06),DUR*BLACK*1000/1000); }
+  const BLACK=0.12, FLICK=0.44, XF=0.07;          // crossfade width between phases
+  if(!S.muted){
+    tone(70,0.6,"sawtooth",0.08);
+    setTimeout(()=>tone(k>=6?48:88,1.4,"sawtooth",0.06),DUR*BLACK);
+  }
   return new Promise(res=>{
     (function frame(now){
       const p=clamp((now-t0)/DUR,0,1);
       cx2.globalCompositeOperation="source-over";
-      cx2.fillStyle="#000"; cx2.fillRect(0,0,W,H);
-      if(p<BLACK){
-        // drop to black
-        cx2.globalAlpha=1; cx2.fillRect(0,0,W,H);
-      } else if(p<FLICK){
-        const fp=(p-BLACK)/(FLICK-BLACK);
-        const al=flickerAlpha(fp);
-        if(al>0.02){
-          const g=cx2.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*0.62);
-          g.addColorStop(0,a.c[0]); g.addColorStop(0.55,a.c[1]); g.addColorStop(1,"#000");
-          cx2.globalAlpha=al*0.92; cx2.fillStyle=g; cx2.fillRect(0,0,W,H);
+      cx2.globalAlpha=1; cx2.fillStyle="#000"; cx2.fillRect(0,0,W,H);
+
+      // ---- flicker, fading out across the crossfade rather than cutting ----
+      const fIn=span(p,BLACK,BLACK+0.04), fOut=1-span(p,FLICK-XF,FLICK+XF);
+      if(fOut>0.001&&p>BLACK){
+        const fp=span(p,BLACK,FLICK);
+        const al=flickerAlpha(fp)*fIn*fOut;
+        if(al>0.015){
+          const gr=cx2.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*0.62);
+          gr.addColorStop(0,a.c[0]); gr.addColorStop(0.55,a.c[1]); gr.addColorStop(1,"#000");
+          cx2.globalAlpha=al*0.92; cx2.fillStyle=gr; cx2.fillRect(0,0,W,H);
           const ent=ENTITIES[a.ent];
-          if(ent&&al>0.45){                      // caught in the strobe
-            cx2.save(); cx2.globalCompositeOperation="source-over";
-            cx2.globalAlpha=al*0.5; 
+          if(ent&&al>0.4){
+            cx2.globalAlpha=al*0.5;
             try{ ent(cx2,W,H,{...a,c:["#000","#05050a"]},now,1); }catch(e){}
-            cx2.restore();
           }
-          if(!S.muted&&al>0.85&&Math.random()<0.25) tone(1400+Math.random()*900,0.03,"square",0.03);
+          if(!S.muted&&al>0.86&&Math.random()<0.22) tone(1400+Math.random()*900,0.03,"square",0.03);
         }
         cx2.globalAlpha=1;
-      } else {
-        // the star
-        const sp=(p-FLICK)/(1-FLICK);
-        const grow=clamp(sp*2.4,0,1)*(1-clamp((sp-0.82)/0.18,0,1)*0.25);
-        if(q>=2){
-          /* The entity comes in with the star rather than after it: the star
-             is the light it arrives by. */
-          const ent=ENTITIES[a.ent];
-          if(ent){
-            const ea=clamp((sp-0.12)/0.5,0,1)*(1-clamp((sp-0.86)/0.14,0,1));
-            cx2.save(); cx2.globalCompositeOperation="lighter";
-            const z=0.86+ea*0.2;
-            cx2.translate(W/2,H/2); cx2.scale(z,z); cx2.translate(-W/2,-H/2);
-            try{ ent(cx2,W,H,a,now,ea*0.95); }catch(e){}
-            cx2.restore();
-          }
-          drawStar(cx2,W,H,a,now,Math.min(4,q-1),grow);
-          if(q>=5){                                   // one full-screen wash at the top
-            cx2.globalAlpha=clamp(0.5-Math.abs(sp-0.35)*2,0,1)*0.5;
-            cx2.globalCompositeOperation="lighter";
-            cx2.fillStyle=a.c[0]; cx2.fillRect(0,0,W,H);
-            cx2.globalCompositeOperation="source-over"; cx2.globalAlpha=1;
-          }
-        } else {
-          const g=cx2.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*0.5);
-          g.addColorStop(0,a.c[0]); g.addColorStop(1,"#000");
-          cx2.globalAlpha=(1-sp)*0.55; cx2.fillStyle=g; cx2.fillRect(0,0,W,H);
-          cx2.globalAlpha=1;
-          const ent=ENTITIES[a.ent];
-          if(ent){ cx2.save(); cx2.globalCompositeOperation="lighter";
-            try{ ent(cx2,W,H,a,now,(1-sp)*0.8); }catch(e){} cx2.restore(); }
+      }
+
+      // ---- the star, on its own fading trail layer ----
+      const sIn=span(p,FLICK-XF,FLICK+0.22);
+      if(sIn>0.001){
+        const sp=span(p,FLICK-XF,1);
+        const g=easeOutBack(clamp(sp*1.7,0,1))*(1-span(p,0.9,1)*0.35);
+        cutTx.globalCompositeOperation="destination-out";
+        cutTx.globalAlpha=1; cutTx.fillStyle="rgba(0,0,0,0.26)"; cutTx.fillRect(0,0,W,H);
+        /* Only the star goes through the trail buffer. The entity is drawn
+           straight to the frame: an additive layer that fades by a quarter
+           each frame accumulates whatever is redrawn in place, and a solid
+           entity saturates to white within about four frames. */
+        cutTx.globalCompositeOperation="lighter"; cutTx.globalAlpha=1;
+        cutTx.save();
+        try{ ST.draw(cutTx,W,H,a,now,g); }catch(e){}
+        cutTx.restore();
+
+        const ent=ENTITIES[a.ent];
+        if(ent){
+          const ea=span(sp,0.1,0.55)*(1-span(sp,0.88,1));
+          cx2.save();
+          cx2.globalCompositeOperation="lighter";
+          cx2.globalAlpha=easeOutCubic(sIn)*0.42;
+          const z=0.58+ea*0.12;                    // keep it inside the frame
+          cx2.translate(W/2,H/2); cx2.scale(z,z); cx2.translate(-W/2,-H/2);
+          try{ ent(cx2,W,H,a,now,ea*0.8); }catch(e){}
+          cx2.restore();
         }
+        cx2.globalCompositeOperation="lighter";
+        cx2.globalAlpha=easeOutCubic(sIn);
+        cx2.drawImage(cutTrail,0,0);
+        cx2.globalAlpha=1; cx2.globalCompositeOperation="source-over";
+        if(ST.occlude){ cx2.save();
+          try{ ST.occlude(cx2,W,H,a,now,g); }catch(e){} cx2.restore(); }
       }
       if(p<1) requestAnimationFrame(frame);
       else { cutCv.classList.remove("show"); res(true); }
@@ -2037,9 +2222,10 @@ $("btnAlpha").onclick=()=>{
     $("aBiome").innerHTML=BIOMES.map(b=>`<option>${b.id}</option>`).join("");
   if(!$("aCut").options.length){
     // one representative per cutscene tier, so every variant is reachable
-    const reps=[5e3,8e4,5e5,1e7,1e9].map(min=>AURAS.find(a=>a.o>=min));
-    $("aCut").innerHTML=reps.filter(Boolean).map(a=>
-      `<option value="${a.id}">1 in ${fmt(a.o)} \u2014 ${a.n}</option>`).join("");
+    $("aCut").innerHTML=STAR_TYPES.map(st=>{
+      const a=AURAS.find(x=>x.o>=st.min); if(!a) return "";
+      return `<option value="${a.id}">${st.name} \u00b7 1 in ${fmt(st.min)}</option>`;
+    }).join("");
   }
 };
 document.querySelectorAll("#alpha [data-a]").forEach(btn=>btn.onclick=()=>{

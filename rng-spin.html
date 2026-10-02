@@ -69,6 +69,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hi
  letter-spacing:1.1px;color:var(--gold);background:rgba(255,200,87,.08)}
 
 /* ---------- reveal ---------- */
+#cut{position:fixed;inset:0;z-index:34;display:none;pointer-events:none}
+#cut.show{display:block}
 #reveal{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;
  flex-direction:column;gap:8px;pointer-events:none}
 #reveal.show{display:flex}
@@ -179,6 +181,7 @@ input:focus,select:focus{border-color:var(--acc)}
   </div>
 </div>
 
+<canvas id="cut"></canvas>
 <div id="reveal">
   <div id="revBack"></div><div class="bar t"></div><div class="bar b"></div>
   <div id="revTag"></div><canvas id="revCv" width="260" height="260"></canvas>
@@ -212,9 +215,22 @@ input:focus,select:focus{border-color:var(--acc)}
   <div class="ar"><input id="aGrant" placeholder="grant aura by name" style="flex:1">
     <button class="btn btnA" data-a="grant">GIVE</button></div>
   <div class="ar"><button class="btn btnA" data-a="grantrarest">GRANT ORIGIN (1 in 12.5B)</button></div>
+  <div class="ar"><input id="aLuck" placeholder="set luck multiplier" style="flex:1">
+    <button class="btn btnA" data-a="setluck">SET</button></div>
+  <div class="ar"><input id="aNext" placeholder="force next roll by name" style="flex:1">
+    <button class="btn btnA" data-a="forcenext">ARM</button></div>
+  <div class="ar"><select id="aCut" style="flex:1"></select>
+    <button class="btn btnA" data-a="playcut">PLAY CUTSCENE</button></div>
+  <div class="ar"><button class="btn btnA" data-a="allshiny">ALL RADIANT</button>
+    <button class="btn btnA" data-a="allpotions">ALL POTIONS</button></div>
+  <div class="ar"><button class="btn btnA" data-a="skipcut">TOGGLE CUTSCENES</button>
+    <button class="btn btnA" data-a="freeze">FREEZE BIOME</button></div>
+  <div class="ar"><button class="btn btnA" data-a="rolls">+10,000 ROLLS</button>
+    <button class="btn btnA" data-a="clearlo">CLEAR LOADOUT</button></div>
   <div class="ar"><button class="btn btnA" data-a="wipe">WIPE SAVE</button></div>
   <div class="note">Alpha build. These are debug levers, not progression - they
-    bypass the table entirely.</div>
+    bypass the table entirely. PLAY CUTSCENE replays any tier without rolling
+    for it.</div>
 </div>
 
 <div class="modal" id="mAltar"><div class="sheet">
@@ -367,8 +383,9 @@ const TRAIT={nova:"luck",beam:"luck",halo:"luck",ring:"luck",
              voidfx:"biome",glitch:"biome",storm:"biome",motes:"biome",
              flame:"luck",rain:"shard"};
 const TRAITCOL={luck:"#ffc857",shard:"#7cf5c4",speed:"#8fd3ff",biome:"#c9a6ff"};
-function statsOf(a){
-  const p=Math.log10(a.o);                 // 0.30 at 1 in 2, 10.1 at 1 in 12.5B
+function statsOf(a,shiny){
+  const mul=(shiny===undefined?isShiny(a.id):shiny)?2.5:1;
+  const p=Math.log10(a.o)*Math.sqrt(mul);                 // 0.30 at 1 in 2, 10.1 at 1 in 12.5B
   const base=p*p*0.9;                      // quadratic: rarity should matter a lot
   const k=TRAIT[a.fx]||"luck";
   return {
@@ -383,12 +400,17 @@ function loadoutStats(){
   const t={luck:0,shard:0,speed:0,biome:0};
   for(const id of (S.loadout||[])){
     if(!id||!BY_ID[id]) continue;
-    const st=statsOf(BY_ID[id]);
+    const st=statsOf(BY_ID[id],isShiny(id));
     t.luck+=st.luck; t.shard+=st.shard; t.speed+=st.speed; t.biome+=st.biome;
   }
   t.speed=Math.min(80,t.speed);
   return t;
 }
+/* A Radiant is the same aura pulled in a rarer state: 1 in 40 by default,
+   2.5x the stats, and an extra gold sparkle pass when rendered. Tracked
+   separately from the inventory so melting duplicates can never lose one. */
+const SHINY_ODDS=40;
+const isShiny=id=>!!(S.shiny&&S.shiny[id]);
 const slotCap=()=>S.maxSlots?6:clamp(1+Math.floor(owned()/60),1,6);
 
 /* Essence comes from melting duplicates, and buys a Catalyst: a floor on the
@@ -405,7 +427,8 @@ const CATALYSTS=[
 const KEY="aether-roll-v2", BASE_CD=900;
 let S={rolls:0,shards:250,essence:0,inv:{},equipped:null,rarest:null,biome:"SERENE",
        biomeEnd:0,effects:[],muted:false,auto:false,fast:false,
-       loadout:[null,null,null,null,null,null],catalyst:0,maxSlots:false,instant:false};
+       loadout:[null,null,null,null,null,null],catalyst:0,maxSlots:false,instant:false,
+       shiny:{},skipCut:false,pity:0};
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){
   try{
@@ -417,6 +440,8 @@ function load(){
     S.rarest=BY_ID[d.rarest]?d.rarest:null;
     S.muted=!!d.muted; S.fast=!!d.fast; S.instant=!!d.instant; S.maxSlots=!!d.maxSlots;
     S.essence=+d.essence||0; S.catalyst=+d.catalyst||0;
+    S.shiny=(d.shiny&&typeof d.shiny==="object")?d.shiny:{};
+    S.skipCut=!!d.skipCut; S.pity=+d.pity||0;
     S.loadout=Array.isArray(d.loadout)
       ? d.loadout.slice(0,6).map(x=>BY_ID[x]?x:null) : [null,null,null,null,null,null];
     while(S.loadout.length<6) S.loadout.push(null);
@@ -428,7 +453,7 @@ const owned=()=>Object.keys(S.inv).filter(k=>BY_ID[k]).length;
 /* Luck compounds: potions multiply, and every 500 rolls adds a permanent
    half-multiplier so a long session is never pure stasis. */
 function luck(){
-  let L=1+Math.floor(S.rolls/500)*0.5;
+  let L=(1+Math.floor(S.rolls/500)*0.5)*(1+Math.min(4,(S.pity||0)/400));
   L*=1+loadoutStats().luck/100;                 // equipped auras pay into luck
   for(const e of S.effects) if(e.luck&&e.until>Date.now()) L*=e.luck;
   return L;
@@ -699,7 +724,19 @@ function paintShowcase(ctx,W,H,a,t){
   drawAura(tr.x,W,H,a,t,1.0);
   if(tier>=2){ tr.x.globalAlpha=.5; drawAura(tr.x,W,H,a,t+1400,0.66); tr.x.globalAlpha=1; }
 
+  /* Cheap bloom: resample the trail layer through a quarter-size buffer and
+     draw it back up. Far faster than any per-pixel blur kernel. */
+  const bw=Math.max(8,W>>2), bh=Math.max(8,H>>2);
+  if(!paintShowcase.b||paintShowcase.b.width!==bw||paintShowcase.b.height!==bh){
+    paintShowcase.b=document.createElement("canvas");
+    paintShowcase.b.width=bw; paintShowcase.b.height=bh;
+    paintShowcase.bx=paintShowcase.b.getContext("2d");
+  }
+  paintShowcase.bx.clearRect(0,0,bw,bh);
+  paintShowcase.bx.drawImage(tr.c,0,0,bw,bh);
+
   ctx.globalCompositeOperation="lighter";
+  ctx.globalAlpha=.45; ctx.drawImage(paintShowcase.b,0,0,W,H);       // bloom
   ctx.globalAlpha=.78; ctx.drawImage(tr.c,0,0); ctx.globalAlpha=1;   // behind the figure
   rarityExtras(ctx,W,H,a,t,tier);
   ctx.globalCompositeOperation="source-over";
@@ -710,6 +747,17 @@ function paintShowcase(ctx,W,H,a,t){
   ctx.globalAlpha=.5; ctx.drawImage(tr.c,0,0); ctx.globalAlpha=1;    // and a pass in front
   ctx.globalCompositeOperation="source-over";
 
+  if(isShiny(a.id)){                                   // Radiant: gold dust on top
+    ctx.globalCompositeOperation="lighter";
+    for(let i=0;i<34;i++){
+      const an=i*2.399+t*0.0006, rr=Math.min(W,H)*0.5*(0.25+((i*53)%100)/100*0.8);
+      const tw=Math.abs(Math.sin(t*0.005+i*1.3));
+      ctx.globalAlpha=tw*0.9; ctx.fillStyle=i%2?"#ffe9a8":"#fff6d8";
+      const sx=W/2+Math.cos(an)*rr, sy=H/2+Math.sin(an)*rr*0.8, sz=1+tw*3;
+      ctx.fillRect(sx-sz/2,sy-0.5,sz,1); ctx.fillRect(sx-0.5,sy-sz/2,1,sz);
+    }
+    ctx.globalAlpha=1; ctx.globalCompositeOperation="source-over";
+  }
   // vignette to seat it in the frame
   const v=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.min(W,H)*0.72);
   v.addColorStop(0,"transparent"); v.addColorStop(1,"rgba(3,3,8,.72)");
@@ -749,6 +797,7 @@ if(!S.biomeEnd||S.biomeEnd<Date.now()) rollBiome();
    entries a linear scan per roll is 700 comparisons, which is nothing, and
    it keeps the odds exactly readable off the table. */
 function rollAura(){
+  if(forcedNext&&BY_ID[forcedNext]){ const a=BY_ID[forcedNext]; forcedNext=null; return a; }
   const L=luck(), bi=S.biome, floor=S.catalyst||0;
   for(let i=MAXI;i>=0;i--){
     const a=AURAS[i];
@@ -812,8 +861,9 @@ function pulse(a){
                {duration:560,easing:"ease-out"});
   tone(520+Math.min(a.o,4096)/18,.16,"triangle",.05);
 }
-function reveal(a){
+async function reveal(a){
   const t=tierOf(a.o),R=$("reveal");
+  await runCutscene(a);                       // black, flicker, then the star
   if(t<2){ pulse(a); return new Promise(r=>setTimeout(r,S.fast?90:240)); }
   revAura=a;
   $("revName").textContent=a.n;
@@ -828,9 +878,160 @@ function reveal(a){
      {transform:`translate(${-t*2}px,${t}px)`},{transform:"translate(0,0)"}],
     {duration:140,iterations:t*2});
   fanfare(t);
-  const hold=(S.fast?400:1)*[0,0,1500,2200,3200,4600][t]||1500;
+  const hold=[0,0,1500,2200,3200,4600][t]||1500;
   return new Promise(r=>setTimeout(()=>{R.classList.remove("show","cine");revAura=null;r()},
     S.fast?Math.min(hold,700):hold));
+}
+
+/* ==========================================================================
+   THE CUTSCENE
+   From 1 in 5,000 the roll stops being a reel result and becomes an event:
+   the screen drops to black, then flickers in the aura's own colour. From
+   1 in 80,000 a star ignites in that flicker, and the star's construction
+   gets another layer at every rarity step above it - more diffraction
+   spikes, halo rings, lens ghosts, chromatic separation, god rays - so the
+   quality of the star is itself the readout of what you pulled.
+   ========================================================================== */
+const cutCv=$("cut"), cx2=cutCv.getContext("2d");
+function cutTier(o){ return o>=1e9?5 : o>=1e7?4 : o>=5e5?3 : o>=8e4?2 : o>=5e3?1 : 0; }
+
+/* A star built in layers. `q` is 1..4 and each step adds construction rather
+   than just scaling the last one up. */
+function drawStar(x,W,H,a,t,q,grow){
+  const cx=W/2, cy=H/2, R=Math.min(W,H)*0.5;
+  const c0=a.c[0], c1=a.c[1];
+  const g0=clamp(grow,0,1), pulse=0.92+Math.sin(t*0.006)*0.08;
+  const core=R*0.075*g0*pulse, reach=R*(0.42+q*0.17)*g0;
+  x.save(); x.globalCompositeOperation="lighter";
+
+  // god rays behind everything, from q3
+  if(q>=3){
+    x.globalAlpha=0.13*g0;
+    for(let i=0;i<22;i++){
+      const an=t*0.00016+i/22*TAU, len=reach*(1.5+0.5*Math.sin(i*3+t*0.001));
+      const g=x.createLinearGradient(cx,cy,cx+Math.cos(an)*len,cy+Math.sin(an)*len);
+      g.addColorStop(0,c0); g.addColorStop(1,"transparent");
+      x.strokeStyle=g; x.lineWidth=10+(i%3)*9;
+      x.beginPath(); x.moveTo(cx,cy); x.lineTo(cx+Math.cos(an)*len,cy+Math.sin(an)*len); x.stroke();
+    }
+  }
+  // halo rings, from q2; chromatic separation from q4
+  if(q>=2){
+    const rings=q>=4?4:2;
+    for(let i=0;i<rings;i++){
+      const rr=reach*(0.30+i*0.17)*(1+Math.sin(t*0.0018+i)*0.035);
+      x.globalAlpha=(0.34-i*0.06)*g0;
+      x.strokeStyle=q>=4?[c0,"#ff6b8a","#6bd5ff",c1][i%4]:(i%2?c0:c1);
+      x.lineWidth=q>=4?2.2:1.6;
+      x.beginPath(); x.arc(cx,cy,rr,0,TAU); x.stroke();
+    }
+  }
+  // diffraction spikes: 4 at q1, then +2 per step, with a counter-rotating set at q3+
+  const spikes=4+(q-1)*2;
+  const spin=t*0.00012;
+  for(let pass=0; pass<(q>=3?2:1); pass++){
+    const rot=spin*(pass?-1.7:1), lenMul=pass?0.62:1, wid=pass?0.5:1;
+    for(let i=0;i<spikes;i++){
+      const an=rot+i/spikes*TAU;
+      const long=(i%2===0)?1:0.52;
+      const len=reach*long*lenMul*(0.94+Math.sin(t*0.004+i)*0.06);
+      const g=x.createLinearGradient(cx,cy,cx+Math.cos(an)*len,cy+Math.sin(an)*len);
+      g.addColorStop(0,"#ffffff"); g.addColorStop(0.12,c0);
+      g.addColorStop(0.55,c1); g.addColorStop(1,"transparent");
+      x.globalAlpha=0.9*g0;
+      x.strokeStyle=g; x.lineWidth=(core*0.55*wid)*(long>0.6?1:0.6)+1.2;
+      x.lineCap="round";
+      x.beginPath(); x.moveTo(cx,cy); x.lineTo(cx+Math.cos(an)*len,cy+Math.sin(an)*len); x.stroke();
+    }
+  }
+  // lens ghosts along the optical axis, from q3
+  if(q>=3){
+    for(let i=1;i<=5;i++){
+      const d=(i-2.5)*reach*0.26, rr=reach*0.055*(1+i*0.22);
+      x.globalAlpha=0.16*g0;
+      x.fillStyle=[c0,c1,"#ffd9a0","#a0d9ff",c0][i%5];
+      x.beginPath(); x.arc(cx+d*0.8,cy+d*0.42,rr,0,TAU); x.fill();
+    }
+  }
+  // sparkles, from q4
+  if(q>=4){
+    for(let i=0;i<40;i++){
+      const an=i*2.399+t*0.0005, rr=reach*(0.2+((i*37)%100)/100*0.95);
+      const tw=Math.abs(Math.sin(t*0.004+i*1.7));
+      x.globalAlpha=tw*0.85*g0; x.fillStyle=i%3?"#fff":c0;
+      const sx=cx+Math.cos(an)*rr, sy=cy+Math.sin(an)*rr, sz=1+tw*2.4;
+      x.fillRect(sx-sz/2,sy-0.5,sz,1); x.fillRect(sx-0.5,sy-sz/2,1,sz);
+    }
+  }
+  // the core last, so it sits on top of its own spikes
+  const cg=x.createRadialGradient(cx,cy,0,cx,cy,core*4.2);
+  cg.addColorStop(0,"#ffffff"); cg.addColorStop(0.16,c0);
+  cg.addColorStop(0.46,c1); cg.addColorStop(1,"transparent");
+  x.globalAlpha=g0; x.fillStyle=cg;
+  x.beginPath(); x.arc(cx,cy,core*4.2,0,TAU); x.fill();
+  x.restore();
+}
+
+/* Flicker that behaves like a failing lamp rather than a square wave: bursts
+   of rapid strobing separated by beats of black. */
+function flickerAlpha(p){
+  const burst=Math.sin(p*Math.PI*7)>0.1 ? 1 : 0.15;
+  const fast=(Math.sin(p*260)*0.5+0.5)*(Math.sin(p*131)*0.5+0.5);
+  return clamp(burst*fast*1.5,0,1);
+}
+function runCutscene(a){
+  const q=cutTier(a.o);
+  if(q===0) return Promise.resolve(false);
+  const DUR=S.skipCut?0:[0,1500,2400,3200,4200,5600][q];
+  if(!DUR) return Promise.resolve(false);
+  const W=cutCv.width=innerWidth, H=cutCv.height=innerHeight;
+  cutCv.classList.add("show");
+  const t0=performance.now();
+  // phase boundaries as fractions of the whole
+  const BLACK=0.14, FLICK=q>=2?0.46:0.86;
+  if(!S.muted){ tone(70,0.5,"sawtooth",0.08);
+    setTimeout(()=>tone(a.o>=1e7?55:90,1.2,"sawtooth",0.06),DUR*BLACK*1000/1000); }
+  return new Promise(res=>{
+    (function frame(now){
+      const p=clamp((now-t0)/DUR,0,1);
+      cx2.globalCompositeOperation="source-over";
+      cx2.fillStyle="#000"; cx2.fillRect(0,0,W,H);
+      if(p<BLACK){
+        // drop to black
+        cx2.globalAlpha=1; cx2.fillRect(0,0,W,H);
+      } else if(p<FLICK){
+        const fp=(p-BLACK)/(FLICK-BLACK);
+        const al=flickerAlpha(fp);
+        if(al>0.02){
+          const g=cx2.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*0.62);
+          g.addColorStop(0,a.c[0]); g.addColorStop(0.55,a.c[1]); g.addColorStop(1,"#000");
+          cx2.globalAlpha=al*0.92; cx2.fillStyle=g; cx2.fillRect(0,0,W,H);
+          if(!S.muted&&al>0.85&&Math.random()<0.25) tone(1400+Math.random()*900,0.03,"square",0.03);
+        }
+        cx2.globalAlpha=1;
+      } else {
+        // the star
+        const sp=(p-FLICK)/(1-FLICK);
+        const grow=clamp(sp*2.4,0,1)*(1-clamp((sp-0.82)/0.18,0,1)*0.25);
+        if(q>=2){
+          drawStar(cx2,W,H,a,now,Math.min(4,q-1),grow);
+          if(q>=5){                                   // one full-screen wash at the top
+            cx2.globalAlpha=clamp(0.5-Math.abs(sp-0.35)*2,0,1)*0.5;
+            cx2.globalCompositeOperation="lighter";
+            cx2.fillStyle=a.c[0]; cx2.fillRect(0,0,W,H);
+            cx2.globalCompositeOperation="source-over"; cx2.globalAlpha=1;
+          }
+        } else {
+          const g=cx2.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*0.5);
+          g.addColorStop(0,a.c[0]); g.addColorStop(1,"#000");
+          cx2.globalAlpha=(1-sp)*0.55; cx2.fillStyle=g; cx2.fillRect(0,0,W,H);
+          cx2.globalAlpha=1;
+        }
+      }
+      if(p<1) requestAnimationFrame(frame);
+      else { cutCv.classList.remove("show"); res(true); }
+    })(t0);
+  });
 }
 
 /* ---------------- feed ---------------- */
@@ -854,6 +1055,13 @@ async function doRoll(){
   if(S.instant){ buildStrip(a); parkOn(WIN_AT); }
   else await spin(a, S.fast?420:[2200,2800,3500,4300,5200,6400][t]);
   S.rolls++; S.inv[a.id]=(S.inv[a.id]||0)+1; S.shards+=shardsFor(a.o);
+  if(Math.random()<1/SHINY_ODDS){
+    S.shiny[a.id]=(S.shiny[a.id]||0)+1;
+    feedRaw("RADIANT "+a.n,"mutation","#ffe9a8");
+  }
+  /* Pity: rolls that find nothing past 1 in 50,000 raise the next roll's
+     effective luck, and a hit resets it, so a dry run cannot be endless. */
+  if(a.o>=5e4) S.pity=0; else S.pity++;
   if(S.catalyst) S.catalyst=0;                     // a catalyst is spent on one roll
   if(!S.loadout.some(x=>x)) S.loadout[0]=a.id;     // first pull fills slot 1
   if(!S.rarest||a.o>BY_ID[S.rarest].o) S.rarest=a.id;
@@ -883,7 +1091,8 @@ function paint(){
     ?("1 IN "+fmt(a.o)+" · "+TIERNAME[tierOf(a.o)].toUpperCase()+(a.b?" · "+a.b:"")
       +(previewId&&previewId!==S.equipped?" · PREVIEW":""))
     :"roll to begin";
-  $("showFx").textContent=a?("effect: "+a.fx):"";
+  $("showFx").textContent=a?((isShiny(a.id)?"\u2726 RADIANT \u00b7 ":"")+"effect: "+a.fx):"";
+  $("showFx").style.color=a&&isShiny(a.id)?"#ffe9a8":"";
   const now=Date.now();
   $("fx").innerHTML=S.effects.filter(e=>e.until>now).map(e=>{
     const p=POTIONS.find(x=>x.id===e.id)||{n:e.id};
@@ -896,7 +1105,7 @@ function paint(){
     d.className="slot"+(i===0?" p0":"")+(open?"":" locked");
     d.title=open?(au?au.n:"empty slot "+(i+1)):("unlocks at "+(i*60)+" auras found");
     d.innerHTML=au
-      ? `<div class="so" style="background:radial-gradient(circle at 34% 30%,${au.c[0]},${au.c[1]});box-shadow:0 0 14px ${au.c[0]}99"></div><div class="sl">${i+1}</div>`
+      ? `<div class="so" style="background:radial-gradient(circle at 34% 30%,${au.c[0]},${au.c[1]});box-shadow:0 0 14px ${au.c[0]}99${isShiny(id)?";outline:2px solid #ffe9a8":""}"></div><div class="sl">${i+1}</div>`
       : `<div class="so" style="background:#191926"></div><div class="sl">${i+1}</div>`;
     if(open) d.onclick=()=>{ assignTo=i; openIndex(); };
     lo.appendChild(d);
@@ -939,7 +1148,7 @@ function renderIndex(){
     d.className="card"+(have?"":" locked")+(S.equipped===a.id?" eq":"");
     d.style.background=have?`linear-gradient(135deg,${a.c[0]},${a.c[1]})`:"#121220";
     d.innerHTML=`${have?`<div class="cc">x${fmt(have)}</div>`:""}
-      <div class="cn">${have?a.n:"???"}</div>
+      <div class="cn">${have?(isShiny(a.id)?"\u2726 "+a.n:a.n):"???"}</div>
       <div class="co">1 in ${fmt(a.o)}${a.b?" &middot; "+a.b:""}</div>`;
     if(have) d.onclick=()=>{
       if(assignTo!==null){                       // arrived here from a loadout slot
@@ -1062,13 +1271,46 @@ const ALPHA={
   },
   grantrarest:()=>{const a=AURAS[MAXI]; S.inv[a.id]=(S.inv[a.id]||0)+1;
     S.rarest=a.id; S.loadout[0]=a.id; S.equipped=a.id; feed(a);},
+  setluck:()=>{
+    const v=parseFloat($("aLuck").value.replace(/[,_\s]/g,""));
+    if(!isFinite(v)||v<=0) return;
+    S.effects=S.effects.filter(e=>e.id!=="alpha");
+    S.effects.push({id:"alpha",luck:v,until:Date.now()+36e5});
+  },
+  forcenext:()=>{
+    const q=$("aNext").value.trim().toLowerCase();
+    if(!q){ forcedNext=null; feedRaw("force cleared","next roll is normal","#8a8aa6"); return; }
+    const a=AURAS.find(x=>x.n.toLowerCase()===q)||AURAS.find(x=>x.n.toLowerCase().includes(q));
+    if(!a){ feedRaw("no match","try another name","#ff6b6b"); return; }
+    forcedNext=a.id; feedRaw("armed: "+a.n,"next roll is forced",a.c[0]);
+  },
+  playcut:()=>{
+    const id=$("aCut").value, a=BY_ID[id]||AURAS[MAXI];
+    $("alpha").classList.remove("show"); $("btnAlpha").classList.remove("on");
+    runCutscene(a);
+  },
+  allshiny:()=>{for(const id in S.inv) S.shiny[id]=(S.shiny[id]||0)+1},
+  allpotions:()=>{for(const q of POTIONS)
+    S.effects.push({id:q.id,luck:q.luck,haste:q.haste,until:Date.now()+36e5})},
+  skipcut:()=>{S.skipCut=!S.skipCut;
+    feedRaw(S.skipCut?"cutscenes off":"cutscenes on","alpha","#c9a6ff")},
+  freeze:()=>{S.biomeEnd=Date.now()+36e5; feedRaw("biome frozen",S.biome,"#c9a6ff")},
+  rolls:()=>{S.rolls+=10000},
+  clearlo:()=>{S.loadout=[null,null,null,null,null,null]},
   wipe:()=>{localStorage.removeItem(KEY); location.reload()}
 };
+let forcedNext=null;
 $("btnAlpha").onclick=()=>{
   const el=$("alpha"); el.classList.toggle("show");
   $("btnAlpha").classList.toggle("on",el.classList.contains("show"));
   if(!$("aBiome").options.length)
     $("aBiome").innerHTML=BIOMES.map(b=>`<option>${b.id}</option>`).join("");
+  if(!$("aCut").options.length){
+    // one representative per cutscene tier, so every variant is reachable
+    const reps=[5e3,8e4,5e5,1e7,1e9].map(min=>AURAS.find(a=>a.o>=min));
+    $("aCut").innerHTML=reps.filter(Boolean).map(a=>
+      `<option value="${a.id}">1 in ${fmt(a.o)} \u2014 ${a.n}</option>`).join("");
+  }
 };
 document.querySelectorAll("#alpha [data-a]").forEach(btn=>btn.onclick=()=>{
   const f=ALPHA[btn.dataset.a]; if(!f) return;

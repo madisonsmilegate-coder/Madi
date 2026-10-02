@@ -1421,13 +1421,27 @@ function paintShowcase(ctx,W,H,a,t){
   /* ---- 4. shafts of light ---- */
   if(mid) pillars(ctx,W,H,a,t,heavy?0.6:0.42, heavy?4:3);
 
-  /* ---- 5. the subject, inside the atmosphere rather than over it ---- */
-  const ent=ENTITIES[a.ent];
-  if(ent){ ctx.save(); ctx.globalCompositeOperation="lighter";
-    try{ ent(ctx,W,H,a,t,0.82); }catch(e){} ctx.restore(); }
+  /* ---- 5. the subject ----
+     A named apex aura draws its own scene; the rest stage the shared entity
+     at their own scale, lift and spin so no two read alike. */
+  if(a.sig&&SIGN[a.sig]){
+    ctx.save(); ctx.globalCompositeOperation="lighter";
+    inFigure(ctx,W,H,g=>{ try{ SIGN[a.sig](g,a,t*a.spin,0.95); }catch(e){} });
+    ctx.restore();
+  } else {
+    const ent=ENTITIES[a.ent];
+    if(ent){ ctx.save(); ctx.globalCompositeOperation="lighter";
+      const z=a.escale;
+      ctx.translate(W/2,H*(0.5+a.elift)); ctx.scale(z,z); ctx.translate(-W/2,-H*0.5);
+      try{ ent(ctx,W,H,a,t*a.spin,0.82); }catch(e){} ctx.restore(); }
+  }
   /* ---- 5b. what orbits it ---- */
-  if(SATS[a.sat]){ ctx.save();
-    try{ SATS[a.sat](ctx,W,H,a,t,1); }catch(e){} ctx.restore(); }
+  if(SATS[a.sat]){ ctx.save(); ctx.translate(W/2,H/2);
+    ctx.scale(a.satR,a.satR); ctx.translate(-W/2,-H/2);
+    try{ SATS[a.sat](ctx,W,H,a,t*a.spin,1); }catch(e){} ctx.restore(); }
+  if(a.sat2&&SATS[a.sat2]){ ctx.save(); ctx.translate(W/2,H/2);
+    ctx.scale(a.satR*1.42,a.satR*1.42); ctx.translate(-W/2,-H/2);
+    try{ SATS[a.sat2](ctx,W,H,a,-t*a.spin*0.7,0.75); }catch(e){} ctx.restore(); }
 
   /* ---- 6. particle effect, on its fading trail layer ---- */
   const tr=trailFor(ctx,W,H);
@@ -1506,6 +1520,484 @@ function frames(ctx,W,H,a){
   FRAMES.key=key; return FRAMES;
 }
 
+
+
+/* ==========================================================================
+   SIGNATURES
+   The 24 auras at the top of the table are named rather than generated, and
+   a name like "Heat Death" or "Paradox" deserves a scene built for it rather
+   than a dice roll over the same component library. Each of these replaces
+   the subject and satellite slots entirely with a composition about what the
+   name means. Drawn in the figure's local space like everything else.
+   ========================================================================== */
+const SIGN={
+
+"ORIGIN"(g,a,t,A){                      // the first light, and geometry following it
+  const c0=a.c[0];
+  g.globalAlpha=A;
+  for(let r=0;r<5;r++){
+    const ph=((t*0.00032+r/5)%1), e=1-Math.pow(1-ph,2);
+    g.globalAlpha=A*(1-ph)*0.8; g.strokeStyle=r%2?c0:"#ffffff"; g.lineWidth=2.4;
+    g.beginPath();
+    const n=3+r;                        // each ring resolves into more sides
+    for(let i=0;i<=n;i++){ const an=i/n*TAU+t*0.0004*(r%2?1:-1), rr=e*210;
+      i?g.lineTo(Math.cos(an)*rr,-70+Math.sin(an)*rr*0.6)
+       :g.moveTo(Math.cos(an)*rr,-70+Math.sin(an)*rr*0.6); }
+    g.closePath(); g.stroke();
+  }
+  const cg=g.createRadialGradient(0,-70,0,0,-70,46);
+  cg.addColorStop(0,"#ffffff"); cg.addColorStop(.3,c0); cg.addColorStop(1,c0+"00");
+  g.globalAlpha=A; g.fillStyle=cg;
+  g.beginPath(); g.arc(0,-70,46,0,TAU); g.fill();
+},
+
+"Aleph"(g,a,t,A){                       // infinities nested inside infinities
+  const c0=a.c[0], c1=a.c[1];
+  g.globalAlpha=A; g.lineCap="round";
+  for(let d=0;d<5;d++){
+    const sc=Math.pow(0.62,d), sp=t*0.0006*(d%2?-1:1);
+    g.save(); g.translate(0,-70); g.rotate(sp); g.scale(sc,sc);
+    g.strokeStyle=d%2?c0:c1; g.lineWidth=7/sc*0.6; g.globalAlpha=A*(1-d*0.13);
+    g.beginPath();                      // lemniscate
+    for(let i=0;i<=64;i++){
+      const u=i/64*TAU, k=170/(1+Math.sin(u)*Math.sin(u));
+      const px=k*Math.cos(u), py=k*Math.sin(u)*Math.cos(u);
+      i?g.lineTo(px,py):g.moveTo(px,py);
+    }
+    g.stroke(); g.restore();
+  }
+  g.globalAlpha=A; g.fillStyle="#ffffff";
+  g.beginPath(); g.arc(0,-70,6,0,TAU); g.fill();
+},
+
+"Heat Death"(g,a,t,A){                  // nothing left warm enough to shine
+  g.globalAlpha=A*0.8;
+  for(let i=0;i<60;i++){
+    const u=((t*0.00004+i/60)%1);
+    const an=i*2.399, rr=40+u*260;
+    const px=Math.cos(an)*rr, py=-70+Math.sin(an)*rr*0.62;
+    const heat=Math.max(0,1-u*1.5);
+    g.globalAlpha=A*heat*0.75;
+    g.fillStyle=heat>0.55?a.c[0]:(heat>0.25?a.c[1]:"#3a3a44");
+    g.beginPath(); g.arc(px,py,1.4+heat*2.6,0,TAU); g.fill();
+  }
+  g.globalAlpha=A*0.35; g.strokeStyle="#4a4a56"; g.lineWidth=1.2;
+  g.beginPath(); g.arc(0,-70,230,0,TAU); g.stroke();
+},
+
+"The Last Light"(g,a,t,A){              // one flame, and everything else dark
+  const c0=a.c[0];
+  const fl=1+Math.sin(t*0.009)*0.08+Math.sin(t*0.021)*0.04;
+  g.globalAlpha=A; g.fillStyle="#e8e2cf";
+  g.fillRect(-9,-54,18,78);             // the candle
+  g.fillStyle="#cfc7ae"; g.fillRect(-9,-54,18,5);
+  g.strokeStyle="#6a6354"; g.lineWidth=2;
+  g.beginPath(); g.moveTo(0,-54); g.lineTo(0,-66); g.stroke();
+  const fg=g.createRadialGradient(0,-82,0,0,-82,34*fl);
+  fg.addColorStop(0,"#ffffff"); fg.addColorStop(.25,"#ffe9a8");
+  fg.addColorStop(.6,c0); fg.addColorStop(1,c0+"00");
+  g.fillStyle=fg;
+  g.beginPath(); g.ellipse(0,-82,17*fl,32*fl,0,0,TAU); g.fill();
+  const hg=g.createRadialGradient(0,-80,0,0,-80,210);
+  hg.addColorStop(0,c0+"44"); hg.addColorStop(1,c0+"00");
+  g.fillStyle=hg; g.beginPath(); g.arc(0,-80,210,0,TAU); g.fill();
+},
+
+"First Cause"(g,a,t,A){                 // a hand lets go, and it never stops
+  const c0=a.c[0];
+  g.globalAlpha=A*0.85; g.fillStyle=a.c[1];
+  g.save(); g.translate(-120,-150); g.rotate(0.5);
+  g.beginPath(); g.ellipse(0,0,44,30,0,0,TAU); g.fill();
+  g.strokeStyle=a.c[1]; g.lineWidth=11; g.lineCap="round";
+  for(let i=0;i<4;i++){ g.save(); g.rotate(-0.4+i*0.3);
+    g.beginPath(); g.moveTo(20,0); g.lineTo(76,0); g.stroke(); g.restore(); }
+  g.restore();
+  for(let r=0;r<7;r++){
+    const ph=((t*0.00026+r/7)%1);
+    g.globalAlpha=A*(1-ph)*0.8; g.strokeStyle=r%2?c0:"#ffffff";
+    g.lineWidth=(1-ph)*3.4+0.6;
+    g.beginPath(); g.arc(-56,-96,ph*300,0,TAU); g.stroke();
+  }
+  g.globalAlpha=A; g.fillStyle="#ffffff";
+  g.beginPath(); g.arc(-56,-96,9,0,TAU); g.fill();
+},
+
+"Null Theorem"(g,a,t,A){                // statements cancelling themselves out
+  const c0=a.c[0];
+  for(let i=0;i<16;i++){
+    const an=t*0.0003+i/16*TAU, rr=150;
+    const px=Math.cos(an)*rr, py=-70+Math.sin(an)*rr*0.5;
+    const cancel=Math.abs(Math.sin(t*0.0016+i*0.7));
+    g.save(); g.translate(px,py);
+    g.globalAlpha=A*(1-cancel*0.85);
+    g.fillStyle=i%2?c0:a.c[1]; g.fillRect(-13,-17,26,34);
+    g.globalAlpha=A*cancel;
+    g.strokeStyle="#ffffff"; g.lineWidth=3;
+    g.beginPath(); g.moveTo(-15,-19); g.lineTo(15,19); g.stroke();
+    g.restore();
+  }
+  g.globalAlpha=A*0.9; g.strokeStyle="#ffffff"; g.lineWidth=4;
+  g.beginPath(); g.arc(0,-70,52,0,TAU); g.stroke();
+  g.beginPath(); g.moveTo(-37,-107); g.lineTo(37,-33); g.stroke();
+},
+
+"Eschaton"(g,a,t,A){                    // seals, and the last one giving
+  const c0=a.c[0];
+  for(let i=0;i<7;i++){
+    const an=-Math.PI/2+i/7*TAU, rr=145;
+    const px=Math.cos(an)*rr, py=-70+Math.sin(an)*rr*0.62;
+    const broken=i<Math.floor(((t*0.0004)%1)*8);
+    g.save(); g.translate(px,py); g.rotate(t*0.0005*(i%2?1:-1));
+    g.globalAlpha=A*(broken?0.3:1);
+    g.strokeStyle=broken?"#5a5a66":c0; g.lineWidth=3.4;
+    g.beginPath(); g.arc(0,0,21,0,TAU); g.stroke();
+    for(let k=0;k<6;k++){ const b=k/6*TAU;
+      g.beginPath(); g.moveTo(Math.cos(b)*8,Math.sin(b)*8);
+      g.lineTo(Math.cos(b)*21,Math.sin(b)*21); g.stroke(); }
+    if(broken){ g.globalAlpha=A; g.strokeStyle="#ffffff"; g.lineWidth=2;
+      g.beginPath(); g.moveTo(-24,-6); g.lineTo(24,8); g.stroke(); }
+    g.restore();
+  }
+},
+
+"Apotheosis"(g,a,t,A){                  // something mortal stops being mortal
+  const c0=a.c[0], c1=a.c[1];
+  for(let r=0;r<6;r++){
+    const u=((t*0.00042+r/6)%1);
+    g.globalAlpha=A*(1-u)*0.9; g.strokeStyle=r%2?c0:"#ffffff"; g.lineWidth=3;
+    const y=40-u*300, rr=70*(1-u*0.55);
+    g.beginPath(); g.ellipse(0,y,rr,rr*0.26,0,0,TAU); g.stroke();
+  }
+  for(const sgn of [-1,1]){
+    g.save(); g.scale(sgn,1); g.translate(26,-110);
+    for(let i=0;i<8;i++){ g.save(); g.rotate(-1.1+i*0.2+Math.sin(t*0.0015)*0.05);
+      g.globalAlpha=A*0.95; feather(g,78+i*12,10,i%2?c0:c1); g.restore(); }
+    g.restore();
+  }
+  const cg=g.createRadialGradient(0,-120,0,0,-120,56);
+  cg.addColorStop(0,"#ffffff"); cg.addColorStop(.4,c0); cg.addColorStop(1,c0+"00");
+  g.globalAlpha=A; g.fillStyle=cg;
+  g.beginPath(); g.arc(0,-120,56,0,TAU); g.fill();
+},
+
+"Singularity"(g,a,t,A){                 // the disc, and what it is falling into
+  const c0=a.c[0], c1=a.c[1];
+  g.save(); g.translate(0,-80); g.rotate(-0.38);
+  for(let i=0;i<110;i++){
+    const u=i/110, ph=((t*0.0011+u)%1), rr=40+(1-ph)*170;
+    const an=u*TAU*2.2+ph*5+t*0.0013;
+    g.globalAlpha=A*(0.2+(1-ph)*0.8);
+    g.fillStyle=ph<0.3?"#ffffff":(i%2?c0:c1);
+    g.beginPath(); g.arc(Math.cos(an)*rr,Math.sin(an)*rr*0.3,(1-ph)*3.6+0.8,0,TAU); g.fill();
+  }
+  g.globalAlpha=1; g.fillStyle="#000";
+  g.beginPath(); g.arc(0,0,36,0,TAU); g.fill();
+  g.globalAlpha=A*0.8; g.strokeStyle=c0; g.lineWidth=2.4;
+  g.beginPath(); g.arc(0,0,42,Math.PI*1.05,Math.PI*1.95); g.stroke();
+  g.restore();
+},
+
+"Event Horizon"(g,a,t,A){               // the line past which nothing returns
+  const c0=a.c[0];
+  g.globalAlpha=A;
+  for(let i=0;i<40;i++){
+    const u=((t*0.0005+i/40)%1);
+    const sx=(((i*53)%100)/50-1)*240;
+    const stretch=Math.pow(u,0.4);
+    g.globalAlpha=A*(1-u)*0.9;
+    const gr=g.createLinearGradient(sx,-70-stretch*180,sx*0.1,-70);
+    gr.addColorStop(0,"transparent"); gr.addColorStop(1,i%3?c0:"#ffffff");
+    g.strokeStyle=gr; g.lineWidth=2.2;
+    g.beginPath(); g.moveTo(sx,-70-stretch*180); g.lineTo(sx*0.1,-70); g.stroke();
+  }
+  g.globalAlpha=1; g.fillStyle="#000";
+  g.beginPath(); g.ellipse(0,-70,120,30,0,0,TAU); g.fill();
+  g.globalAlpha=A; g.strokeStyle="#ffffff"; g.lineWidth=2.6;
+  g.beginPath(); g.ellipse(0,-70,120,30,0,0,TAU); g.stroke();
+},
+
+"Omega Point"(g,a,t,A){                 // every line, arriving at once
+  const c0=a.c[0];
+  for(let i=0;i<48;i++){
+    const an=i/48*TAU, u=((t*0.0007+i*0.021)%1);
+    const r0=300*(1-u);
+    g.globalAlpha=A*u*0.9;
+    const gr=g.createLinearGradient(Math.cos(an)*r0,-70+Math.sin(an)*r0*0.6,0,-70);
+    gr.addColorStop(0,"transparent"); gr.addColorStop(1,i%3?c0:"#ffffff");
+    g.strokeStyle=gr; g.lineWidth=1.8;
+    g.beginPath(); g.moveTo(Math.cos(an)*r0,-70+Math.sin(an)*r0*0.6); g.lineTo(0,-70); g.stroke();
+  }
+  const cg=g.createRadialGradient(0,-70,0,0,-70,30+Math.sin(t*0.004)*6);
+  cg.addColorStop(0,"#ffffff"); cg.addColorStop(1,c0+"00");
+  g.globalAlpha=A; g.fillStyle=cg;
+  g.beginPath(); g.arc(0,-70,36,0,TAU); g.fill();
+},
+
+"Entropy"(g,a,t,A){                     // a lattice forgetting how to be one
+  const c0=a.c[0], c1=a.c[1];
+  const N=9;
+  for(let i=0;i<N;i++) for(let k=0;k<N;k++){
+    const u=(i+k)/(N*2);
+    const dis=Math.min(1,Math.max(0,(((t*0.00022)%1.4)-u)*2.4));
+    const jx=Math.sin(i*7.1+k*3.3+t*0.002)*dis*52;
+    const jy=Math.cos(i*3.7+k*5.9+t*0.0017)*dis*52;
+    const px=(i-(N-1)/2)*34+jx, py=-70+(k-(N-1)/2)*26+jy;
+    g.globalAlpha=A*(1-dis*0.7);
+    g.fillStyle=dis<0.5?c0:c1;
+    g.save(); g.translate(px,py); g.rotate(dis*3);
+    g.fillRect(-6,-6,12,12); g.restore();
+  }
+},
+
+"Genesis"(g,a,t,A){                     // light divided from dark, once
+  const c0=a.c[0], c1=a.c[1];
+  const split=70+Math.sin(t*0.0007)*22;
+  g.globalAlpha=A*0.9;
+  let gr=g.createLinearGradient(0,-70-split-150,0,-70-split);
+  gr.addColorStop(0,"#ffffff"); gr.addColorStop(1,c0+"00");
+  g.fillStyle=gr; g.fillRect(-250,-70-split-150,500,150);
+  gr=g.createLinearGradient(0,-70+split,0,-70+split+150);
+  gr.addColorStop(0,c1+"cc"); gr.addColorStop(1,"transparent");
+  g.fillStyle=gr; g.fillRect(-250,-70+split,500,150);
+  g.globalAlpha=A; g.strokeStyle="#ffffff"; g.lineWidth=3;
+  g.beginPath(); g.moveTo(-230,-70); g.lineTo(230,-70); g.stroke();
+  for(let i=0;i<22;i++){
+    const u=((t*0.0004+i/22)%1);
+    g.globalAlpha=A*(1-Math.abs(u-0.5)*2)*0.9;
+    g.fillStyle=i%2?"#ffffff":c0;
+    g.beginPath(); g.arc(-220+u*440,-70+Math.sin(i*2.1+t*0.001)*10,2.6,0,TAU); g.fill();
+  }
+},
+
+"Terminus"(g,a,t,A){                    // a gate, and it is shut
+  const c0=a.c[0], c1=a.c[1];
+  g.globalAlpha=A;
+  const gg=g.createLinearGradient(0,-220,0,60);
+  gg.addColorStop(0,c0); gg.addColorStop(1,c1);
+  g.fillStyle=gg;
+  g.beginPath(); g.moveTo(-95,60); g.lineTo(-95,-130);
+  g.quadraticCurveTo(0,-250,95,-130); g.lineTo(95,60); g.closePath(); g.fill();
+  g.globalAlpha=A*0.95; g.fillStyle="#05050b";
+  g.beginPath(); g.moveTo(-78,60); g.lineTo(-78,-126);
+  g.quadraticCurveTo(0,-230,78,-126); g.lineTo(78,60); g.closePath(); g.fill();
+  g.globalAlpha=A; g.strokeStyle="#ffffff"; g.lineWidth=2.4;
+  g.beginPath(); g.moveTo(0,-224); g.lineTo(0,60); g.stroke();    // the seam
+  const lg=g.createLinearGradient(-4,0,4,0);
+  lg.addColorStop(0,"transparent"); lg.addColorStop(.5,"#ffffff"); lg.addColorStop(1,"transparent");
+  g.globalAlpha=A*(0.5+Math.sin(t*0.0018)*0.5);
+  g.fillStyle=lg; g.fillRect(-9,-224,18,284);
+},
+
+"Axiom"(g,a,t,A){                       // a construction that needs no proof
+  const c0=a.c[0];
+  g.globalAlpha=A*0.9; g.strokeStyle=c0; g.lineWidth=1.8;
+  const R=150;
+  g.beginPath(); g.arc(-R/2,-70,R,0,TAU); g.stroke();
+  g.beginPath(); g.arc( R/2,-70,R,0,TAU); g.stroke();
+  g.globalAlpha=A; g.strokeStyle="#ffffff"; g.lineWidth=2.6;
+  const hy=Math.sqrt(R*R-(R/2)*(R/2));
+  g.beginPath(); g.moveTo(-R/2,-70); g.lineTo(R/2,-70);
+  g.lineTo(0,-70-hy); g.closePath(); g.stroke();                  // vesica triangle
+  g.beginPath(); g.moveTo(0,-70-hy); g.lineTo(0,-70+hy); g.stroke();
+  for(const [px,py] of [[-R/2,-70],[R/2,-70],[0,-70-hy],[0,-70+hy]]){
+    g.globalAlpha=A*(0.6+Math.sin(t*0.003+px)*0.4);
+    g.fillStyle="#ffffff"; g.beginPath(); g.arc(px,py,5,0,TAU); g.fill();
+  }
+},
+
+"Paradox"(g,a,t,A){                     // a triangle that cannot be built
+  const c0=a.c[0], c1=a.c[1];
+  g.save(); g.translate(0,-70); g.rotate(t*0.00022);
+  const S=70, w=26;
+  for(let i=0;i<3;i++){
+    g.rotate(TAU/3);
+    g.globalAlpha=A;
+    g.fillStyle=i%2?c0:c1;
+    g.beginPath();
+    g.moveTo(-S,S*0.58); g.lineTo(S,S*0.58); g.lineTo(S-w,S*0.58-w);
+    g.lineTo(-S+w*0.4,S*0.58-w); g.closePath(); g.fill();
+    g.strokeStyle="#ffffff"; g.lineWidth=1.8; g.globalAlpha=A*0.8; g.stroke();
+  }
+  g.restore();
+},
+
+"Infinity"(g,a,t,A){                    // the serpent, still eating
+  const c0=a.c[0], c1=a.c[1];
+  g.save(); g.translate(0,-70);
+  const R=150;
+  for(let i=0;i<90;i++){
+    const u=i/90, an=u*TAU*0.96-1.2+t*0.00035;
+    const w=5+Math.sin(u*Math.PI)*15;
+    g.globalAlpha=A; g.strokeStyle=i%2?c0:c1; g.lineWidth=w; g.lineCap="round";
+    g.beginPath();
+    g.moveTo(Math.cos(an)*R,Math.sin(an)*R*0.62);
+    const a2=an+0.02;
+    g.lineTo(Math.cos(a2)*R,Math.sin(a2)*R*0.62); g.stroke();
+  }
+  const ha=-1.2+t*0.00035+TAU*0.96;
+  g.translate(Math.cos(ha)*R,Math.sin(ha)*R*0.62); g.rotate(ha+1.6);
+  g.fillStyle=c0; g.beginPath(); g.ellipse(0,0,24,14,0,0,TAU); g.fill();
+  g.fillStyle="#ffffff"; g.beginPath(); g.arc(6,-4,3.4,0,TAU); g.fill();
+  g.restore();
+},
+
+"Oblivion"(g,a,t,A){                    // fragments, and then not even those
+  const c1=a.c[1];
+  for(let i=0;i<34;i++){
+    const u=((t*0.00018+i/34)%1);
+    const an=i*2.399, rr=50+u*230;
+    const px=Math.cos(an)*rr, py=-70+Math.sin(an)*rr*0.6;
+    g.globalAlpha=A*Math.max(0,1-u*1.3)*0.85;
+    g.save(); g.translate(px,py); g.rotate(an+u*3);
+    g.fillStyle=u<0.4?a.c[0]:c1;
+    const sz=(1-u)*13+2;
+    g.fillRect(-sz/2,-sz/2,sz,sz);
+    g.restore();
+  }
+  const vg=g.createRadialGradient(0,-70,20,0,-70,180);
+  vg.addColorStop(0,"#000000"); vg.addColorStop(1,"transparent");
+  g.globalAlpha=A*0.9; g.fillStyle=vg;
+  g.beginPath(); g.arc(0,-70,180,0,TAU); g.fill();
+},
+
+"Transcendence"(g,a,t,A){               // the same shape, rising out of itself
+  const c0=a.c[0], c1=a.c[1];
+  for(let i=0;i<7;i++){
+    const u=((t*0.00035+i/7)%1);
+    const y=60-u*300, sc=1-u*0.5;
+    g.globalAlpha=A*(1-u)*0.85;
+    g.save(); g.translate(0,y); g.scale(sc,sc);
+    g.fillStyle=i%2?c0:c1;
+    g.beginPath(); g.moveTo(-34,0); g.quadraticCurveTo(-44,-90,0,-110);
+    g.quadraticCurveTo(44,-90,34,0); g.closePath(); g.fill();
+    g.restore();
+  }
+},
+
+"Ascension"(g,a,t,A){                   // stairs, going up out of frame
+  const c0=a.c[0], c1=a.c[1];
+  for(let i=0;i<11;i++){
+    const u=((t*0.00024+i/11)%1);
+    const y=80-u*320, w=120*(1-u*0.6);
+    g.globalAlpha=A*(1-u)*0.9;
+    g.fillStyle=i%2?c0:c1;
+    g.fillRect(-w/2+Math.sin(i*1.4)*26, y, w, 11);
+    g.globalAlpha=A*(1-u)*0.5; g.fillStyle="#ffffff";
+    g.fillRect(-w/2+Math.sin(i*1.4)*26, y, w, 2.4);
+  }
+},
+
+"Revelation"(g,a,t,A){                  // the veil drawn back
+  const c0=a.c[0];
+  const open=0.3+Math.abs(Math.sin(t*0.0007))*0.7;
+  const eg=g.createRadialGradient(0,-80,0,0,-80,120);
+  eg.addColorStop(0,"#ffffff"); eg.addColorStop(.3,c0); eg.addColorStop(1,c0+"00");
+  g.globalAlpha=A; g.fillStyle=eg;
+  g.beginPath(); g.ellipse(0,-80,120,70*open,0,0,TAU); g.fill();
+  g.fillStyle="#06060c";
+  g.beginPath(); g.ellipse(0,-80,34,34*Math.min(1,open*1.4),0,0,TAU); g.fill();
+  for(const sgn of [-1,1]){               // the curtains
+    g.globalAlpha=A*0.95; g.fillStyle=a.c[1];
+    g.beginPath(); g.moveTo(sgn*250,-230); g.lineTo(sgn*250,90);
+    for(let i=6;i>=0;i--){
+      const u=i/6;
+      g.lineTo(sgn*(110+open*140+Math.sin(t*0.0013+i)*9)*(0.5+u*0.5), 90-u*320);
+    }
+    g.closePath(); g.fill();
+  }
+},
+
+"Cataclysm"(g,a,t,A){                   // impact, and the ground remembering it
+  const c0=a.c[0], c1=a.c[1];
+  for(let i=0;i<13;i++){
+    const an=i/13*TAU+0.2, L=110+((i*41)%100)/100*150;
+    const pulse=0.5+Math.abs(Math.sin(t*0.0014+i))*0.5;
+    g.globalAlpha=A*pulse;
+    const gr=g.createLinearGradient(0,30,Math.cos(an)*L,30+Math.sin(an)*L*0.34);
+    gr.addColorStop(0,"#ffffff"); gr.addColorStop(.3,c0); gr.addColorStop(1,"transparent");
+    g.strokeStyle=gr; g.lineWidth=5; g.lineCap="round";
+    g.beginPath(); g.moveTo(0,30);
+    for(let k=1;k<=3;k++) g.lineTo(Math.cos(an+Math.sin(k+i)*0.2)*L*k/3,
+                                  30+Math.sin(an+Math.sin(k+i)*0.2)*L*0.34*k/3);
+    g.stroke();
+  }
+  for(let i=0;i<20;i++){                  // ejecta
+    const u=((t*0.0006+i/20)%1), an=i*2.399;
+    g.globalAlpha=A*(1-u);
+    g.fillStyle=i%2?c0:c1;
+    g.save(); g.translate(Math.cos(an)*u*230, 30-Math.sin(Math.PI*u)*180+Math.sin(an)*u*60);
+    g.rotate(u*6); g.fillRect(-4,-4,8,8); g.restore();
+  }
+},
+
+"Requiem"(g,a,t,A){                     // candles, and what falls on them
+  const c0=a.c[0], c1=a.c[1];
+  for(let i=0;i<5;i++){
+    const px=(i-2)*62, hh=40+Math.abs(2-i)*14;
+    g.globalAlpha=A; g.fillStyle="#ded7c4";
+    g.fillRect(px-6,-10-hh,12,hh);
+    const fl=1+Math.sin(t*0.008+i*2)*0.12;
+    const fg=g.createRadialGradient(px,-20-hh,0,px,-20-hh,22*fl);
+    fg.addColorStop(0,"#ffffff"); fg.addColorStop(.3,"#ffe3a0");
+    fg.addColorStop(.7,c0); fg.addColorStop(1,c0+"00");
+    g.fillStyle=fg; g.beginPath(); g.ellipse(px,-20-hh,11*fl,21*fl,0,0,TAU); g.fill();
+  }
+  for(let i=0;i<22;i++){                  // petals
+    const u=((t*0.00016+i/22)%1);
+    g.globalAlpha=A*(1-Math.abs(u-0.5)*1.4)*0.9;
+    g.save(); g.translate(Math.sin(i*2.3+t*0.0007)*190, -250+u*300);
+    g.rotate(t*0.0012+i); g.fillStyle=i%2?c1:c0;
+    g.beginPath(); g.ellipse(0,0,7,3.4,0,0,TAU); g.fill(); g.restore();
+  }
+},
+
+"Chronos Unbound"(g,a,t,A){             // clocks, and none of them agreeing
+  const c0=a.c[0], c1=a.c[1];
+  for(let i=0;i<5;i++){
+    const an=t*0.0004*(i%2?1:-1)+i/5*TAU, rr=i===0?0:150;
+    const px=Math.cos(an)*rr, py=-70+Math.sin(an)*rr*0.5;
+    const R=i===0?64:36;
+    g.save(); g.translate(px,py);
+    g.globalAlpha=A*0.95;
+    g.fillStyle="rgba(0,0,0,.5)"; g.beginPath(); g.arc(0,0,R,0,TAU); g.fill();
+    g.strokeStyle=i%2?c0:c1; g.lineWidth=3; g.stroke();
+    for(let k=0;k<12;k++){ const b=k/12*TAU;
+      g.beginPath(); g.moveTo(Math.cos(b)*R*0.8,Math.sin(b)*R*0.8);
+      g.lineTo(Math.cos(b)*R*0.95,Math.sin(b)*R*0.95); g.lineWidth=k%3?1.2:2.4; g.stroke(); }
+    const dir=(i%2?-1:1)*(1+i*0.9);        // each runs at its own rate and sign
+    g.strokeStyle="#ffffff"; g.lineCap="round";
+    g.lineWidth=R*0.08;
+    g.beginPath(); g.moveTo(0,0);
+    g.lineTo(Math.cos(t*0.0009*dir)*R*0.5,Math.sin(t*0.0009*dir)*R*0.5); g.stroke();
+    g.lineWidth=R*0.05;
+    g.beginPath(); g.moveTo(0,0);
+    g.lineTo(Math.cos(t*0.009*dir)*R*0.78,Math.sin(t*0.009*dir)*R*0.78); g.stroke();
+    if(i>2){ g.strokeStyle=c0; g.lineWidth=2;   // cracked faces
+      g.beginPath(); g.moveTo(-R,-R*0.3); g.lineTo(R*0.4,R*0.5); g.stroke(); }
+    g.restore();
+  }
+},
+
+"Primordial"(g,a,t,A){                  // matter before it decided what to be
+  const c0=a.c[0], c1=a.c[1];
+  for(let i=0;i<40;i++){
+    const u=i/40;
+    const an=t*0.0005*(1+u)+u*TAU*3;
+    const rr=40+u*170+Math.sin(t*0.0013+i)*22;
+    const px=Math.cos(an)*rr, py=-70+Math.sin(an)*rr*0.6;
+    const sz=10+Math.sin(t*0.002+i*1.7)*7+u*14;
+    g.globalAlpha=A*0.3;
+    const gr=g.createRadialGradient(px,py,0,px,py,sz);
+    gr.addColorStop(0,i%3===0?"#ffffff":(i%3===1?c0:c1));
+    gr.addColorStop(1,"transparent");
+    g.fillStyle=gr; g.beginPath(); g.arc(px,py,sz,0,TAU); g.fill();
+  }
+  g.globalAlpha=A*0.85;
+  const cg=g.createRadialGradient(0,-70,0,0,-70,60);
+  cg.addColorStop(0,"#ffffff"); cg.addColorStop(.4,c0); cg.addColorStop(1,"transparent");
+  g.fillStyle=cg; g.beginPath(); g.arc(0,-70,60,0,TAU); g.fill();
+}
+};
 
 /* ==========================================================================
    COMPOSITION
@@ -2145,14 +2637,28 @@ function anamorphic(x,W,H,a,t,A){
 const COMPO_READY=(() => {
   const RE=mulberry(90210777);
   const pick=o=>{const k=Object.keys(o); return k[(RE()*k.length)|0];};
+  /* Two things were making the deep end look alike: the apex pool was nine
+     entities covering most of 172 auras, and nothing but the component choice
+     varied - same scale, same spin, same staging. The pool is every entity
+     now, only weighted toward the showy ones, and each aura carries its own
+     spin rate and direction, scale and lift, so two auras sharing a subject
+     still do not read as the same scene. */
+  const SHOWY=["seraph","reaper","ghost","orrery","rift","throne","phoenix","eye",
+               "antlers","clockwork","tentacles","monolith","jelly","mask","spider"];
   for(const a of AURAS){
     const u=a.i/(N_AURAS-1), deep=u>0.72;
-    a.ent=(deep&&RE()<0.72) ? ENT_APEX[(RE()*ENT_APEX.length)|0]
-                            : ENT_NAMES[(RE()*ENT_NAMES.length)|0];
+    a.sig = SIGN[a.n] ? a.n : null;        // the named apex auras get their own scene
+    a.ent=(deep&&RE()<0.5) ? SHOWY[(RE()*SHOWY.length)|0]
+                           : ENT_NAMES[(RE()*ENT_NAMES.length)|0];
     a.gnd=pick(GROUND);
     a.sat=pick(SATS);
+    a.sat2=(u>0.62&&RE()<0.45) ? pick(SATS) : null;   // some carry two rings
     a.wld=(u>0.30||RE()<0.5) ? pick(WIELD) : null;
     a.ovr=(u>0.46||RE()<0.35) ? pick(OVER)  : null;
+    a.spin=(0.55+RE()*1.5)*(RE()<0.5?-1:1);
+    a.escale=0.78+RE()*0.62;
+    a.elift=(RE()-0.5)*0.22;
+    a.satR=0.82+RE()*0.5;
   }
   return true;
 })();
@@ -2608,7 +3114,16 @@ function runCutscene(a){
         try{ ST.draw(cutTx,W,H,a,now,g); }catch(e){}
         cutTx.restore();
 
-        const ent=ENTITIES[a.ent];
+        const ent=a.sig?null:ENTITIES[a.ent];
+        if(a.sig&&SIGN[a.sig]){
+          const ea=span(sp,0.1,0.55)*(1-span(sp,0.88,1));
+          cx2.save(); cx2.globalCompositeOperation="lighter";
+          cx2.globalAlpha=easeOutCubic(sIn)*0.62;
+          cx2.translate(W/2,H/2); cx2.scale(0.62,0.62); cx2.translate(-W/2,-H/2);
+          inFigure(cx2,W,H,g=>{ try{ SIGN[a.sig](g,a,now*a.spin,ea); }catch(e){} });
+          if(SATS[a.sat]) try{ SATS[a.sat](cx2,W,H,a,now,ea*0.8); }catch(e){}
+          cx2.restore();
+        }
         if(ent){
           const ea=span(sp,0.1,0.55)*(1-span(sp,0.88,1));
           cx2.save();
@@ -2694,8 +3209,9 @@ function paint(){
       +(previewId&&previewId!==S.equipped?" · PREVIEW":""))
     :"roll to begin";
   $("showFx").textContent=a
-    ?((isShiny(a.id)?"\u2726 RADIANT \u00b7 ":"")+
-      [a.ent,a.wld,a.sat,a.ovr,a.gnd].filter(Boolean).join(" \u00b7 ").toUpperCase()):"";
+    ?((isShiny(a.id)?"\u2726 RADIANT \u00b7 ":"")+(a.sig?"SIGNATURE \u00b7 ":"")+
+      [a.sig?null:a.ent,a.wld,a.sat,a.sat2,a.ovr,a.gnd]
+        .filter(Boolean).join(" \u00b7 ").toUpperCase()):"";
   $("showFx").style.color=a&&isShiny(a.id)?"#ffe9a8":"";
   const now=Date.now();
   $("fx").innerHTML=S.effects.filter(e=>e.until>now).map(e=>{

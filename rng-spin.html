@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aether Roll</title>
+<style>
+:root{
+  --bg:#06060b; --panel:#0e0e18; --line:#22223a; --ink:#e8e8f4; --dim:#8a8aa6;
+  --gold:#ffc857; --acc:#8b6cff;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hidden;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;-webkit-font-smoothing:antialiased}
+#bg{position:fixed;inset:0;z-index:0}
+#app{position:fixed;inset:0;z-index:1;display:flex;flex-direction:column;
+  padding:14px;gap:12px}
+
+/* ---------- top bar ---------- */
+.top{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}
+.chip{background:rgba(14,14,24,.82);border:1px solid var(--line);border-radius:10px;
+  padding:8px 12px;font-size:12px;letter-spacing:.5px;display:flex;flex-direction:column;gap:2px;
+  min-width:94px}
+.chip b{font-size:15px;letter-spacing:0}
+.chip span{color:var(--dim);font-size:10px;letter-spacing:1.4px;text-transform:uppercase}
+.grow{flex:1}
+.biome{border-color:#2d2a4d}
+#biomeName{color:var(--gold)}
+.btn{font:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;border-radius:10px;
+  border:1px solid var(--line);background:rgba(20,20,34,.9);color:var(--ink);padding:9px 14px;
+  transition:border-color .15s,transform .08s}
+.btn:hover{border-color:#4a4a6e}
+.btn:active{transform:translateY(1px)}
+.btn.on{border-color:var(--acc);color:#cbb8ff;box-shadow:0 0 14px rgba(139,108,255,.28)}
+
+/* ---------- reel ---------- */
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;min-height:0;position:relative}
+#reelWrap{position:relative;width:min(880px,96vw);height:138px;overflow:hidden;
+  border:1px solid var(--line);border-radius:14px;background:rgba(8,8,14,.74);
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);
+          mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent)}
+#reel{position:absolute;top:0;left:0;height:100%;display:flex;align-items:center;gap:10px;
+  will-change:transform}
+.tile{width:126px;height:104px;flex:0 0 126px;border-radius:11px;position:relative;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  border:1px solid rgba(255,255,255,.1);overflow:hidden}
+.tile .nm{font-size:11.5px;font-weight:700;letter-spacing:.4px;text-align:center;padding:0 6px;
+  text-shadow:0 1px 4px rgba(0,0,0,.95);z-index:1;line-height:1.2}
+.tile .od{font-size:9.5px;color:rgba(255,255,255,.82);letter-spacing:.6px;z-index:1;
+  text-shadow:0 1px 4px #000}
+#needle{position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;
+  background:linear-gradient(180deg,transparent,var(--gold) 14%,var(--gold) 86%,transparent);
+  box-shadow:0 0 16px var(--gold);z-index:3;pointer-events:none}
+#needle::before,#needle::after{content:"";position:absolute;left:-5px;border:6px solid transparent}
+#needle::before{top:-1px;border-top-color:var(--gold)}
+#needle::after{bottom:-1px;border-bottom-color:var(--gold)}
+
+/* ---------- roll row ---------- */
+#fx{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;min-height:22px}
+.fx{border:1px solid var(--line);border-radius:99px;padding:3px 11px;font-size:10.5px;
+  letter-spacing:1.2px;color:var(--gold);background:rgba(255,200,87,.08)}
+#rarest{font-size:11px;color:var(--dim);letter-spacing:1.4px;text-align:center}
+#rarest b{color:var(--ink)}
+.rollRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+#rollBtn{font-size:16px;font-weight:800;letter-spacing:3px;padding:14px 42px;border-radius:12px;
+  background:linear-gradient(180deg,#8b6cff,#5a3fd6);border:0;color:#fff;cursor:pointer;
+  box-shadow:0 6px 24px rgba(139,108,255,.36);transition:transform .08s,filter .15s}
+#rollBtn:hover{filter:brightness(1.1)}
+#rollBtn:active{transform:translateY(2px)}
+#rollBtn:disabled{filter:grayscale(.8) brightness(.6);cursor:default;box-shadow:none}
+#cdBar{width:min(880px,96vw);height:3px;background:rgba(255,255,255,.08);border-radius:99px;
+  overflow:hidden}
+#cdBar i{display:block;height:100%;width:0;background:var(--acc)}
+
+/* ---------- equipped ---------- */
+#equipped{display:flex;align-items:center;gap:12px;background:rgba(14,14,24,.8);
+  border:1px solid var(--line);border-radius:12px;padding:10px 16px;min-width:300px;
+  justify-content:center}
+#eqOrb{width:40px;height:40px;border-radius:50%;flex:0 0 40px;position:relative}
+#eqName{font-size:14px;font-weight:700;letter-spacing:.6px}
+#eqOdds{font-size:10.5px;color:var(--dim);letter-spacing:1.2px}
+
+/* ---------- feed ---------- */
+#feed{position:absolute;right:0;top:0;width:252px;max-height:100%;overflow:hidden;
+  display:flex;flex-direction:column;gap:5px;pointer-events:none}
+.fi{background:rgba(10,10,18,.84);border:1px solid var(--line);border-left-width:3px;
+  border-radius:8px;padding:6px 10px;font-size:11px;animation:slide .3s ease both}
+.fi b{display:block;font-size:12px;letter-spacing:.3px}
+.fi span{color:var(--dim);font-size:9.5px;letter-spacing:1px}
+@keyframes slide{from{opacity:0;transform:translateX(18px)}}
+
+/* ---------- reveal ---------- */
+#reveal{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;
+  flex-direction:column;gap:10px;pointer-events:none}
+#reveal.show{display:flex}
+#revBack{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,
+  rgba(4,4,9,.88),rgba(0,0,0,.985));backdrop-filter:none}
+.bar{position:absolute;left:0;right:0;height:0;background:#000;transition:height .45s ease}
+.bar.t{top:0} .bar.b{bottom:0}
+#reveal.cine .bar{height:12vh}
+#revName{position:relative;font-size:clamp(30px,8vw,76px);font-weight:900;letter-spacing:4px;
+  text-align:center;line-height:1.05;padding:0 16px}
+#revOdds{position:relative;font-size:clamp(12px,2.4vw,18px);letter-spacing:6px;color:#cfcfe6}
+#revTag{position:relative;font-size:11px;letter-spacing:5px;color:var(--gold);text-transform:uppercase}
+
+/* ---------- modal ---------- */
+.modal{position:fixed;inset:0;z-index:40;background:rgba(3,3,7,.9);display:none;
+  align-items:center;justify-content:center;padding:18px}
+.modal.show{display:flex}
+.sheet{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  width:min(900px,100%);max-height:88vh;display:flex;flex-direction:column;overflow:hidden}
+.sheetTop{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.sheetTop h2{margin:0;font-size:16px;letter-spacing:2px;flex:1}
+.sheetBody{overflow:auto;padding:16px 20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:9px}
+.card{border:1px solid var(--line);border-radius:11px;padding:10px;position:relative;
+  overflow:hidden;cursor:pointer;min-height:84px;display:flex;flex-direction:column;
+  justify-content:flex-end;gap:3px}
+.card.locked{opacity:.3;cursor:default}
+.card .cn{font-size:12px;font-weight:700;z-index:1;text-shadow:0 1px 4px #000}
+.card .co{font-size:9.5px;color:rgba(255,255,255,.75);z-index:1;letter-spacing:.8px}
+.card .cc{position:absolute;top:7px;right:9px;font-size:10px;color:rgba(255,255,255,.9);z-index:1;
+  background:rgba(0,0,0,.45);border-radius:99px;padding:1px 7px}
+.card.eq{outline:2px solid var(--gold);outline-offset:-2px}
+.shopRow{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);
+  border-radius:11px;margin-bottom:9px}
+.shopRow .si{flex:1}
+.shopRow .si b{display:block;font-size:13px}
+.shopRow .si span{font-size:10.5px;color:var(--dim);letter-spacing:.6px}
+@media (max-width:760px){ #feed{display:none} #reelWrap{height:120px} .tile{height:92px} }
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+
+<div id="app">
+  <div class="top">
+    <div class="chip"><span>Rolls</span><b id="sRolls">0</b></div>
+    <div class="chip"><span>Luck</span><b id="sLuck">1.00x</b></div>
+    <div class="chip"><span>Shards</span><b id="sShards">0</b></div>
+    <div class="chip"><span>Index</span><b id="sIndex">0/0</b></div>
+    <div class="chip biome grow"><span>Biome &middot; <i id="biomeT">2:00</i></span><b id="biomeName">SERENE</b></div>
+    <button class="btn" id="btnIndex">INDEX</button>
+    <button class="btn" id="btnShop">POTIONS</button>
+    <button class="btn" id="btnAuto">AUTO</button>
+    <button class="btn" id="btnMute">SOUND</button>
+  </div>
+
+  <div class="stage">
+    <div id="feed"></div>
+    <div id="equipped">
+      <div id="eqOrb"></div>
+      <div><div id="eqName">Nothing equipped</div><div id="eqOdds">roll to begin</div></div>
+    </div>
+    <div id="fx"></div>
+    <div id="reelWrap"><div id="reel"></div><div id="needle"></div></div>
+    <div id="cdBar"><i></i></div>
+    <div class="rollRow">
+      <button id="rollBtn">ROLL</button>
+      <div style="font-size:11px;color:var(--dim);letter-spacing:1.4px">SPACE TO ROLL</div>
+    </div>
+    <div id="rarest"></div>
+  </div>
+</div>
+
+<div id="reveal">
+  <div id="revBack"></div><div class="bar t"></div><div class="bar b"></div>
+  <div id="revTag"></div><div id="revName"></div><div id="revOdds"></div>
+</div>
+
+<div class="modal" id="mIndex"><div class="sheet">
+  <div class="sheetTop"><h2>INDEX</h2>
+    <div style="font-size:11px;color:var(--dim)" id="idxPct"></div>
+    <button class="btn" data-close>CLOSE</button></div>
+  <div class="sheetBody"><div class="grid" id="idxGrid"></div></div>
+</div></div>
+
+<div class="modal" id="mShop"><div class="sheet">
+  <div class="sheetTop"><h2>POTIONS</h2>
+    <div style="font-size:12px;color:var(--gold)" id="shopShards"></div>
+    <button class="btn" data-close>CLOSE</button></div>
+  <div class="sheetBody" id="shopBody"></div>
+</div></div>
+
+<script>
+"use strict";
+/* ============================================================
+   AETHER ROLL - an RNG roller. Spin the reel, pull an aura,
+   fill the index. Rarity is expressed the way these games do:
+   "1 in N", where N climbs to a billion.
+   ============================================================ */
+
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const fmt=n=>n.toLocaleString("en-US");
+
+/* ---------------- auras ----------------
+   Ordered by odds ascending. `o` is the N in "1 in N". `c` is a two-stop
+   gradient; `rb` marks the ones that cycle hue instead of sitting still.
+   `b` restricts an aura to a biome, which is what makes biomes worth
+   waiting for rather than just a colour wash. */
+const AURAS=[
+ {id:"ember",      n:"Ember",         o:2,          c:["#ff8a4c","#a52c08"]},
+ {id:"tide",       n:"Tide",          o:4,          c:["#5fc9ff","#0f4c87"]},
+ {id:"verdant",    n:"Verdant",       o:8,          c:["#86df86","#16682c"]},
+ {id:"gust",       n:"Gust",          o:16,         c:["#dff1fa","#6d93a9"]},
+ {id:"quartz",     n:"Quartz",        o:32,         c:["#f6edff","#a98fd4"]},
+ {id:"cinder",     n:"Cinder",        o:64,         c:["#ff6334","#4a0e00"]},
+ {id:"frostbite",  n:"Frostbite",     o:128,        c:["#a9ecff","#226b91"]},
+ {id:"static",     n:"Static",        o:256,        c:["#fff386","#7d6c0c"]},
+ {id:"monsoon",    n:"Monsoon",       o:512,        c:["#45b4d4","#0c2f41"]},
+ {id:"zephyr",     n:"Zephyr",        o:1500,       c:["#e8fbff","#4e8fa8"], b:"GALE"},
+ {id:"obsidian",   n:"Obsidian",      o:1024,       c:["#616177","#07070c"]},
+ {id:"aurora",     n:"Aurora",        o:2048,       c:["#80ffcb","#5a7cf5"]},
+ {id:"solar",      n:"Solar Flare",   o:4096,       c:["#ffd95e","#ff4400"]},
+ {id:"glacier",    n:"Glacier Heart", o:6000,       c:["#ddfaff","#2e7fa8"], b:"RIME"},
+ {id:"permafrost", n:"Permafrost",    o:8192,       c:["#e2f9ff","#3f8fb5"]},
+ {id:"meteor",     n:"Meteor",        o:12000,      c:["#ffb570","#5c1c00"], b:"STARFALL"},
+ {id:"nebula",     n:"Nebula",        o:16384,      c:["#cf7bf7","#241664"]},
+ {id:"blight",     n:"Blight",        o:24000,      c:["#9de04a","#1d2d07"], b:"HOLLOW"},
+ {id:"starfall",   n:"Starfall",      o:32768,      c:["#ffeeb4","#6b4ed8"]},
+ {id:"gravity",    n:"Gravity Well",  o:65536,      c:["#99a4ff","#05020b"]},
+ {id:"prism",      n:"Prism",         o:100000,     c:["#ff7ad9","#7affd9"], rb:1},
+ {id:"eclipse",    n:"Eclipse",       o:250000,     c:["#ffbe56","#0d0716"]},
+ {id:"nullform",   n:"Nullform",      o:400000,     c:["#b9b9c6","#000000"], b:"NULL"},
+ {id:"quasar",     n:"Quasar",        o:500000,     c:["#7df4ff","#07215c"]},
+ {id:"singularity",n:"Singularity",   o:1000000,    c:["#bd7cff","#000000"]},
+ {id:"glitch",     n:"Glitch",        o:2000000,    c:["#00ffc8","#ff0066"], b:"FRACTURE", rb:1},
+ {id:"chronos",    n:"Chronos",       o:5000000,    c:["#f0d487","#3a2a0a"]},
+ {id:"oblivion",   n:"Oblivion",      o:10000000,   c:["#44445a","#000000"]},
+ {id:"genesis",    n:"Genesis",       o:50000000,   c:["#fff8e0","#ffb000"]},
+ {id:"apotheosis", n:"Apotheosis",    o:100000000,  c:["#ffffff","#9b6cff"], rb:1},
+ {id:"origin",     n:"ORIGIN",        o:1000000000, c:["#ffffff","#1a1a1a"], rb:1}
+].sort((a,b)=>a.o-b.o);
+const BY_ID=Object.fromEntries(AURAS.map(a=>[a.id,a]));
+
+/* How loud a result should be. Everything downstream - reel length, screen
+   shake, whether the bars come in - keys off this one number. */
+function tierOf(o){ return o>=10000000?4 : o>=500000?3 : o>=50000?2 : o>=2048?1 : 0; }
+
+/* ---------------- biomes ----------------
+   One is always active. Each tilts the odds and most unlock an aura that
+   cannot drop anywhere else. */
+const BIOMES=[
+  {id:"SERENE",  w:54, tint:"#6a7ad8", boost:{} },
+  {id:"GALE",    w:16, tint:"#8fc8e0", boost:{gust:3,zephyr:1,monsoon:2} },
+  {id:"RIME",    w:13, tint:"#9fdcf2", boost:{frostbite:3,permafrost:3,glacier:1} },
+  {id:"STARFALL",w:9,  tint:"#c7a4ff", boost:{starfall:4,nebula:3,meteor:1} },
+  {id:"HOLLOW",  w:5,  tint:"#8fbf4a", boost:{blight:1,obsidian:3,oblivion:2} },
+  {id:"NULL",    w:2.4,tint:"#b9b9c6", boost:{nullform:1,gravity:4,singularity:2} },
+  {id:"FRACTURE",w:0.6,tint:"#00ffc8", boost:{glitch:1,prism:5,apotheosis:3} }
+];
+const BIOME_MS=120000;
+
+/* ---------------- potions ---------------- */
+const POTIONS=[
+  {id:"luck1", n:"Lucky Draught",  d:"x2 luck for 90 seconds",   cost:60,   luck:2,  ms:90000},
+  {id:"luck2", n:"Greater Draught",d:"x5 luck for 120 seconds",  cost:320,  luck:5,  ms:120000},
+  {id:"luck3", n:"Mythic Draught", d:"x20 luck for 90 seconds",  cost:1800, luck:20, ms:90000},
+  {id:"luck4", n:"Aether Draught", d:"x100 luck for 60 seconds", cost:12000,luck:100,ms:60000},
+  {id:"haste", n:"Haste Tonic",    d:"half roll delay, 2 minutes",cost:240, haste:1, ms:120000}
+];
+
+/* ---------------- state ---------------- */
+const SAVE_KEY="aether-roll-v1";
+const BASE_CD=1100;
+let S={ rolls:0, shards:0, inv:{}, equipped:null, rarest:null,
+        biome:"SERENE", biomeEnd:0, effects:[], muted:false, auto:false };
+
+function save(){
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){}
+}
+function load(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY); if(!raw) return;
+    const d=JSON.parse(raw); if(!d||typeof d!=="object") return;
+    // merge field by field: a save written by an older build must not be able
+    // to delete keys this build depends on
+    S.rolls=+d.rolls||0; S.shards=+d.shards||0;
+    S.inv=(d.inv&&typeof d.inv==="object")?d.inv:{};
+    S.equipped=BY_ID[d.equipped]?d.equipped:null;
+    S.rarest=BY_ID[d.rarest]?d.rarest:null;
+    S.muted=!!d.muted;
+    S.effects=Array.isArray(d.effects)?d.effects.filter(e=>e&&e.until>Date.now()):[];
+  }catch(e){ S.inv={}; }
+}
+load();
+
+const owned=()=>Object.keys(S.inv).filter(k=>BY_ID[k]).length;
+function luck(){
+  let L=1;
+  for(const e of S.effects) if(e.luck && e.until>Date.now()) L*=e.luck;
+  return L;
+}
+const hasted=()=>S.effects.some(e=>e.haste && e.until>Date.now());
+const cooldown=()=>BASE_CD*(hasted()?0.5:1);
+
+/* ---------------- audio ---------------- */
+let AC=null;
+const ac=()=>AC||(AC=new (window.AudioContext||window.webkitAudioContext)());
+function tone(f,dur,type,vol){
+  if(S.muted) return;
+  try{
+    const a=ac(),t=a.currentTime,o=a.createOscillator(),g=a.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f,t);
+    g.gain.setValueAtTime(vol||0.05,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+dur+0.02);
+  }catch(e){}
+}
+const tick=()=>tone(1200+Math.random()*300,0.03,"square",0.018);
+function fanfare(tier){
+  if(S.muted) return;
+  const seq=[[523,0],[659,90],[784,180],[1047,270],[1319,380]].slice(0,2+tier);
+  seq.forEach(([f,d])=>setTimeout(()=>tone(f,0.5,"triangle",0.07),d));
+  if(tier>=3) setTimeout(()=>tone(130,1.4,"sawtooth",0.07),0);
+}
+
+/* ---------------- background ---------------- */
+const bg=$("bg"), bx=bg.getContext("2d");
+let BW=0,BH=0,stars=[],motes=[];
+function sizeBg(){
+  BW=bg.width=innerWidth; BH=bg.height=innerHeight;
+  stars=Array.from({length:150},()=>({x:Math.random()*BW,y:Math.random()*BH,
+    r:Math.random()*1.3+0.2,p:Math.random()*6.28,s:0.3+Math.random()*0.7}));
+}
+addEventListener("resize",sizeBg); sizeBg();
+function biome(){ return BIOMES.find(b=>b.id===S.biome)||BIOMES[0]; }
+function eqColors(){
+  const a=S.equipped?BY_ID[S.equipped]:null;
+  return a?a.c:["#5a5a7a","#15151f"];
+}
+function drawBg(t){
+  bx.fillStyle="#06060b"; bx.fillRect(0,0,BW,BH);
+  const bi=biome();
+  // biome wash from the top
+  const g=bx.createLinearGradient(0,0,0,BH);
+  g.addColorStop(0,bi.tint+"26"); g.addColorStop(0.55,"#06060b00"); g.addColorStop(1,"#00000000");
+  bx.fillStyle=g; bx.fillRect(0,0,BW,BH);
+  for(const s of stars){
+    const a=0.25+Math.abs(Math.sin(t*0.0011*s.s+s.p))*0.6;
+    bx.globalAlpha=a; bx.fillStyle="#cfd6ff";
+    bx.fillRect(s.x,s.y,s.r,s.r);
+  }
+  bx.globalAlpha=1;
+  // motes carrying the equipped aura's colour, so the choice is visible
+  const [c1,c2]=eqColors();
+  if(motes.length<70 && S.equipped) motes.push({x:Math.random()*BW,y:BH+20,
+    v:0.25+Math.random()*0.7,r:1+Math.random()*2.6,a:0.5+Math.random()*0.5,
+    sw:Math.random()*6.28});
+  for(let i=motes.length-1;i>=0;i--){
+    const m=motes[i]; m.y-=m.v; m.x+=Math.sin(t*0.001+m.sw)*0.35;
+    if(m.y<-20){ motes.splice(i,1); continue; }
+    bx.globalAlpha=m.a*clamp(m.y/BH,0,1)*0.75;
+    bx.fillStyle=i%2?c1:c2;
+    bx.beginPath(); bx.arc(m.x,m.y,m.r,0,6.2832); bx.fill();
+  }
+  bx.globalAlpha=1;
+}
+
+/* ---------------- biome cycle ---------------- */
+function pickBiome(){
+  const tot=BIOMES.reduce((a,b)=>a+b.w,0);
+  let r=Math.random()*tot;
+  for(const b of BIOMES){ r-=b.w; if(r<=0) return b.id; }
+  return "SERENE";
+}
+function rollBiome(){
+  const prev=S.biome;
+  S.biome=pickBiome(); S.biomeEnd=Date.now()+BIOME_MS;
+  if(S.biome!==prev){
+    feed({n:S.biome+" BIOME",o:0,c:[biome().tint,"#0b0b14"]},"biome");
+    tone(300,0.5,"sine",0.05);
+  }
+  save();
+}
+if(!S.biomeEnd||S.biomeEnd<Date.now()) rollBiome();
+
+/* ---------------- the roll ----------------
+   Walk the table from rarest to most common and take the first hit. Written
+   this way, luck multiplies your shot at every rare tier at once, which is
+   what a luck potion is supposed to feel like. */
+function rollAura(){
+  const L=luck(), bi=biome();
+  const pool=AURAS.filter(a=>!a.b||a.b===bi.id);
+  for(let i=pool.length-1;i>=0;i--){
+    const a=pool[i];
+    const mult=bi.boost[a.id]||1;
+    if(Math.random() < (L*mult)/a.o) return a;
+  }
+  return pool[0];
+}
+const shardsFor=o=>Math.max(1,Math.round(Math.log2(o)));
+
+/* ---------------- reel ---------------- */
+const reel=$("reel"), reelWrap=$("reelWrap");
+const TILE=126, GAP=10, STEP=TILE+GAP;
+function tileHTML(a){
+  const bgc=a.rb
+    ? `background:linear-gradient(135deg,${a.c[0]},${a.c[1]});filter:saturate(1.3)`
+    : `background:linear-gradient(135deg,${a.c[0]},${a.c[1]})`;
+  return `<div class="tile" style="${bgc}">
+    <div class="nm">${a.n}</div><div class="od">1 in ${fmt(a.o)}</div></div>`;
+}
+/* Filler is drawn from what you could plausibly hit, weighted toward the
+   common end, so the strip reads as a real spin rather than a parade of
+   legendaries that never land. */
+function filler(){
+  const pool=AURAS.filter(a=>!a.b||a.b===S.biome);
+  const r=Math.random();
+  const span=r<0.72?Math.min(10,pool.length):r<0.95?Math.min(18,pool.length):pool.length;
+  return pool[Math.floor(Math.random()*span)];
+}
+const WIN_AT=52, STRIP=60;
+function buildStrip(winner){
+  const items=[];
+  for(let i=0;i<STRIP;i++) items.push(i===WIN_AT?winner:filler());
+  reel.innerHTML=items.map(tileHTML).join("");
+  return items;
+}
+let spinning=false;
+function spin(winner,dur){
+  return new Promise(res=>{
+    buildStrip(winner);
+    const center=reelWrap.clientWidth/2;
+    const end=-(WIN_AT*STEP)-TILE/2+center;
+    const start=center+STEP*2;
+    const t0=performance.now();
+    let lastIdx=-1;
+    reel.style.transform=`translateX(${start}px)`;
+    (function frame(now){
+      const p=clamp((now-t0)/dur,0,1);
+      const e=1-Math.pow(1-p,5);                       // quintic ease-out
+      const x=start+(end-start)*e;
+      reel.style.transform=`translateX(${x}px)`;
+      const idx=Math.round((center-x-TILE/2)/STEP);
+      if(idx!==lastIdx){ lastIdx=idx; tick(); }
+      if(p<1) requestAnimationFrame(frame); else res();
+    })(t0);
+  });
+}
+
+/* ---------------- reveal ---------------- */
+/* Only a genuinely rare pull earns the full screen. Commons get a pulse on
+   the tile they landed on, which keeps a session of auto-rolling watchable
+   instead of forcing a cutscene on every 1 in 2. */
+function pulse(a){
+  const tile=reel.children[WIN_AT]; if(!tile) return;
+  tile.animate([{boxShadow:`0 0 0 0 ${a.c[0]}00`,transform:"scale(1)"},
+                {boxShadow:`0 0 34px 10px ${a.c[0]}cc`,transform:"scale(1.07)"},
+                {boxShadow:`0 0 0 0 ${a.c[0]}00`,transform:"scale(1)"}],
+               {duration:620,easing:"ease-out"});
+  tone(520+Math.min(a.o,4096)/18,0.18,"triangle",0.05);
+}
+function reveal(a){
+  const t=tierOf(a.o), R=$("reveal");
+  if(t<2){ pulse(a); return new Promise(r=>setTimeout(r,260)); }
+  $("revName").textContent=a.n;
+  $("revName").style.cssText=
+    `background:linear-gradient(90deg,${a.c[0]},${a.c[1]});-webkit-background-clip:text;`+
+    `background-clip:text;color:transparent;filter:drop-shadow(0 0 22px ${a.c[0]}aa)`;
+  $("revOdds").textContent="1 IN "+fmt(a.o);
+  $("revTag").textContent=["found","rare","very rare","exceptional","transcendent"][t];
+  R.classList.toggle("cine",t>=3);
+  R.classList.add("show");
+  if(t>=2) document.body.animate(
+    [{transform:"translate(0,0)"},{transform:`translate(${t*2}px,${-t*2}px)`},
+     {transform:`translate(${-t*2}px,${t}px)`},{transform:"translate(0,0)"}],
+    {duration:140,iterations:t*2});
+  fanfare(t);
+  const hold=[1000,1300,1800,2600,3600][t];
+  return new Promise(r=>setTimeout(()=>{ R.classList.remove("show","cine"); r(); },hold));
+}
+
+/* ---------------- feed ---------------- */
+function feed(a,kind){
+  const d=document.createElement("div");
+  d.className="fi"; d.style.borderLeftColor=a.c[0];
+  d.innerHTML=kind==="biome"
+    ? `<b style="color:${a.c[0]}">${a.n}</b><span>biome shift</span>`
+    : `<b style="color:${a.c[0]}">${a.n}</b><span>1 in ${fmt(a.o)}</span>`;
+  $("feed").prepend(d);
+  while($("feed").children.length>9) $("feed").lastChild.remove();
+  setTimeout(()=>{ d.style.transition="opacity .5s"; d.style.opacity="0"; },7000);
+  setTimeout(()=>d.remove(),7600);
+}
+
+/* ---------------- a single roll ---------------- */
+let cdUntil=0;
+async function doRoll(){
+  if(spinning) return;
+  spinning=true; $("rollBtn").disabled=true;
+  const a=rollAura(), t=tierOf(a.o);
+  await spin(a, [2600,3200,3900,4800,6000][t]);
+  S.rolls++;
+  S.inv[a.id]=(S.inv[a.id]||0)+1;
+  S.shards+=shardsFor(a.o);
+  if(!S.rarest||a.o>BY_ID[S.rarest].o) S.rarest=a.id;
+  // first of its kind equips itself, so the background reacts immediately
+  if(S.inv[a.id]===1 && (!S.equipped||a.o>=BY_ID[S.equipped].o)) S.equipped=a.id;
+  feed(a); save(); paint();
+  await reveal(a);
+  cdUntil=Date.now()+cooldown();
+  spinning=false; paint();
+  if(S.auto) setTimeout(()=>{ if(S.auto&&!spinning) doRoll(); }, cooldown()+60);
+}
+
+/* ---------------- paint ---------------- */
+function paint(){
+  $("sRolls").textContent=fmt(S.rolls);
+  $("sLuck").textContent=luck().toFixed(2)+"x";
+  $("sLuck").style.color=luck()>1?"var(--gold)":"";
+  $("sShards").textContent=fmt(S.shards);
+  $("sIndex").textContent=owned()+"/"+AURAS.length;
+  $("biomeName").textContent=S.biome;
+  $("biomeName").style.color=biome().tint;
+  const a=S.equipped?BY_ID[S.equipped]:null;
+  $("eqName").textContent=a?a.n:"Nothing equipped";
+  $("eqOdds").textContent=a?("1 IN "+fmt(a.o)):"roll to begin";
+  $("eqOrb").style.background=a?`radial-gradient(circle at 34% 30%,${a.c[0]},${a.c[1]})`:"#1a1a26";
+  $("eqOrb").style.boxShadow=a?`0 0 22px ${a.c[0]}88`:"none";
+  const now=Date.now();
+  $("fx").innerHTML=S.effects.filter(e=>e.until>now).map(e=>{
+    const p=POTIONS.find(x=>x.id===e.id)||{n:e.id};
+    return `<div class="fx">${p.n} &middot; ${Math.ceil((e.until-now)/1000)}s</div>`;
+  }).join("");
+  $("rarest").innerHTML = S.rarest
+    ? `rarest pull &middot; <b>${BY_ID[S.rarest].n}</b> at 1 in ${fmt(BY_ID[S.rarest].o)}`
+    : "nothing pulled yet";
+  $("btnAuto").classList.toggle("on",S.auto);
+  $("btnMute").textContent=S.muted?"MUTED":"SOUND";
+  $("btnMute").classList.toggle("on",!S.muted);
+}
+
+/* ---------------- index ---------------- */
+function openIndex(){
+  const g=$("idxGrid"); g.innerHTML="";
+  for(const a of AURAS){
+    const have=S.inv[a.id]|0;
+    const d=document.createElement("div");
+    d.className="card"+(have?"":" locked")+(S.equipped===a.id?" eq":"");
+    d.style.background=have?`linear-gradient(135deg,${a.c[0]},${a.c[1]})`:"#121220";
+    d.innerHTML=`${have?`<div class="cc">x${fmt(have)}</div>`:""}
+      <div class="cn">${have?a.n:"???"}</div>
+      <div class="co">1 in ${fmt(a.o)}${a.b?" &middot; "+a.b:""}</div>`;
+    if(have) d.onclick=()=>{ S.equipped=a.id; save(); paint(); openIndex(); tone(700,0.12,"sine",0.05); };
+    g.appendChild(d);
+  }
+  $("idxPct").textContent=Math.round(owned()/AURAS.length*100)+"% complete"+
+    (S.rarest?" · rarest: "+BY_ID[S.rarest].n:"");
+  $("mIndex").classList.add("show");
+}
+
+/* ---------------- shop ---------------- */
+function openShop(){
+  const b=$("shopBody"); b.innerHTML="";
+  $("shopShards").textContent=fmt(S.shards)+" shards";
+  for(const p of POTIONS){
+    const active=S.effects.find(e=>e.id===p.id&&e.until>Date.now());
+    const row=document.createElement("div");
+    row.className="shopRow";
+    row.innerHTML=`<div class="si"><b>${p.n}</b><span>${p.d}</span></div>`;
+    const btn=document.createElement("button");
+    btn.className="btn";
+    btn.textContent=active?Math.ceil((active.until-Date.now())/1000)+"s":fmt(p.cost);
+    btn.disabled=!!active||S.shards<p.cost;
+    if(btn.disabled) btn.style.opacity=".45";
+    btn.onclick=()=>{
+      if(S.shards<p.cost) return;
+      S.shards-=p.cost;
+      S.effects=S.effects.filter(e=>e.id!==p.id);
+      S.effects.push({id:p.id,luck:p.luck,haste:p.haste,until:Date.now()+p.ms});
+      save(); paint(); openShop(); tone(880,0.25,"triangle",0.06);
+    };
+    row.appendChild(btn); b.appendChild(row);
+  }
+  const note=document.createElement("div");
+  note.style.cssText="font-size:11px;color:var(--dim);margin-top:10px;line-height:1.6";
+  note.textContent="Shards come from every roll, scaled to how rare it was. "+
+    "Luck multiplies your chance at every tier at once, so a potion is worth "+
+    "saving for a rare biome.";
+  b.appendChild(note);
+  $("mShop").classList.add("show");
+}
+
+/* ---------------- wiring ---------------- */
+$("rollBtn").onclick=()=>doRoll();
+$("btnIndex").onclick=openIndex;
+$("btnShop").onclick=openShop;
+$("btnAuto").onclick=()=>{ S.auto=!S.auto; paint();
+  if(S.auto&&!spinning&&Date.now()>=cdUntil) doRoll(); };
+$("btnMute").onclick=()=>{ S.muted=!S.muted; save(); paint(); };
+document.querySelectorAll("[data-close]").forEach(b=>
+  b.onclick=()=>document.querySelectorAll(".modal").forEach(m=>m.classList.remove("show")));
+document.querySelectorAll(".modal").forEach(m=>
+  m.onclick=e=>{ if(e.target===m) m.classList.remove("show"); });
+addEventListener("keydown",e=>{
+  if(e.code==="Space"){ e.preventDefault();
+    if(!spinning&&Date.now()>=cdUntil) doRoll(); }
+  if(e.key==="Escape") document.querySelectorAll(".modal").forEach(m=>m.classList.remove("show"));
+  if(e.key==="i"||e.key==="I") openIndex();
+});
+
+/* ---------------- main loop ---------------- */
+const cdFill=document.querySelector("#cdBar i");
+function loop(t){
+  drawBg(t);
+  if(Date.now()>S.biomeEnd) rollBiome();
+  const left=Math.max(0,S.biomeEnd-Date.now());
+  $("biomeT").textContent=Math.floor(left/60000)+":"+
+    String(Math.floor(left/1000)%60).padStart(2,"0");
+  S.effects=S.effects.filter(e=>e.until>Date.now());
+  if(t-(loop.last||0)>500){ loop.last=t; paint(); }
+  if(!spinning){
+    const rem=cdUntil-Date.now();
+    if(rem>0){ cdFill.style.width=(100-rem/cooldown()*100)+"%"; $("rollBtn").disabled=true; }
+    else { cdFill.style.width="0%"; $("rollBtn").disabled=false; }
+  }
+  requestAnimationFrame(loop);
+}
+buildStrip(AURAS[0]);
+reel.style.transform=`translateX(${reelWrap.clientWidth/2-TILE/2-STEP*3}px)`;
+paint();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

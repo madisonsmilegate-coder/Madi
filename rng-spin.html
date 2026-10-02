@@ -346,6 +346,706 @@ const AURAS=(()=>{
 const BY_ID=Object.fromEntries(AURAS.map(a=>[a.id,a]));
 const MAXI=AURAS.length-1;
 
+
+/* ==========================================================================
+   ENTITIES
+   An aura is not a colour with particles on it. It is a thing that shows up
+   behind you: a ghost that fills the frame, a clock tearing itself apart, a
+   serpent coiling through the scene. Each painter draws into a box centred
+   on the figure, takes the aura's two colours, and animates off a single
+   clock, so any entity can be drawn at any size in the showcase, the index
+   or the middle of a cutscene.
+   ========================================================================== */
+function gear(x,cx,cy,r,teeth,rot,fill,stroke){
+  x.save(); x.translate(cx,cy); x.rotate(rot);
+  x.beginPath();
+  for(let i=0;i<teeth;i++){
+    const a0=i/teeth*TAU, a1=(i+0.26)/teeth*TAU, a2=(i+0.5)/teeth*TAU, a3=(i+0.76)/teeth*TAU;
+    const ro=r*1.17;
+    x.lineTo(Math.cos(a0)*r,Math.sin(a0)*r);
+    x.lineTo(Math.cos(a1)*ro,Math.sin(a1)*ro);
+    x.lineTo(Math.cos(a2)*ro,Math.sin(a2)*ro);
+    x.lineTo(Math.cos(a3)*r,Math.sin(a3)*r);
+  }
+  x.closePath(); x.fillStyle=fill; x.fill();
+  x.strokeStyle=stroke; x.lineWidth=r*0.07; x.stroke();
+  x.beginPath(); x.arc(0,0,r*0.34,0,TAU); x.strokeStyle=stroke; x.lineWidth=r*0.1; x.stroke();
+  for(let i=0;i<5;i++){                                   // spokes
+    const a=i/5*TAU;
+    x.beginPath(); x.moveTo(Math.cos(a)*r*0.34,Math.sin(a)*r*0.34);
+    x.lineTo(Math.cos(a)*r*0.86,Math.sin(a)*r*0.86); x.lineWidth=r*0.08; x.stroke();
+  }
+  x.restore();
+}
+function feather(x,len,wid,col){
+  x.beginPath(); x.moveTo(0,0);
+  x.quadraticCurveTo(len*0.45,-wid, len,-wid*0.18);
+  x.quadraticCurveTo(len*0.45, wid*0.42, 0,0);
+  x.fillStyle=col; x.fill();
+}
+
+const ENTITIES={
+/* ---- a giant hooded spectre, far taller than you, body fraying to nothing ---- */
+ghost(x,W,H,a,t,A){
+  const cx=W/2, cy=H*0.46, S=Math.min(W,H)/300, sway=Math.sin(t*0.0009)*10*S;
+  x.save(); x.globalAlpha=A*0.9; x.translate(cx+sway,cy);
+  const g=x.createLinearGradient(0,-150*S,0,160*S);
+  g.addColorStop(0,a.c[0]); g.addColorStop(.45,a.c[1]); g.addColorStop(1,"transparent");
+  x.fillStyle=g;
+  x.beginPath(); x.moveTo(-60*S,-60*S);
+  x.quadraticCurveTo(-78*S,-150*S,0,-152*S);             // hood
+  x.quadraticCurveTo(78*S,-150*S,60*S,-60*S);
+  x.quadraticCurveTo(104*S,40*S,86*S,150*S);             // shoulders out to a ragged hem
+  for(let i=0;i<7;i++){
+    const px=86*S-i*(172*S/7), amp=Math.sin(t*0.0024+i*1.5)*18*S;
+    x.quadraticCurveTo(px-12*S,(190+amp)*S, px-24*S,150*S+amp*0.5);
+  }
+  x.quadraticCurveTo(-104*S,40*S,-60*S,-60*S); x.closePath(); x.fill();
+  // trailing arms
+  x.globalAlpha=A*0.55;
+  for(const sgn of [-1,1]){
+    x.beginPath(); x.moveTo(sgn*54*S,-20*S);
+    x.quadraticCurveTo(sgn*(126+Math.sin(t*0.0016)*18)*S,30*S, sgn*96*S,116*S);
+    x.quadraticCurveTo(sgn*108*S,30*S, sgn*44*S,0); x.closePath(); x.fill();
+  }
+  // hollow eyes
+  x.globalAlpha=A*(0.75+Math.sin(t*0.003)*0.25);
+  x.fillStyle="#ffffff"; x.shadowColor=a.c[0]; x.shadowBlur=26*S;
+  x.beginPath(); x.ellipse(-20*S,-104*S,8*S,13*S,0.2,0,TAU); x.fill();
+  x.beginPath(); x.ellipse( 20*S,-104*S,8*S,13*S,-0.2,0,TAU); x.fill();
+  x.restore();
+},
+
+/* ---- an escapement coming apart: meshed gears and a face with no time left ---- */
+clockwork(x,W,H,a,t,A){
+  const cx=W/2, cy=H/2, S=Math.min(W,H)/300;
+  x.save(); x.globalAlpha=A*0.95; x.translate(cx,cy);
+  gear(x,-74*S,-54*S,46*S,12, t*0.0006, a.c[1], a.c[0]);
+  gear(x, 72*S,-16*S,34*S,10,-t*0.0009, a.c[1], a.c[0]);
+  gear(x,-18*S, 78*S,28*S, 9, t*0.0013, a.c[1], a.c[0]);
+  gear(x, 46*S, 92*S,20*S, 8,-t*0.0018, a.c[1], a.c[0]);
+  // the dial
+  x.globalAlpha=A;
+  x.beginPath(); x.arc(0,-6*S,62*S,0,TAU);
+  x.fillStyle="rgba(0,0,0,.55)"; x.fill();
+  x.strokeStyle=a.c[0]; x.lineWidth=3*S; x.stroke();
+  for(let i=0;i<12;i++){
+    const an=i/12*TAU, r0=i%3?54*S:46*S;
+    x.beginPath(); x.moveTo(Math.cos(an)*r0,-6*S+Math.sin(an)*r0);
+    x.lineTo(Math.cos(an)*60*S,-6*S+Math.sin(an)*60*S);
+    x.lineWidth=i%3?1.6*S:3*S; x.stroke();
+  }
+  const hr=t*0.0004, mn=t*0.0049;
+  x.strokeStyle=a.c[0]; x.lineCap="round";
+  x.beginPath(); x.moveTo(0,-6*S); x.lineTo(Math.cos(hr)*30*S,-6*S+Math.sin(hr)*30*S);
+  x.lineWidth=5*S; x.stroke();
+  x.beginPath(); x.moveTo(0,-6*S); x.lineTo(Math.cos(mn)*48*S,-6*S+Math.sin(mn)*48*S);
+  x.lineWidth=3*S; x.stroke();
+  x.restore();
+},
+
+/* ---- a serpent threading through the frame, scales catching the light ---- */
+serpent(x,W,H,a,t,A){
+  const S=Math.min(W,H)/300;
+  x.save(); x.globalAlpha=A;
+  const pts=[];
+  for(let i=0;i<=44;i++){
+    const u=i/44;
+    pts.push([W*0.08+u*W*0.84,
+              H/2+Math.sin(u*8.2-t*0.0022)*H*0.26*Math.sin(u*Math.PI)]);
+  }
+  for(let i=0;i<pts.length-1;i++){
+    const u=i/pts.length, w=(3+Math.sin(u*Math.PI)*17)*S;
+    x.strokeStyle=i%2?a.c[0]:a.c[1]; x.lineWidth=w; x.lineCap="round";
+    x.beginPath(); x.moveTo(pts[i][0],pts[i][1]); x.lineTo(pts[i+1][0],pts[i+1][1]); x.stroke();
+  }
+  const [hx,hy]=pts[pts.length-1], [px,py]=pts[pts.length-3];
+  const an=Math.atan2(hy-py,hx-px);
+  x.translate(hx,hy); x.rotate(an);
+  x.fillStyle=a.c[0];
+  x.beginPath(); x.ellipse(6*S,0,22*S,12*S,0,0,TAU); x.fill();
+  x.fillStyle="#fff"; x.shadowColor=a.c[0]; x.shadowBlur=14*S;
+  x.beginPath(); x.ellipse(10*S,-4*S,3.4*S,2.4*S,0,0,TAU); x.fill();
+  x.shadowBlur=0; x.strokeStyle=a.c[1]; x.lineWidth=2*S;
+  x.beginPath(); x.moveTo(26*S,0); x.lineTo(42*S,-6*S); x.moveTo(26*S,0); x.lineTo(42*S,6*S);
+  x.stroke();
+  x.restore();
+},
+
+/* ---- an eye the size of the sky, which blinks ---- */
+eye(x,W,H,a,t,A){
+  const cx=W/2, cy=H*0.44, S=Math.min(W,H)/300;
+  const blink=Math.max(0,Math.sin(t*0.0007)*14-13);       // mostly open
+  const open=1-clamp(blink,0,1);
+  x.save(); x.globalAlpha=A; x.translate(cx,cy);
+  x.beginPath();
+  x.moveTo(-140*S,0); x.quadraticCurveTo(0,-98*S*open,140*S,0);
+  x.quadraticCurveTo(0,98*S*open,-140*S,0); x.closePath();
+  x.save(); x.clip();
+  const g=x.createRadialGradient(0,0,0,0,0,86*S);
+  g.addColorStop(0,"#000"); g.addColorStop(.2,a.c[1]);
+  g.addColorStop(.72,a.c[0]); g.addColorStop(1,"#0a0a12");
+  x.fillStyle=g; x.fillRect(-150*S,-110*S,300*S,220*S);
+  for(let i=0;i<46;i++){                                   // iris fibres
+    const an=i/46*TAU+t*0.0002;
+    x.strokeStyle="rgba(255,255,255,.22)"; x.lineWidth=1.4*S;
+    x.beginPath(); x.moveTo(Math.cos(an)*26*S,Math.sin(an)*26*S);
+    x.lineTo(Math.cos(an)*82*S,Math.sin(an)*82*S); x.stroke();
+  }
+  x.fillStyle="#000";
+  x.beginPath(); x.ellipse(0,0,24*S+Math.sin(t*0.0016)*5*S,30*S,0,0,TAU); x.fill();
+  x.fillStyle="rgba(255,255,255,.85)";
+  x.beginPath(); x.arc(-26*S,-24*S,10*S,0,TAU); x.fill();
+  x.restore();
+  x.strokeStyle=a.c[0]; x.lineWidth=4*S; x.stroke();
+  x.restore();
+},
+
+/* ---- a world-tree, drawn by recursion ---- */
+tree(x,W,H,a,t,A){
+  const S=Math.min(W,H)/300;
+  x.save(); x.globalAlpha=A; x.translate(W/2,H*0.92);
+  const grow=(len,wid,ang,d)=>{
+    if(d>6||len<4*S) return;
+    const sw=Math.sin(t*0.0008+d*1.3)*0.06;
+    x.save(); x.rotate(ang+sw);
+    const g=x.createLinearGradient(0,0,0,-len);
+    g.addColorStop(0,a.c[1]); g.addColorStop(1,a.c[0]);
+    x.strokeStyle=g; x.lineWidth=wid; x.lineCap="round";
+    x.beginPath(); x.moveTo(0,0); x.lineTo(0,-len); x.stroke();
+    x.translate(0,-len);
+    if(d>=4){
+      x.globalAlpha=A*0.85; x.fillStyle=a.c[0];
+      x.beginPath(); x.arc(0,0,2.6*S+Math.sin(t*0.003+d)*1.1*S,0,TAU); x.fill();
+      x.globalAlpha=A;
+    }
+    grow(len*0.72,wid*0.66,-0.42,d+1);
+    grow(len*0.72,wid*0.66, 0.42,d+1);
+    if(d<3) grow(len*0.56,wid*0.5,0,d+1);
+    x.restore();
+  };
+  grow(72*S,13*S,0,0);
+  x.restore();
+},
+
+/* ---- wings, feather by feather ---- */
+wings(x,W,H,a,t,A){
+  const cx=W/2, cy=H*0.48, S=Math.min(W,H)/300;
+  const spread=0.72+Math.sin(t*0.0012)*0.12;
+  x.save(); x.globalAlpha=A; x.translate(cx,cy);
+  for(const sgn of [-1,1]){
+    x.save(); x.scale(sgn,1);
+    for(let row=0;row<3;row++){
+      const n=8-row, len=(150-row*34)*S, base=-40*S+row*26*S;
+      for(let i=0;i<n;i++){
+        const f=i/(n-1||1);
+        x.save(); x.translate(18*S,base);
+        x.rotate(-spread*1.15+f*spread*1.6+Math.sin(t*0.0014+i)*0.03);
+        feather(x,len*(0.74+f*0.34),(16-row*3)*S, row?a.c[1]:a.c[0]);
+        x.restore();
+      }
+    }
+    x.restore();
+  }
+  x.restore();
+},
+
+/* ---- a crown, hanging unworn ---- */
+crown(x,W,H,a,t,A){
+  const cx=W/2, cy=H*0.26+Math.sin(t*0.0011)*6, S=Math.min(W,H)/300;
+  x.save(); x.globalAlpha=A; x.translate(cx,cy);
+  const g=x.createLinearGradient(0,-60*S,0,36*S);
+  g.addColorStop(0,a.c[0]); g.addColorStop(1,a.c[1]);
+  x.fillStyle=g; x.beginPath();
+  x.moveTo(-72*S,30*S);
+  const pts=[[-72,-26],[-44,10],[-24,-46],[0,6],[24,-46],[44,10],[72,-26]];
+  for(const [px,py] of pts) x.lineTo(px*S,py*S);
+  x.lineTo(72*S,30*S); x.closePath(); x.fill();
+  x.fillStyle="rgba(0,0,0,.3)"; x.fillRect(-72*S,16*S,144*S,8*S);
+  for(const [px,py] of pts.filter((_,i)=>i%2===0)){
+    x.globalAlpha=A*(0.7+Math.sin(t*0.004+px)*0.3);
+    x.fillStyle="#fff"; x.shadowColor=a.c[0]; x.shadowBlur=16*S;
+    x.beginPath(); x.arc(px*S,py*S,5*S,0,TAU); x.fill();
+  }
+  x.restore();
+},
+
+/* ---- hands coming in from both sides ---- */
+hands(x,W,H,a,t,A){
+  const S=Math.min(W,H)/300, reach=Math.sin(t*0.001)*14*S;
+  x.save(); x.globalAlpha=A;
+  for(const sgn of [-1,1]){
+    x.save(); x.translate(W/2+sgn*(W*0.42-reach),H*0.52); x.scale(sgn,1);
+    const g=x.createLinearGradient(20*S,0,-96*S,0);
+    g.addColorStop(0,a.c[0]); g.addColorStop(.55,a.c[1]); g.addColorStop(1,"transparent");
+    x.fillStyle=g;
+    x.beginPath(); x.ellipse(-22*S,0,44*S,34*S,0,0,TAU); x.fill();   // palm
+    x.strokeStyle=a.c[0]; x.lineCap="round";
+    // four fingers, each drawn in two tapering joints so they read as fingers
+    for(let i=0;i<4;i++){
+      const spread=(-0.52+i*0.35)*0.8, L1=(44-Math.abs(i-1.4)*7)*S, L2=L1*0.72;
+      const curl=Math.sin(t*0.0013+i*0.6)*0.1;
+      x.save(); x.rotate(spread+curl);
+      x.lineWidth=(13-i*1.1)*S;
+      x.beginPath(); x.moveTo(14*S,0); x.lineTo(14*S+L1,0); x.stroke();
+      x.translate(14*S+L1,0); x.rotate(0.46+curl);
+      x.lineWidth=(10.5-i*1)*S;
+      x.beginPath(); x.moveTo(0,0); x.lineTo(L2,0); x.stroke();
+      x.fillStyle="#fff"; x.globalAlpha=A*0.5;
+      x.beginPath(); x.arc(L2,0,(4-i*0.4)*S,0,TAU); x.fill();        // nail glint
+      x.globalAlpha=A;
+      x.restore();
+    }
+    x.lineWidth=14*S; x.beginPath(); x.moveTo(-14*S,20*S);
+    x.quadraticCurveTo(20*S,44*S,48*S,30*S); x.stroke();             // thumb
+    x.restore();
+  }
+  x.restore();
+},
+
+/* ---- a jellyfish, drifting ---- */
+jelly(x,W,H,a,t,A){
+  const cx=W/2, cy=H*0.34+Math.sin(t*0.0011)*12, S=Math.min(W,H)/300;
+  x.save(); x.globalAlpha=A*0.85; x.translate(cx,cy);
+  const pinch=1+Math.sin(t*0.0019)*0.09;
+  const g=x.createRadialGradient(0,-10*S,0,0,0,96*S);
+  g.addColorStop(0,"#ffffff"); g.addColorStop(.3,a.c[0]); g.addColorStop(1,a.c[1]+"00");
+  x.fillStyle=g;
+  x.beginPath(); x.ellipse(0,0,88*S*pinch,64*S/pinch,0,Math.PI,0); 
+  x.quadraticCurveTo(0,30*S,-88*S*pinch,0); x.closePath(); x.fill();
+  x.globalAlpha=A*0.6; x.strokeStyle=a.c[0]; x.lineCap="round";
+  for(let i=0;i<11;i++){
+    const ox=(-1+i/5)*62*S;
+    x.lineWidth=(i%3?2:4)*S; x.beginPath(); x.moveTo(ox,14*S);
+    for(let k=1;k<=7;k++){
+      const yy=14*S+k*26*S;
+      x.lineTo(ox+Math.sin(t*0.0024+k*0.8+i)*(9+k*2.6)*S, yy);
+    }
+    x.stroke();
+  }
+  x.restore();
+},
+
+/* ---- a phoenix, all wing and tail ---- */
+phoenix(x,W,H,a,t,A){
+  const cx=W/2, cy=H*0.46, S=Math.min(W,H)/300;
+  const flap=Math.sin(t*0.0026);
+  x.save(); x.globalAlpha=A; x.translate(cx,cy);
+  for(const sgn of [-1,1]){
+    x.save(); x.scale(sgn,1); x.rotate(flap*0.2);
+    for(let i=0;i<9;i++){
+      const f=i/8;
+      x.save(); x.translate(10*S,-10*S);
+      x.rotate(-1.15+f*1.5+flap*0.12);
+      feather(x,(70+f*90)*S,(13-f*4)*S, i%2?a.c[0]:a.c[1]);
+      x.restore();
+    }
+    x.restore();
+  }
+  x.fillStyle=a.c[0];
+  x.beginPath(); x.ellipse(0,0,16*S,30*S,0,0,TAU); x.fill();          // body
+  x.beginPath(); x.ellipse(0,-34*S,12*S,12*S,0,0,TAU); x.fill();      // head
+  x.fillStyle=a.c[1];
+  x.beginPath(); x.moveTo(8*S,-36*S); x.lineTo(28*S,-32*S); x.lineTo(8*S,-28*S);
+  x.closePath(); x.fill();
+  for(let i=0;i<7;i++){                                               // tail
+    x.save(); x.translate(0,26*S); x.rotate(1.3+(i-3)*0.19+Math.sin(t*0.002+i)*0.07);
+    feather(x,(80+Math.sin(i)*34)*S,8*S,i%2?a.c[0]:a.c[1]); x.restore();
+  }
+  x.restore();
+},
+
+/* ---- a whale, passing through ---- */
+whale(x,W,H,a,t,A){
+  const S=Math.min(W,H)/300;
+  const ph=t*0.00028, dx=W/2+Math.sin(ph)*W*0.3, dir=Math.cos(ph)>=0?1:-1;
+  x.save(); x.globalAlpha=A*0.9;
+  x.translate(dx,H*0.4+Math.sin(t*0.0009)*16); x.scale(dir,1);
+  const g=x.createLinearGradient(0,-50*S,0,60*S);
+  g.addColorStop(0,a.c[0]); g.addColorStop(1,a.c[1]);
+  x.fillStyle=g;
+  x.beginPath(); x.moveTo(-160*S,10*S);
+  x.quadraticCurveTo(-60*S,-56*S,74*S,-20*S);
+  x.quadraticCurveTo(120*S,-6*S,118*S,14*S);
+  x.quadraticCurveTo(60*S,54*S,-160*S,10*S); x.closePath(); x.fill();
+  x.beginPath(); x.moveTo(-150*S,8*S);                                 // fluke
+  x.lineTo(-212*S,-30*S); x.quadraticCurveTo(-176*S,8*S,-212*S,46*S);
+  x.closePath(); x.fill();
+  x.beginPath(); x.moveTo(-30*S,22*S); x.quadraticCurveTo(-6*S,62*S,24*S,30*S);
+  x.closePath(); x.fill();                                             // fin
+  x.fillStyle="#fff"; x.globalAlpha=A*0.9; x.shadowColor=a.c[0]; x.shadowBlur=12*S;
+  x.beginPath(); x.arc(84*S,-6*S,4.6*S,0,TAU); x.fill();
+  x.restore();
+},
+
+/* ---- chains, hanging and swinging ---- */
+chains(x,W,H,a,t,A){
+  const S=Math.min(W,H)/300;
+  x.save(); x.globalAlpha=A;
+  for(let c=0;c<6;c++){
+    const bx=W*(0.12+c*0.152), sw=Math.sin(t*0.0013+c)*0.12;
+    for(let i=0;i<11;i++){
+      const y=i*30*S, off=Math.sin(sw)*y*0.42;
+      x.save(); x.translate(bx+off,y); x.rotate(sw*0.5+(i%2?Math.PI/2:0));
+      x.strokeStyle=i%2?a.c[0]:a.c[1]; x.lineWidth=5*S;
+      x.beginPath(); x.ellipse(0,0,10*S,17*S,0,0,TAU); x.stroke();
+      x.restore();
+    }
+  }
+  x.restore();
+},
+
+/* ---- a throne, empty ---- */
+throne(x,W,H,a,t,A){
+  const cx=W/2, S=Math.min(W,H)/300;
+  x.save(); x.globalAlpha=A*0.9; x.translate(cx,H*0.62);
+  const g=x.createLinearGradient(0,-210*S,0,70*S);
+  g.addColorStop(0,a.c[0]); g.addColorStop(1,a.c[1]);
+  x.fillStyle=g;
+  x.beginPath(); x.moveTo(-66*S,60*S); x.lineTo(-66*S,-140*S);
+  for(let i=0;i<7;i++){
+    const px=-66*S+i*22*S, h=(i===3?-212:-150-Math.abs(i-3)*14)*S;
+    x.lineTo(px,h); x.lineTo(px+11*S,-140*S);
+  }
+  x.lineTo(66*S,-140*S); x.lineTo(66*S,60*S); x.closePath(); x.fill();
+  x.fillStyle=a.c[1];
+  x.fillRect(-96*S,-26*S,30*S,86*S); x.fillRect(66*S,-26*S,30*S,86*S);   // arms
+  x.fillRect(-96*S,52*S,192*S,20*S);                                      // base
+  x.globalAlpha=A*(0.6+Math.sin(t*0.002)*0.4); x.fillStyle="#fff";
+  x.shadowColor=a.c[0]; x.shadowBlur=22*S;
+  x.beginPath(); x.arc(0,-188*S,8*S,0,TAU); x.fill();
+  x.restore();
+},
+
+/* ---- a constellation that draws itself ---- */
+constellation(x,W,H,a,t,A){
+  const S=Math.min(W,H)/300, cx=W/2, cy=H/2;
+  const nodes=[[0,-110],[-34,-62],[34,-62],[-58,0],[58,0],[-30,52],[30,52],
+               [0,-16],[-86,-30],[86,-30],[0,112]];
+  const links=[[0,1],[0,2],[1,3],[2,4],[1,7],[2,7],[7,5],[7,6],[5,10],[6,10],[3,8],[4,9]];
+  const prog=(Math.sin(t*0.0004)*0.5+0.5)*1.25;
+  x.save(); x.globalAlpha=A; x.translate(cx,cy);
+  x.strokeStyle=a.c[1]; x.lineWidth=1.6*S;
+  links.forEach(([i,j],k)=>{
+    if(k/links.length>prog) return;
+    x.globalAlpha=A*0.6;
+    x.beginPath(); x.moveTo(nodes[i][0]*S,nodes[i][1]*S);
+    x.lineTo(nodes[j][0]*S,nodes[j][1]*S); x.stroke();
+  });
+  nodes.forEach(([px,py],i)=>{
+    const tw=0.55+Math.abs(Math.sin(t*0.0027+i))*0.45;
+    x.globalAlpha=A*tw; x.fillStyle="#fff";
+    x.shadowColor=a.c[0]; x.shadowBlur=16*S;
+    x.beginPath(); x.arc(px*S,py*S,(i%3?2.6:4.4)*S*tw,0,TAU); x.fill();
+  });
+  x.restore();
+},
+
+/* ---- a cracked mask ---- */
+mask(x,W,H,a,t,A){
+  const cx=W/2, cy=H*0.44, S=Math.min(W,H)/300;
+  x.save(); x.globalAlpha=A; x.translate(cx,cy); x.rotate(Math.sin(t*0.0008)*0.06);
+  const g=x.createLinearGradient(0,-100*S,0,100*S);
+  g.addColorStop(0,a.c[0]); g.addColorStop(1,a.c[1]);
+  x.fillStyle=g;
+  x.beginPath(); x.moveTo(0,-104*S);
+  x.quadraticCurveTo(76*S,-86*S,70*S,10*S);
+  x.quadraticCurveTo(62*S,96*S,0,112*S);
+  x.quadraticCurveTo(-62*S,96*S,-70*S,10*S);
+  x.quadraticCurveTo(-76*S,-86*S,0,-104*S); x.closePath(); x.fill();
+  x.fillStyle="#05050a";
+  x.beginPath(); x.ellipse(-28*S,-16*S,17*S,11*S,-0.2,0,TAU); x.fill();
+  x.beginPath(); x.ellipse( 28*S,-16*S,17*S,11*S, 0.2,0,TAU); x.fill();
+  x.beginPath(); x.moveTo(-20*S,56*S); x.quadraticCurveTo(0,70*S,20*S,56*S);
+  x.quadraticCurveTo(0,62*S,-20*S,56*S); x.fill();
+  x.strokeStyle="#05050a"; x.lineWidth=2.6*S;                       // cracks
+  x.beginPath(); x.moveTo(14*S,-100*S); x.lineTo(26*S,-50*S); x.lineTo(10*S,-26*S);
+  x.lineTo(30*S,22*S); x.lineTo(16*S,78*S); x.stroke();
+  x.beginPath(); x.moveTo(26*S,-50*S); x.lineTo(56*S,-34*S); x.stroke();
+  x.globalAlpha=A*(0.5+Math.sin(t*0.0035)*0.5);
+  x.strokeStyle=a.c[0]; x.lineWidth=1.4*S; x.stroke();
+  x.restore();
+},
+
+/* ---- tentacles from below ---- */
+tentacles(x,W,H,a,t,A){
+  const S=Math.min(W,H)/300;
+  x.save(); x.globalAlpha=A;
+  for(let c=0;c<5;c++){
+    const bx=W*(0.14+c*0.18), ph=c*1.7;
+    x.beginPath(); x.moveTo(bx,H+20);
+    const pts=[];
+    for(let i=0;i<=9;i++){
+      const u=i/9, yy=H+20-u*H*0.82;
+      pts.push([bx+Math.sin(t*0.0016+ph+u*3.4)*u*86*S, yy]);
+    }
+    for(let i=0;i<pts.length-1;i++){
+      x.strokeStyle=i%2?a.c[0]:a.c[1];
+      x.lineWidth=(30-i*2.9)*S; x.lineCap="round";
+      x.beginPath(); x.moveTo(pts[i][0],pts[i][1]); x.lineTo(pts[i+1][0],pts[i+1][1]); x.stroke();
+      if(i>2){ x.fillStyle="rgba(255,255,255,.2)";
+        x.beginPath(); x.arc(pts[i][0],pts[i][1],(9-i*0.8)*S,0,TAU); x.fill(); }
+    }
+  }
+  x.restore();
+},
+
+/* ---- a moth with eyespots ---- */
+moth(x,W,H,a,t,A){
+  const cx=W/2, cy=H*0.46, S=Math.min(W,H)/300;
+  const flap=0.82+Math.sin(t*0.0032)*0.18;
+  x.save(); x.globalAlpha=A; x.translate(cx,cy);
+  for(const sgn of [-1,1]){
+    x.save(); x.scale(sgn*flap,1);
+    const g=x.createLinearGradient(0,0,150*S,0);
+    g.addColorStop(0,a.c[0]); g.addColorStop(1,a.c[1]);
+    x.fillStyle=g;
+    x.beginPath(); x.moveTo(0,-14*S);
+    x.quadraticCurveTo(110*S,-110*S,152*S,-28*S);
+    x.quadraticCurveTo(120*S,8*S,0,-2*S); x.closePath(); x.fill();
+    x.beginPath(); x.moveTo(0,4*S);
+    x.quadraticCurveTo(92*S,46*S,106*S,88*S);
+    x.quadraticCurveTo(54*S,70*S,0,20*S); x.closePath(); x.fill();
+    x.fillStyle="rgba(0,0,0,.5)";
+    x.beginPath(); x.ellipse(96*S,-44*S,19*S,15*S,0,0,TAU); x.fill();
+    x.fillStyle="#fff"; x.globalAlpha=A*0.85;
+    x.beginPath(); x.ellipse(96*S,-44*S,7*S,6*S,0,0,TAU); x.fill();
+    x.globalAlpha=A;
+    x.restore();
+  }
+  x.fillStyle=a.c[1];
+  x.beginPath(); x.ellipse(0,14*S,11*S,42*S,0,0,TAU); x.fill();
+  x.beginPath(); x.arc(0,-26*S,12*S,0,TAU); x.fill();
+  x.strokeStyle=a.c[0]; x.lineWidth=3*S; x.lineCap="round";
+  for(const sgn of [-1,1]){
+    x.beginPath(); x.moveTo(sgn*5*S,-34*S);
+    x.quadraticCurveTo(sgn*40*S,-70*S,sgn*20*S,-86*S); x.stroke();
+  }
+  x.restore();
+},
+
+/* ---- the reaper ---- */
+reaper(x,W,H,a,t,A){
+  const cx=W/2, cy=H*0.5, S=Math.min(W,H)/300;
+  x.save(); x.globalAlpha=A; x.translate(cx,cy);
+  x.save(); x.translate(72*S,-10*S); x.rotate(-0.42+Math.sin(t*0.0011)*0.05);
+  x.strokeStyle=a.c[1]; x.lineWidth=7*S; x.lineCap="round";
+  x.beginPath(); x.moveTo(0,-150*S); x.lineTo(0,130*S); x.stroke();     // haft
+  const g=x.createLinearGradient(0,-150*S,130*S,-110*S);
+  g.addColorStop(0,"#ffffff"); g.addColorStop(1,a.c[0]);
+  x.fillStyle=g;
+  x.beginPath(); x.moveTo(0,-150*S);
+  x.quadraticCurveTo(120*S,-156*S,138*S,-72*S);
+  x.quadraticCurveTo(96*S,-122*S,0,-136*S); x.closePath(); x.fill();    // blade
+  x.restore();
+  const bg=x.createLinearGradient(0,-120*S,0,140*S);
+  bg.addColorStop(0,a.c[0]); bg.addColorStop(.6,a.c[1]); bg.addColorStop(1,"transparent");
+  x.fillStyle=bg;
+  x.beginPath(); x.moveTo(-46*S,-54*S);
+  x.quadraticCurveTo(-58*S,-128*S,0,-130*S);
+  x.quadraticCurveTo(58*S,-128*S,46*S,-54*S);
+  x.quadraticCurveTo(76*S,60*S,52*S,146*S);
+  x.lineTo(-52*S,146*S); x.quadraticCurveTo(-76*S,60*S,-46*S,-54*S); x.closePath(); x.fill();
+  x.globalAlpha=A*(0.7+Math.sin(t*0.0033)*0.3); x.fillStyle="#fff";
+  x.shadowColor=a.c[0]; x.shadowBlur=20*S;
+  x.beginPath(); x.arc(-15*S,-92*S,5.4*S,0,TAU); x.fill();
+  x.beginPath(); x.arc( 15*S,-92*S,5.4*S,0,TAU); x.fill();
+  x.restore();
+},
+
+/* ---- an orrery ---- */
+orrery(x,W,H,a,t,A){
+  const cx=W/2, cy=H/2, S=Math.min(W,H)/300;
+  x.save(); x.globalAlpha=A; x.translate(cx,cy);
+  x.fillStyle="#fff"; x.shadowColor=a.c[0]; x.shadowBlur=30*S;
+  x.beginPath(); x.arc(0,0,15*S,0,TAU); x.fill(); x.shadowBlur=0;
+  for(let i=0;i<5;i++){
+    const rr=(44+i*32)*S, tilt=0.28+i*0.1, sp=t*0.0012/(i*0.55+1);
+    x.strokeStyle=i%2?a.c[0]:a.c[1]; x.globalAlpha=A*0.42; x.lineWidth=1.6*S;
+    x.beginPath(); x.ellipse(0,0,rr,rr*tilt,i*0.4,0,TAU); x.stroke();
+    const an=sp+i*2.1;
+    const px=Math.cos(an)*rr, py=Math.sin(an)*rr*tilt;
+    const rot=i*0.4;
+    const fx2=px*Math.cos(rot)-py*Math.sin(rot), fy=px*Math.sin(rot)+py*Math.cos(rot);
+    x.globalAlpha=A; x.fillStyle=i%2?a.c[0]:a.c[1];
+    x.beginPath(); x.arc(fx2,fy,(5+i*1.6)*S,0,TAU); x.fill();
+    if(i===3){ x.strokeStyle=a.c[0]; x.lineWidth=1.4*S;
+      x.beginPath(); x.ellipse(fx2,fy,16*S,5*S,0.5,0,TAU); x.stroke(); }
+  }
+  x.restore();
+},
+
+/* ---- a tear in the world ---- */
+rift(x,W,H,a,t,A){
+  const cx=W/2, S=Math.min(W,H)/300;
+  x.save(); x.globalAlpha=A; 
+  const pts=[];
+  for(let i=0;i<=16;i++){
+    const u=i/16;
+    pts.push([cx+Math.sin(u*9+t*0.0012)*26*S*Math.sin(u*Math.PI),
+              H*0.06+u*H*0.88]);
+  }
+  const wide=(k)=>Math.sin(k*Math.PI)*58*S;
+  x.beginPath(); x.moveTo(pts[0][0],pts[0][1]);
+  for(let i=1;i<pts.length;i++) x.lineTo(pts[i][0]+wide(i/16),pts[i][1]);
+  for(let i=pts.length-1;i>=0;i--) x.lineTo(pts[i][0]-wide(i/16),pts[i][1]);
+  x.closePath();
+  const g=x.createLinearGradient(cx-60*S,0,cx+60*S,0);
+  g.addColorStop(0,"transparent"); g.addColorStop(.4,a.c[0]);
+  g.addColorStop(.5,"#ffffff"); g.addColorStop(.6,a.c[0]); g.addColorStop(1,"transparent");
+  x.fillStyle=g; x.fill();
+  x.strokeStyle=a.c[1]; x.lineWidth=3*S; x.globalAlpha=A*0.8; x.stroke();
+  for(let i=0;i<26;i++){                                   // shards falling out
+    const u=((t*0.0004+i/26)%1);
+    const yy=H*0.06+u*H*0.88, xx=cx+Math.sin(u*9+t*0.0012)*26*S+ (((i*53)%100)/50-1)*80*S;
+    x.globalAlpha=A*(1-u)*0.8; x.fillStyle=i%2?a.c[0]:"#fff";
+    x.save(); x.translate(xx,yy); x.rotate(i+t*0.002);
+    x.fillRect(-2.4*S,-7*S,4.8*S,14*S); x.restore();
+  }
+  x.restore();
+},
+
+/* ---- a web and the thing on it ---- */
+spider(x,W,H,a,t,A){
+  const cx=W/2, cy=H*0.42, S=Math.min(W,H)/300;
+  x.save(); x.globalAlpha=A*0.7; x.translate(cx,cy);
+  x.strokeStyle=a.c[1]; x.lineWidth=1.3*S;
+  for(let i=0;i<12;i++){
+    const an=i/12*TAU;
+    x.beginPath(); x.moveTo(0,0); x.lineTo(Math.cos(an)*200*S,Math.sin(an)*200*S); x.stroke();
+  }
+  for(let r=1;r<=6;r++){
+    x.beginPath();
+    for(let i=0;i<=12;i++){
+      const an=i/12*TAU, rr=r*32*S*(1+Math.sin(an*6)*0.04);
+      i?x.lineTo(Math.cos(an)*rr,Math.sin(an)*rr):x.moveTo(Math.cos(an)*rr,Math.sin(an)*rr);
+    }
+    x.closePath(); x.stroke();
+  }
+  x.globalAlpha=A;
+  const dy=Math.sin(t*0.0013)*22*S;
+  x.translate(0,dy);
+  x.strokeStyle=a.c[0]; x.lineWidth=3.4*S; x.lineCap="round";
+  for(let i=0;i<4;i++){
+    for(const sgn of [-1,1]){
+      const k=Math.sin(t*0.0028+i)*0.16;
+      x.beginPath(); x.moveTo(0,0);
+      x.quadraticCurveTo(sgn*(30+i*8)*S,(-18+i*16)*S+k*30*S, sgn*(56+i*6)*S,(6+i*20)*S);
+      x.stroke();
+    }
+  }
+  x.fillStyle=a.c[0];
+  x.beginPath(); x.ellipse(0,10*S,17*S,21*S,0,0,TAU); x.fill();
+  x.beginPath(); x.arc(0,-14*S,11*S,0,TAU); x.fill();
+  x.fillStyle="#fff";
+  for(let i=0;i<4;i++){ x.beginPath();
+    x.arc((-6+(i%2)*12)*S,(-18+Math.floor(i/2)*7)*S,2.2*S,0,TAU); x.fill(); }
+  x.restore();
+},
+
+/* ---- an antlered skull ---- */
+antlers(x,W,H,a,t,A){
+  const cx=W/2, cy=H*0.5, S=Math.min(W,H)/300;
+  x.save(); x.globalAlpha=A; x.translate(cx,cy);
+  x.strokeStyle=a.c[0]; x.lineCap="round";
+  const branch=(ang,len,d)=>{
+    if(d>3) return;
+    x.save(); x.rotate(ang+Math.sin(t*0.0007+d)*0.03);
+    x.lineWidth=(8-d*1.8)*S;
+    x.beginPath(); x.moveTo(0,0); x.quadraticCurveTo(6*S,-len*0.6,0,-len); x.stroke();
+    x.translate(0,-len);
+    branch(-0.5,len*0.62,d+1); branch(0.42,len*0.56,d+1);
+    x.restore();
+  };
+  x.save(); x.translate(-26*S,-56*S); branch(-0.42,74*S,0); x.restore();
+  x.save(); x.translate( 26*S,-56*S); branch( 0.42,74*S,0); x.restore();
+  const g=x.createLinearGradient(0,-60*S,0,70*S);
+  g.addColorStop(0,"#f2efe4"); g.addColorStop(1,a.c[1]);
+  x.fillStyle=g;
+  x.beginPath(); x.moveTo(-40*S,-52*S);
+  x.quadraticCurveTo(-48*S,10*S,-20*S,26*S);
+  x.lineTo(-14*S,62*S); x.quadraticCurveTo(0,72*S,14*S,62*S);
+  x.lineTo(20*S,26*S); x.quadraticCurveTo(48*S,10*S,40*S,-52*S);
+  x.quadraticCurveTo(0,-72*S,-40*S,-52*S); x.closePath(); x.fill();
+  x.fillStyle="#07070c";
+  x.beginPath(); x.ellipse(-18*S,-12*S,12*S,14*S,0.2,0,TAU); x.fill();
+  x.beginPath(); x.ellipse( 18*S,-12*S,12*S,14*S,-0.2,0,TAU); x.fill();
+  x.globalAlpha=A*(0.5+Math.sin(t*0.003)*0.5); x.fillStyle=a.c[0];
+  x.shadowColor=a.c[0]; x.shadowBlur=18*S;
+  x.beginPath(); x.arc(-18*S,-12*S,4.6*S,0,TAU); x.fill();
+  x.beginPath(); x.arc( 18*S,-12*S,4.6*S,0,TAU); x.fill();
+  x.restore();
+},
+
+/* ---- monoliths, turning slowly ---- */
+monolith(x,W,H,a,t,A){
+  const cx=W/2, cy=H/2, S=Math.min(W,H)/300;
+  x.save(); x.globalAlpha=A; x.translate(cx,cy);
+  for(let i=0;i<3;i++){
+    const an=t*0.0006+i/3*TAU, rr=108*S;
+    const px=Math.cos(an)*rr, py=Math.sin(an)*rr*0.34+Math.sin(t*0.0013+i)*10*S;
+    const sc=0.72+(py/(rr*0.34))*0.3;
+    x.save(); x.translate(px,py); x.scale(sc,sc);
+    const g=x.createLinearGradient(0,-90*S,0,90*S);
+    g.addColorStop(0,a.c[0]); g.addColorStop(1,a.c[1]);
+    x.fillStyle=g;
+    x.beginPath(); x.moveTo(-20*S,-96*S); x.lineTo(20*S,-88*S);
+    x.lineTo(24*S,94*S); x.lineTo(-24*S,86*S); x.closePath(); x.fill();
+    x.globalAlpha=A*(0.5+Math.sin(t*0.0036+i*2)*0.5);
+    x.strokeStyle="#fff"; x.lineWidth=2*S;
+    for(let k=0;k<4;k++){
+      const yy=-60*S+k*40*S;
+      x.beginPath(); x.moveTo(-10*S,yy); x.lineTo(8*S,yy+8*S);
+      x.moveTo(8*S,yy); x.lineTo(-10*S,yy+8*S); x.stroke();
+    }
+    x.restore();
+  }
+  x.restore();
+},
+
+/* ---- a seraph: too many wings, too many rings ---- */
+seraph(x,W,H,a,t,A){
+  const cx=W/2, cy=H*0.46, S=Math.min(W,H)/300;
+  x.save(); x.globalAlpha=A; x.translate(cx,cy);
+  for(let pair=0;pair<3;pair++){
+    const lift=-56*S+pair*52*S, len=(140-pair*26)*S;
+    for(const sgn of [-1,1]){
+      x.save(); x.scale(sgn,1); x.translate(14*S,lift);
+      x.rotate(-0.5+pair*0.42+Math.sin(t*0.0016+pair)*0.06);
+      for(let i=0;i<6;i++){
+        x.save(); x.rotate(-0.42+i*0.17);
+        feather(x,len*(0.7+i*0.07),(13-pair*2.6)*S, i%2?a.c[0]:a.c[1]);
+        x.restore();
+      }
+      x.restore();
+    }
+  }
+  for(let i=0;i<4;i++){                                    // halo rings
+    const an=t*0.0011*(i%2?-1:1)+i;
+    x.globalAlpha=A*0.85; x.strokeStyle=i%2?a.c[0]:"#fff"; x.lineWidth=3*S;
+    x.beginPath(); x.ellipse(0,-76*S,(52-i*7)*S,(18-i*3)*S,an,0,TAU); x.stroke();
+  }
+  x.globalAlpha=A; x.fillStyle="#fff"; x.shadowColor=a.c[0]; x.shadowBlur=34*S;
+  x.beginPath(); x.arc(0,-76*S,15*S,0,TAU); x.fill();
+  x.restore();
+}
+};
+const ENT_NAMES=Object.keys(ENTITIES);
+/* The showiest entities are reserved for the deep end, so what shows up
+   behind you is itself a read on how rare the pull was. */
+const ENT_APEX=["seraph","reaper","ghost","orrery","rift","throne","phoenix","eye","antlers"];
+/* Assigned here rather than inside the generator above, so the entity table
+   is fully declared before anything reads it. */
+(() => {
+  const RE=mulberry(90210777);
+  for(const a of AURAS){
+    const deep=a.i/(N_AURAS-1)>0.72;
+    a.ent=(deep&&RE()<0.72) ? ENT_APEX[(RE()*ENT_APEX.length)|0]
+                            : ENT_NAMES[(RE()*ENT_NAMES.length)|0];
+  }
+})();
+
+
 function tierOf(o){return o>=1e9?5:o>=1e7?4:o>=5e5?3:o>=5e4?2:o>=2048?1:0}
 const TIERNAME=["found","rare","very rare","exceptional","transcendent","origin-class"];
 
@@ -735,6 +1435,14 @@ function paintShowcase(ctx,W,H,a,t){
   paintShowcase.bx.clearRect(0,0,bw,bh);
   paintShowcase.bx.drawImage(tr.c,0,0,bw,bh);
 
+  // the entity itself, behind everything the figure stands in front of
+  const ent=ENTITIES[a.ent];
+  if(ent){
+    ctx.save(); ctx.globalCompositeOperation="lighter";
+    try{ ent(ctx,W,H,a,t,0.62); }catch(e){}
+    ctx.restore();
+  }
+
   ctx.globalCompositeOperation="lighter";
   ctx.globalAlpha=.45; ctx.drawImage(paintShowcase.b,0,0,W,H);       // bloom
   ctx.globalAlpha=.78; ctx.drawImage(tr.c,0,0); ctx.globalAlpha=1;   // behind the figure
@@ -1006,6 +1714,13 @@ function runCutscene(a){
           const g=cx2.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*0.62);
           g.addColorStop(0,a.c[0]); g.addColorStop(0.55,a.c[1]); g.addColorStop(1,"#000");
           cx2.globalAlpha=al*0.92; cx2.fillStyle=g; cx2.fillRect(0,0,W,H);
+          const ent=ENTITIES[a.ent];
+          if(ent&&al>0.45){                      // caught in the strobe
+            cx2.save(); cx2.globalCompositeOperation="source-over";
+            cx2.globalAlpha=al*0.5; 
+            try{ ent(cx2,W,H,{...a,c:["#000","#05050a"]},now,1); }catch(e){}
+            cx2.restore();
+          }
           if(!S.muted&&al>0.85&&Math.random()<0.25) tone(1400+Math.random()*900,0.03,"square",0.03);
         }
         cx2.globalAlpha=1;
@@ -1014,6 +1729,17 @@ function runCutscene(a){
         const sp=(p-FLICK)/(1-FLICK);
         const grow=clamp(sp*2.4,0,1)*(1-clamp((sp-0.82)/0.18,0,1)*0.25);
         if(q>=2){
+          /* The entity comes in with the star rather than after it: the star
+             is the light it arrives by. */
+          const ent=ENTITIES[a.ent];
+          if(ent){
+            const ea=clamp((sp-0.12)/0.5,0,1)*(1-clamp((sp-0.86)/0.14,0,1));
+            cx2.save(); cx2.globalCompositeOperation="lighter";
+            const z=0.86+ea*0.2;
+            cx2.translate(W/2,H/2); cx2.scale(z,z); cx2.translate(-W/2,-H/2);
+            try{ ent(cx2,W,H,a,now,ea*0.95); }catch(e){}
+            cx2.restore();
+          }
           drawStar(cx2,W,H,a,now,Math.min(4,q-1),grow);
           if(q>=5){                                   // one full-screen wash at the top
             cx2.globalAlpha=clamp(0.5-Math.abs(sp-0.35)*2,0,1)*0.5;
@@ -1026,6 +1752,9 @@ function runCutscene(a){
           g.addColorStop(0,a.c[0]); g.addColorStop(1,"#000");
           cx2.globalAlpha=(1-sp)*0.55; cx2.fillStyle=g; cx2.fillRect(0,0,W,H);
           cx2.globalAlpha=1;
+          const ent=ENTITIES[a.ent];
+          if(ent){ cx2.save(); cx2.globalCompositeOperation="lighter";
+            try{ ent(cx2,W,H,a,now,(1-sp)*0.8); }catch(e){} cx2.restore(); }
         }
       }
       if(p<1) requestAnimationFrame(frame);
@@ -1091,7 +1820,8 @@ function paint(){
     ?("1 IN "+fmt(a.o)+" · "+TIERNAME[tierOf(a.o)].toUpperCase()+(a.b?" · "+a.b:"")
       +(previewId&&previewId!==S.equipped?" · PREVIEW":""))
     :"roll to begin";
-  $("showFx").textContent=a?((isShiny(a.id)?"\u2726 RADIANT \u00b7 ":"")+"effect: "+a.fx):"";
+  $("showFx").textContent=a
+    ?((isShiny(a.id)?"\u2726 RADIANT \u00b7 ":"")+a.ent.toUpperCase()+" \u00b7 "+a.fx):"";
   $("showFx").style.color=a&&isShiny(a.id)?"#ffe9a8":"";
   const now=Date.now();
   $("fx").innerHTML=S.effects.filter(e=>e.until>now).map(e=>{

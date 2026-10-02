@@ -109,7 +109,31 @@ input:focus,select:focus{border-color:var(--acc)}
  border-radius:10px;margin-bottom:8px}
 .shopRow .si{flex:1}.shopRow .si b{display:block;font-size:12.5px}
 .shopRow .si span{font-size:10px;color:var(--dim)}
-@media (max-width:860px){.right{display:none}#show{max-height:40vh}}
+/* loadout */
+#loadout{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.slot{width:46px;height:46px;border-radius:11px;border:1px solid var(--line);
+ background:#101019;cursor:pointer;position:relative;display:flex;align-items:center;
+ justify-content:center;transition:border-color .15s,transform .08s}
+.slot:hover{border-color:#4a4a6e}.slot:active{transform:translateY(1px)}
+.slot.p0{border-color:var(--gold)}
+.slot .so{width:28px;height:28px;border-radius:50%}
+.slot .sl{position:absolute;bottom:-1px;right:2px;font-size:8px;color:var(--dim)}
+.slot.locked{opacity:.3;cursor:not-allowed}
+#stats{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;font-size:10.5px}
+#stats div{border:1px solid var(--line);border-radius:99px;padding:2px 10px;letter-spacing:1px}
+#stats b{color:var(--gold)}
+#catBan{font-size:10.5px;letter-spacing:1.5px;color:#7cf5c4;min-height:14px}
+/* alpha panel */
+#alpha{position:fixed;right:12px;top:58px;z-index:45;width:290px;background:#0b0b14;
+ border:1px solid #3a2a5e;border-radius:14px;padding:12px;display:none;
+ box-shadow:0 18px 50px rgba(0,0,0,.7);max-height:84vh;overflow:auto}
+#alpha.show{display:block}
+#alpha h3{margin:0 0 8px;font-size:12px;letter-spacing:3px;color:#c9a6ff}
+#alpha .ar{display:flex;gap:6px;margin-bottom:6px}
+#alpha .btn{flex:1;font-size:10.5px;padding:7px 8px}
+#alpha .note{font-size:9.5px;color:var(--dim);line-height:1.5;margin-top:8px}
+.btnA{border-color:#5a3fa0;color:#d7c2ff}
+@media (max-width:860px){.right{display:none}#show{max-height:34vh}}
 </style>
 </head>
 <body>
@@ -119,13 +143,16 @@ input:focus,select:focus{border-color:var(--acc)}
     <div class="chip"><span>Rolls</span><b id="sRolls">0</b></div>
     <div class="chip"><span>Luck</span><b id="sLuck">1x</b></div>
     <div class="chip"><span>Shards</span><b id="sShards">0</b></div>
+    <div class="chip"><span>Essence</span><b id="sEss">0</b></div>
     <div class="chip"><span>Index</span><b id="sIndex">0/700</b></div>
     <div class="chip grow"><span>Biome &middot; <i id="biomeT">2:00</i></span><b id="biomeName">SERENE</b></div>
     <button class="btn" id="btnIndex">INDEX</button>
     <button class="btn" id="btnShop">POTIONS</button>
     <button class="btn" id="btnAuto">AUTO</button>
     <button class="btn" id="btnFast">FAST</button>
+    <button class="btn" id="btnAltar">ALTAR</button>
     <button class="btn" id="btnMute">SOUND</button>
+    <button class="btn btnA" id="btnAlpha">ALPHA</button>
   </div>
 
   <div class="main">
@@ -134,6 +161,9 @@ input:focus,select:focus{border-color:var(--acc)}
       <div id="showName">Nothing equipped</div>
       <div id="showMeta">roll to begin</div>
       <div id="showFx"></div>
+      <div id="loadout"></div>
+      <div id="stats"></div>
+      <div id="catBan"></div>
       <div id="fx"></div>
     </div>
     <div class="right" id="feed"></div>
@@ -167,6 +197,31 @@ input:focus,select:focus{border-color:var(--acc)}
     <button class="btn" data-close>CLOSE</button></div>
   <div class="sheetBody"><div class="grid" id="idxGrid"></div>
     <div id="idxMore" style="text-align:center;padding:14px"></div></div>
+</div></div>
+
+<div id="alpha">
+  <h3>ALPHA TOOLS</h3>
+  <div class="ar"><button class="btn btnA" data-a="shards">+10M SHARDS</button>
+    <button class="btn btnA" data-a="essence">+1M ESSENCE</button></div>
+  <div class="ar"><button class="btn btnA" data-a="luck">LUCK x1,000,000 &middot; 5m</button></div>
+  <div class="ar"><button class="btn btnA" data-a="slots">MAX LOADOUT SLOTS</button></div>
+  <div class="ar"><button class="btn btnA" data-a="instant">INSTANT ROLLS</button>
+    <button class="btn btnA" data-a="unlockall">UNLOCK ALL</button></div>
+  <div class="ar"><select id="aBiome" style="flex:1"></select>
+    <button class="btn btnA" data-a="biome">SET</button></div>
+  <div class="ar"><input id="aGrant" placeholder="grant aura by name" style="flex:1">
+    <button class="btn btnA" data-a="grant">GIVE</button></div>
+  <div class="ar"><button class="btn btnA" data-a="grantrarest">GRANT ORIGIN (1 in 12.5B)</button></div>
+  <div class="ar"><button class="btn btnA" data-a="wipe">WIPE SAVE</button></div>
+  <div class="note">Alpha build. These are debug levers, not progression - they
+    bypass the table entirely.</div>
+</div>
+
+<div class="modal" id="mAltar"><div class="sheet">
+  <div class="sheetTop"><h2>ALTAR</h2>
+    <div style="font-size:12px;color:#7cf5c4" id="altEss"></div>
+    <div class="grow"></div><button class="btn" data-close>CLOSE</button></div>
+  <div class="sheetBody" id="altarBody"></div>
 </div></div>
 
 <div class="modal" id="mShop"><div class="sheet">
@@ -299,10 +354,58 @@ const POTIONS=[
   {id:"h1",n:"Haste Tonic",     d:"half roll delay, 3m",cost:150,  haste:1,    ms:180000}
 ];
 
+/* ==========================================================================
+   WHAT AN AURA IS FOR
+   An aura is not just a collectible: equipped into a loadout slot it pays a
+   passive, and the size of that passive is a function of how rare it was.
+   The effect decides which stat it favours, so two auras of the same rarity
+   still pull in different directions and a loadout is a real choice.
+   ========================================================================== */
+const TRAIT={nova:"luck",beam:"luck",halo:"luck",ring:"luck",
+             lattice:"shard",shard:"shard",bubble:"shard",petal:"shard",
+             comet:"speed",vortex:"speed",spark:"speed",orbit:"speed",
+             voidfx:"biome",glitch:"biome",storm:"biome",motes:"biome",
+             flame:"luck",rain:"shard"};
+const TRAITCOL={luck:"#ffc857",shard:"#7cf5c4",speed:"#8fd3ff",biome:"#c9a6ff"};
+function statsOf(a){
+  const p=Math.log10(a.o);                 // 0.30 at 1 in 2, 10.1 at 1 in 12.5B
+  const base=p*p*0.9;                      // quadratic: rarity should matter a lot
+  const k=TRAIT[a.fx]||"luck";
+  return {
+    luck : k==="luck" ? base*2.6 : base*0.55,
+    shard: k==="shard"? base*3.4 : base*0.8,
+    speed: Math.min(70, k==="speed"? base*1.5 : base*0.3),
+    biome: k==="biome"? base*1.8 : 0,
+    kind : k
+  };
+}
+function loadoutStats(){
+  const t={luck:0,shard:0,speed:0,biome:0};
+  for(const id of (S.loadout||[])){
+    if(!id||!BY_ID[id]) continue;
+    const st=statsOf(BY_ID[id]);
+    t.luck+=st.luck; t.shard+=st.shard; t.speed+=st.speed; t.biome+=st.biome;
+  }
+  t.speed=Math.min(80,t.speed);
+  return t;
+}
+const slotCap=()=>S.maxSlots?6:clamp(1+Math.floor(owned()/60),1,6);
+
+/* Essence comes from melting duplicates, and buys a Catalyst: a floor on the
+   next roll's rarity. It is the only way to aim at a specific depth of the
+   table rather than hope. */
+const CATALYSTS=[
+  {min:1e4, n:"Lesser Catalyst",  cost:40},
+  {min:1e6, n:"Greater Catalyst", cost:400},
+  {min:1e8, n:"Grand Catalyst",   cost:4000},
+  {min:1e9, n:"Origin Catalyst",  cost:30000}
+];
+
 /* ---------------- state ---------------- */
 const KEY="aether-roll-v2", BASE_CD=900;
-let S={rolls:0,shards:250,inv:{},equipped:null,rarest:null,biome:"SERENE",biomeEnd:0,
-       effects:[],muted:false,auto:false,fast:false};
+let S={rolls:0,shards:250,essence:0,inv:{},equipped:null,rarest:null,biome:"SERENE",
+       biomeEnd:0,effects:[],muted:false,auto:false,fast:false,
+       loadout:[null,null,null,null,null,null],catalyst:0,maxSlots:false,instant:false};
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){
   try{
@@ -312,7 +415,11 @@ function load(){
     S.inv=(d.inv&&typeof d.inv==="object")?d.inv:{};
     S.equipped=BY_ID[d.equipped]?d.equipped:null;
     S.rarest=BY_ID[d.rarest]?d.rarest:null;
-    S.muted=!!d.muted; S.fast=!!d.fast;
+    S.muted=!!d.muted; S.fast=!!d.fast; S.instant=!!d.instant; S.maxSlots=!!d.maxSlots;
+    S.essence=+d.essence||0; S.catalyst=+d.catalyst||0;
+    S.loadout=Array.isArray(d.loadout)
+      ? d.loadout.slice(0,6).map(x=>BY_ID[x]?x:null) : [null,null,null,null,null,null];
+    while(S.loadout.length<6) S.loadout.push(null);
     S.effects=Array.isArray(d.effects)?d.effects.filter(e=>e&&e.until>Date.now()):[];
   }catch(e){S.inv={}}
 }
@@ -322,11 +429,13 @@ const owned=()=>Object.keys(S.inv).filter(k=>BY_ID[k]).length;
    half-multiplier so a long session is never pure stasis. */
 function luck(){
   let L=1+Math.floor(S.rolls/500)*0.5;
+  L*=1+loadoutStats().luck/100;                 // equipped auras pay into luck
   for(const e of S.effects) if(e.luck&&e.until>Date.now()) L*=e.luck;
   return L;
 }
 const hasted=()=>S.effects.some(e=>e.haste&&e.until>Date.now());
-const cooldown=()=>(S.fast?240:BASE_CD)*(hasted()?0.5:1);
+const cooldown=()=>S.instant?0:
+  (S.fast?240:BASE_CD)*(hasted()?0.5:1)*(1-loadoutStats().speed/100);
 const fmtLuck=L=>L>=1e6?(L/1e6).toFixed(1)+"M":L>=1000?(L/1000).toFixed(1)+"k":L.toFixed(2);
 
 /* ---------------- audio ---------------- */
@@ -472,34 +581,139 @@ function drawAura(ctx,W,H,a,t,scale){
   }
   ctx.restore();
 }
-/* the figure the aura plays around, so scale and placement read as "worn" */
-function drawFigure(ctx,W,H,a){
-  const cx=W/2, cy=H/2, s=Math.min(W,H)/340;
-  ctx.save(); ctx.translate(cx,cy+H*0.1); ctx.scale(s,s);
-  const g=ctx.createLinearGradient(0,-120,0,110);
-  g.addColorStop(0,"#2b2b3e"); g.addColorStop(1,"#111119");
-  ctx.fillStyle=g;
-  ctx.beginPath(); ctx.ellipse(0,-92,24,27,0,0,TAU); ctx.fill();          // head
-  ctx.beginPath();                                                        // cloaked body
-  ctx.moveTo(-20,-66); ctx.quadraticCurveTo(-52,0,-44,104);
-  ctx.lineTo(44,104); ctx.quadraticCurveTo(52,0,20,-66); ctx.closePath(); ctx.fill();
-  if(a){ ctx.globalAlpha=.9; ctx.fillStyle=a.c[0];
-    ctx.beginPath(); ctx.ellipse(-8,-94,4,5,0,0,TAU); ctx.ellipse(8,-94,4,5,0,0,TAU); ctx.fill(); }
+/* The figure the aura plays around. It is lit by the aura rather than drawn
+   flat, so the colour reads as something being worn instead of a sprite with
+   particles pasted over it. */
+function drawFigure(ctx,W,H,a,t){
+  const cx=W/2, s=Math.min(W,H)/340;
+  const float=Math.sin(t*0.0012)*4;
+  ctx.save(); ctx.translate(cx,H/2+H*0.10+float); ctx.scale(s,s);
+
+  // contact shadow, so the figure sits on something
+  ctx.globalAlpha=.5; ctx.fillStyle="#000";
+  ctx.beginPath(); ctx.ellipse(0,110,46,9,0,0,TAU); ctx.fill(); ctx.globalAlpha=1;
+
+  const body=ctx.createLinearGradient(0,-120,0,112);
+  body.addColorStop(0,"#34344a"); body.addColorStop(.55,"#1c1c28"); body.addColorStop(1,"#0c0c12");
+  ctx.fillStyle=body;
+  ctx.beginPath();
+  ctx.moveTo(-20,-66); ctx.quadraticCurveTo(-54,-4,-45,106);
+  ctx.quadraticCurveTo(-22,113,0,112); ctx.quadraticCurveTo(22,113,45,106);
+  ctx.quadraticCurveTo(54,-4,20,-66); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(0,-92,25,28,0,0,TAU); ctx.fill();          // hood
+  // hood opening
+  ctx.fillStyle="#07070c";
+  ctx.beginPath(); ctx.ellipse(0,-88,16,19,0,0,TAU); ctx.fill();
+
+  if(a){
+    const c0=a.c[0];
+    // rim light down the left edge, keyed to the aura
+    ctx.save(); ctx.globalCompositeOperation="lighter";
+    const rim=ctx.createLinearGradient(-54,0,-16,0);
+    rim.addColorStop(0,c0+"00"); rim.addColorStop(1,c0+"90");
+    ctx.fillStyle=rim;
+    ctx.beginPath();
+    ctx.moveTo(-20,-66); ctx.quadraticCurveTo(-54,-4,-45,106);
+    ctx.lineTo(-30,106); ctx.quadraticCurveTo(-38,-4,-12,-66); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha=.55;
+    ctx.beginPath(); ctx.ellipse(-9,-94,20,24,0,0,TAU); ctx.fill();
+    ctx.restore();
+    // eyes
+    ctx.globalAlpha=.75+Math.sin(t*0.004)*0.22; ctx.fillStyle=c0;
+    ctx.shadowColor=c0; ctx.shadowBlur=14;
+    ctx.beginPath(); ctx.ellipse(-7,-90,3.6,5,0,0,TAU); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(7,-90,3.6,5,0,0,TAU); ctx.fill();
+    ctx.shadowBlur=0; ctx.globalAlpha=1;
+  }
   ctx.restore();
+}
+
+/* Extras that only the deep end of the table gets, so a 1 in 10,000,000,000
+   is visibly a different class of thing and not just a different hue. */
+function rarityExtras(ctx,W,H,a,t,tier){
+  const cx=W/2, cy=H/2, R=Math.min(W,H)*0.5, c0=a.c[0], c1=a.c[1];
+  ctx.save(); ctx.globalCompositeOperation="lighter";
+  if(tier>=3){                                   // slow rune ring on the ground
+    ctx.globalAlpha=.5; ctx.strokeStyle=c0; ctx.lineWidth=1.4;
+    for(let k=0;k<2;k++){
+      const rr=R*(0.74+k*0.1), an=t*0.0004*(k?-1:1);
+      ctx.beginPath(); ctx.ellipse(cx,cy+H*0.26,rr,rr*0.19,0,0,TAU); ctx.stroke();
+      for(let i=0;i<12;i++){
+        const p=an+i/12*TAU;
+        const x=cx+Math.cos(p)*rr, y=cy+H*0.26+Math.sin(p)*rr*0.19;
+        ctx.fillStyle=i%2?c0:c1;
+        ctx.fillRect(x-1.6,y-1.6,3.2,3.2);
+      }
+    }
+  }
+  if(tier>=4){                                   // anamorphic flare
+    ctx.globalAlpha=.35+Math.sin(t*0.002)*0.12;
+    const g=ctx.createLinearGradient(cx-R,cy,cx+R,cy);
+    g.addColorStop(0,"transparent"); g.addColorStop(.5,c0); g.addColorStop(1,"transparent");
+    ctx.fillStyle=g; ctx.fillRect(cx-R,cy-2.2,R*2,4.4);
+  }
+  if(tier>=5){                                   // god rays for the top of the table
+    ctx.globalAlpha=.16;
+    for(let i=0;i<14;i++){
+      const an=t*0.0002+i/14*TAU;
+      const g=ctx.createLinearGradient(cx,cy,cx+Math.cos(an)*R*2,cy+Math.sin(an)*R*2);
+      g.addColorStop(0,c0); g.addColorStop(1,"transparent");
+      ctx.strokeStyle=g; ctx.lineWidth=18;
+      ctx.beginPath(); ctx.moveTo(cx,cy);
+      ctx.lineTo(cx+Math.cos(an)*R*2,cy+Math.sin(an)*R*2); ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+/* Particles are drawn onto a persistent buffer that fades rather than clears,
+   which is what gives every effect motion trails instead of a stroboscope of
+   disconnected dots. The buffer is per-canvas so the showcase, the reveal and
+   any preview each keep their own. */
+const TRAILS=new WeakMap();
+function trailFor(ctx,W,H){
+  let r=TRAILS.get(ctx);
+  if(!r||r.c.width!==W||r.c.height!==H){
+    const c=document.createElement("canvas"); c.width=W; c.height=H;
+    r={c,x:c.getContext("2d")}; TRAILS.set(ctx,r);
+  }
+  return r;
 }
 function paintShowcase(ctx,W,H,a,t){
   ctx.clearRect(0,0,W,H);
-  if(!a){ drawFigure(ctx,W,H,null); return; }
-  const g=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.min(W,H)*0.6);
-  g.addColorStop(0,a.c[1]+"55"); g.addColorStop(1,"transparent");
+  if(!a){ drawFigure(ctx,W,H,null,t); return; }
+  const tier=tierOf(a.o);
+
+  // ambient bloom behind everything
+  const g=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.min(W,H)*0.66);
+  g.addColorStop(0,a.c[1]+"66"); g.addColorStop(.5,a.c[0]+"22");
+  g.addColorStop(1,"transparent");
   ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  // trail buffer: fade, then lay down this frame's particles
+  const tr=trailFor(ctx,W,H);
+  tr.x.globalCompositeOperation="destination-out";
+  tr.x.fillStyle="rgba(0,0,0,"+(tier>=3?0.10:0.16)+")";
+  tr.x.fillRect(0,0,W,H);
+  tr.x.globalCompositeOperation="lighter";
+  drawAura(tr.x,W,H,a,t,1.0);
+  if(tier>=2){ tr.x.globalAlpha=.5; drawAura(tr.x,W,H,a,t+1400,0.66); tr.x.globalAlpha=1; }
+
   ctx.globalCompositeOperation="lighter";
-  drawAura(ctx,W,H,a,t,0.92);
+  ctx.globalAlpha=.78; ctx.drawImage(tr.c,0,0); ctx.globalAlpha=1;   // behind the figure
+  rarityExtras(ctx,W,H,a,t,tier);
   ctx.globalCompositeOperation="source-over";
-  drawFigure(ctx,W,H,a);
+
+  drawFigure(ctx,W,H,a,t);
+
   ctx.globalCompositeOperation="lighter";
-  ctx.globalAlpha=0.45; drawAura(ctx,W,H,a,t+900,0.62); ctx.globalAlpha=1;
+  ctx.globalAlpha=.5; ctx.drawImage(tr.c,0,0); ctx.globalAlpha=1;    // and a pass in front
   ctx.globalCompositeOperation="source-over";
+
+  // vignette to seat it in the frame
+  const v=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.min(W,H)*0.72);
+  v.addColorStop(0,"transparent"); v.addColorStop(1,"rgba(3,3,8,.72)");
+  ctx.fillStyle=v; ctx.fillRect(0,0,W,H);
 }
 
 /* ---------------- background ---------------- */
@@ -535,15 +749,22 @@ if(!S.biomeEnd||S.biomeEnd<Date.now()) rollBiome();
    entries a linear scan per roll is 700 comparisons, which is nothing, and
    it keeps the odds exactly readable off the table. */
 function rollAura(){
-  const L=luck(), bi=S.biome;
+  const L=luck(), bi=S.biome, floor=S.catalyst||0;
   for(let i=MAXI;i>=0;i--){
     const a=AURAS[i];
+    if(a.o<floor) break;                        // a catalyst refuses anything below it
     if(a.b&&a.b!==bi) continue;
     if(Math.random()<L/a.o) return a;
   }
+  if(floor){
+    // the catalyst guarantees its floor even when nothing above it landed
+    const pool=AURAS.filter(a=>a.o>=floor&&(!a.b||a.b===bi));
+    return pool[(Math.random()*pool.length)|0]||AURAS[MAXI];
+  }
   return AURAS[0];
 }
-const shardsFor=o=>Math.max(1,Math.round(Math.log2(o)*1.6));
+const shardsFor=o=>Math.max(1,Math.round(Math.log2(o)*1.6*(1+loadoutStats().shard/100)));
+const essenceFor=o=>Math.max(1,Math.round(Math.log2(o)));
 
 /* ---------------- reel ---------------- */
 const reel=$("reel"),reelWrap=$("reelWrap");
@@ -630,8 +851,11 @@ async function doRoll(){
   if(spinning) return;
   spinning=true; $("rollBtn").disabled=true;
   const a=rollAura(), t=tierOf(a.o);
-  await spin(a, S.fast?420:[2200,2800,3500,4300,5200,6400][t]);
+  if(S.instant){ buildStrip(a); parkOn(WIN_AT); }
+  else await spin(a, S.fast?420:[2200,2800,3500,4300,5200,6400][t]);
   S.rolls++; S.inv[a.id]=(S.inv[a.id]||0)+1; S.shards+=shardsFor(a.o);
+  if(S.catalyst) S.catalyst=0;                     // a catalyst is spent on one roll
+  if(!S.loadout.some(x=>x)) S.loadout[0]=a.id;     // first pull fills slot 1
   if(!S.rarest||a.o>BY_ID[S.rarest].o) S.rarest=a.id;
   if(S.inv[a.id]===1&&(!S.equipped||a.o>=BY_ID[S.equipped].o)) S.equipped=a.id;
   feed(a); save(); paint();
@@ -642,12 +866,13 @@ async function doRoll(){
 
 /* ---------------- paint ---------------- */
 let previewId=null;
-const shown=()=>BY_ID[previewId]||BY_ID[S.equipped]||null;
+const shown=()=>BY_ID[previewId]||BY_ID[S.loadout&&S.loadout[0]]||BY_ID[S.equipped]||null;
 function paint(){
   $("sRolls").textContent=fmt(S.rolls);
   $("sLuck").textContent=fmtLuck(luck())+"x";
   $("sLuck").style.color=luck()>1?"var(--gold)":"";
   $("sShards").textContent=fmt(S.shards);
+  $("sEss").textContent=fmt(S.essence);
   $("sIndex").textContent=owned()+"/"+N_AURAS;
   $("biomeName").textContent=S.biome;
   $("biomeName").style.color=biome().tint;
@@ -663,6 +888,27 @@ function paint(){
   $("fx").innerHTML=S.effects.filter(e=>e.until>now).map(e=>{
     const p=POTIONS.find(x=>x.id===e.id)||{n:e.id};
     return `<div class="fxp">${p.n} &middot; ${Math.ceil((e.until-now)/1000)}s</div>`}).join("");
+  const cap=slotCap(), lo=$("loadout");
+  lo.innerHTML="";
+  for(let i=0;i<6;i++){
+    const d=document.createElement("div");
+    const id=S.loadout[i], au=BY_ID[id], open=i<cap;
+    d.className="slot"+(i===0?" p0":"")+(open?"":" locked");
+    d.title=open?(au?au.n:"empty slot "+(i+1)):("unlocks at "+(i*60)+" auras found");
+    d.innerHTML=au
+      ? `<div class="so" style="background:radial-gradient(circle at 34% 30%,${au.c[0]},${au.c[1]});box-shadow:0 0 14px ${au.c[0]}99"></div><div class="sl">${i+1}</div>`
+      : `<div class="so" style="background:#191926"></div><div class="sl">${i+1}</div>`;
+    if(open) d.onclick=()=>{ assignTo=i; openIndex(); };
+    lo.appendChild(d);
+  }
+  const st=loadoutStats();
+  $("stats").innerHTML=
+    `<div>LUCK <b>+${st.luck.toFixed(0)}%</b></div>`+
+    `<div>SHARDS <b>+${st.shard.toFixed(0)}%</b></div>`+
+    `<div>SPEED <b>+${st.speed.toFixed(0)}%</b></div>`+
+    `<div>BIOME <b>+${st.biome.toFixed(0)}%</b></div>`;
+  $("catBan").textContent=S.catalyst
+    ? "CATALYST ARMED "+"·"+" next roll is at least 1 in "+fmt(S.catalyst) : "";
   $("btnAuto").classList.toggle("on",S.auto);
   $("btnFast").classList.toggle("on",S.fast);
   $("btnMute").textContent=S.muted?"MUTED":"SOUND";
@@ -672,7 +918,7 @@ function paint(){
 /* ---------------- index ----------------
    700 cards is more than a grid wants to hold at once, so it renders in
    pages of 240 behind a search box and a filter. */
-const PAGE=240; let idxShown=PAGE;
+const PAGE=240; let idxShown=PAGE, assignTo=null;
 function idxList(){
   const q=$("idxQ").value.trim().toLowerCase(), f=$("idxF").value;
   return AURAS.filter(a=>{
@@ -696,7 +942,14 @@ function renderIndex(){
       <div class="cn">${have?a.n:"???"}</div>
       <div class="co">1 in ${fmt(a.o)}${a.b?" &middot; "+a.b:""}</div>`;
     if(have) d.onclick=()=>{
-      if(previewId===a.id){ S.equipped=a.id; previewId=null; tone(760,.14,"sine",.05); }
+      if(assignTo!==null){                       // arrived here from a loadout slot
+        S.loadout[assignTo]=a.id;
+        if(assignTo===0) S.equipped=a.id;
+        assignTo=null; previewId=null; tone(820,.16,"sine",.06);
+        save(); paint(); $("mIndex").classList.remove("show"); return;
+      }
+      if(previewId===a.id){ S.loadout[0]=a.id; S.equipped=a.id; previewId=null;
+        tone(760,.14,"sine",.05); }
       else { previewId=a.id; tone(640,.1,"sine",.04); }
       save(); paint(); renderIndex();
     };
@@ -707,9 +960,12 @@ function renderIndex(){
     ? `<button class="btn" id="moreBtn">SHOW MORE (${fmt(list.length-idxShown)} left)</button>`
     : `<span style="font-size:11px;color:var(--dim)">${fmt(list.length)} shown</span>`;
   const mb=$("moreBtn"); if(mb) mb.onclick=()=>{idxShown+=PAGE;renderIndex()};
-  $("idxPct").textContent=(owned()/N_AURAS*100).toFixed(1)+"% · click to preview, again to equip";
+  $("idxPct").textContent=(owned()/N_AURAS*100).toFixed(1)+"% · "+
+    (assignTo!==null ? "pick an aura for slot "+(assignTo+1)
+                     : "click to preview, again to equip");
 }
-function openIndex(){ idxShown=PAGE; renderIndex(); $("mIndex").classList.add("show"); }
+function openIndex(){ idxShown=PAGE; if(assignTo!==null) $("idxF").value="owned";
+  renderIndex(); $("mIndex").classList.add("show"); }
 $("idxQ").oninput=()=>{idxShown=PAGE;renderIndex()};
 $("idxF").onchange=()=>{idxShown=PAGE;renderIndex()};
 
@@ -742,22 +998,101 @@ function openShop(){
   $("mShop").classList.add("show");
 }
 
+/* ---------------- altar ----------------
+   Melts duplicates to essence, always keeping one of each so the index can
+   never be damaged by it, and sells catalysts: a floor on the next roll. */
+function dupCount(){
+  let n=0,e=0;
+  for(const id in S.inv){ const a=BY_ID[id]; if(!a) continue;
+    const d=S.inv[id]-1; if(d>0){ n+=d; e+=d*essenceFor(a.o); } }
+  return {n,e};
+}
+function openAltar(){
+  const b=$("altarBody"); b.innerHTML="";
+  $("altEss").textContent=fmt(S.essence)+" essence";
+  const {n,e}=dupCount();
+  const melt=document.createElement("div"); melt.className="shopRow";
+  melt.innerHTML=`<div class="si"><b>Melt duplicates</b><span>${fmt(n)} spare copies &rarr; ${fmt(e)} essence &middot; one of each is always kept</span></div>`;
+  const mb=document.createElement("button"); mb.className="btn";
+  mb.textContent="MELT"; mb.disabled=n===0; if(!n) mb.style.opacity=".45";
+  mb.onclick=()=>{ for(const id in S.inv) if(S.inv[id]>1) S.inv[id]=1;
+    S.essence+=e; save(); paint(); openAltar(); tone(420,.4,"triangle",.07); };
+  melt.appendChild(mb); b.appendChild(melt);
+  const hd=document.createElement("div");
+  hd.style.cssText="font-size:11px;color:var(--dim);margin:14px 0 8px;letter-spacing:1.4px";
+  hd.textContent="CATALYSTS \u2014 put a floor under your next roll";
+  b.appendChild(hd);
+  for(const c of CATALYSTS){
+    const row=document.createElement("div"); row.className="shopRow";
+    row.innerHTML=`<div class="si"><b>${c.n}</b><span>next roll is at least 1 in ${fmt(c.min)}</span></div>`;
+    const btn=document.createElement("button"); btn.className="btn";
+    btn.textContent=fmt(c.cost);
+    btn.disabled=S.essence<c.cost||S.catalyst>=c.min;
+    if(btn.disabled) btn.style.opacity=".45";
+    btn.onclick=()=>{ if(S.essence<c.cost) return;
+      S.essence-=c.cost; S.catalyst=c.min; save(); paint(); openAltar();
+      tone(1000,.3,"triangle",.07); };
+    row.appendChild(btn); b.appendChild(row);
+  }
+  const note=document.createElement("div");
+  note.style.cssText="font-size:11px;color:var(--dim);margin-top:12px;line-height:1.7";
+  note.textContent="A catalyst refuses everything below its floor, so the roll resolves above it. Luck still decides how far above. It is consumed by one roll.";
+  b.appendChild(note);
+  $("mAltar").classList.add("show");
+}
+
+/* ---------------- alpha tools ---------------- */
+const ALPHA={
+  shards:()=>{S.shards+=1e7},
+  essence:()=>{S.essence+=1e6},
+  luck:()=>{S.effects=S.effects.filter(e=>e.id!=="alpha");
+    S.effects.push({id:"alpha",luck:1e6,until:Date.now()+300000})},
+  slots:()=>{S.maxSlots=true},
+  instant:()=>{S.instant=!S.instant},
+  unlockall:()=>{for(const a of AURAS) S.inv[a.id]=Math.max(S.inv[a.id]||0,1);
+    S.rarest=AURAS[MAXI].id},
+  biome:()=>{S.biome=$("aBiome").value; S.biomeEnd=Date.now()+BIOME_MS},
+  grant:()=>{
+    const q=$("aGrant").value.trim().toLowerCase(); if(!q) return;
+    const a=AURAS.find(x=>x.n.toLowerCase()===q)||AURAS.find(x=>x.n.toLowerCase().includes(q));
+    if(!a){ feedRaw("no match","try another name","#ff6b6b"); return; }
+    S.inv[a.id]=(S.inv[a.id]||0)+1;
+    if(!S.rarest||a.o>BY_ID[S.rarest].o) S.rarest=a.id;
+    S.loadout[0]=a.id; S.equipped=a.id; feed(a);
+  },
+  grantrarest:()=>{const a=AURAS[MAXI]; S.inv[a.id]=(S.inv[a.id]||0)+1;
+    S.rarest=a.id; S.loadout[0]=a.id; S.equipped=a.id; feed(a);},
+  wipe:()=>{localStorage.removeItem(KEY); location.reload()}
+};
+$("btnAlpha").onclick=()=>{
+  const el=$("alpha"); el.classList.toggle("show");
+  $("btnAlpha").classList.toggle("on",el.classList.contains("show"));
+  if(!$("aBiome").options.length)
+    $("aBiome").innerHTML=BIOMES.map(b=>`<option>${b.id}</option>`).join("");
+};
+document.querySelectorAll("#alpha [data-a]").forEach(btn=>btn.onclick=()=>{
+  const f=ALPHA[btn.dataset.a]; if(!f) return;
+  f(); save(); paint(); tone(1200,.12,"square",.05);
+});
+
 /* ---------------- wiring ---------------- */
 $("rollBtn").onclick=()=>doRoll();
 $("btnIndex").onclick=openIndex;
 $("btnShop").onclick=openShop;
+$("btnAltar").onclick=openAltar;
 $("btnAuto").onclick=()=>{S.auto=!S.auto;paint();if(S.auto&&!spinning&&Date.now()>=cdUntil)doRoll()};
 $("btnFast").onclick=()=>{S.fast=!S.fast;save();paint()};
 $("btnMute").onclick=()=>{S.muted=!S.muted;save();paint()};
 document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>
   document.querySelectorAll(".modal").forEach(m=>m.classList.remove("show")));
 document.querySelectorAll(".modal").forEach(m=>m.onclick=e=>{
-  if(e.target===m) m.classList.remove("show")});
+  if(e.target===m){ m.classList.remove("show"); assignTo=null; paint(); }});
 addEventListener("keydown",e=>{
   // Escape is handled before the input guard: typing in the index search box
   // should still let you back out of the modal
   if(e.key==="Escape"){
-    e.target.blur&&e.target.blur(); previewId=null; paint();
+    e.target.blur&&e.target.blur(); previewId=null; assignTo=null; paint();
+    $("alpha").classList.remove("show"); $("btnAlpha").classList.remove("on");
     document.querySelectorAll(".modal").forEach(m=>m.classList.remove("show"));
     return;
   }
@@ -794,10 +1129,13 @@ function loop(t){
 fitShow(); buildStrip(AURAS[0]);
 /* park the strip deep enough that tiles fill the whole width at rest, not
    just the right half */
+function parkOn(k){
+  const c=reelWrap.clientWidth/2;
+  reel.style.transform=`translateX(${c-TILE/2-k*STEP}px)`;
+}
 function parkReel(){
   const c=reelWrap.clientWidth/2;
-  const k=Math.min(STRIP-6,Math.max(3,Math.ceil(c/STEP)+1));
-  reel.style.transform=`translateX(${c-TILE/2-k*STEP}px)`;
+  parkOn(Math.min(STRIP-6,Math.max(3,Math.ceil(c/STEP)+1)));
 }
 parkReel(); addEventListener("resize",parkReel);
 paint(); requestAnimationFrame(loop);

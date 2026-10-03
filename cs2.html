@@ -696,6 +696,12 @@ function botThink(b,dt){
     bd=d; best=o;
   }
   if(best!==b.target){ b.target=best; b.react=best?rnd(0.14,0.44)*(1.6-b.skill):0; }
+  // A defender who sees an attacker calls out where the hit is coming, so the
+  // others can collapse onto it instead of each holding an empty site.
+  if(best&&b.team==="CT"){
+    const where=nearestSite(best.x,best.y);
+    if(where&&S.contact!==where){ S.contact=where; S.contactT=4.5; }
+  }
 
   if(b.target){
     const want=Math.atan2(b.target.y-b.y,b.target.x-b.x);
@@ -730,7 +736,8 @@ function botThink(b,dt){
     // Whoever must touch the bomb walks all the way in; everyone else takes up
     // a position at a standoff distance so a squad doesn't share one tile.
     const mustReach = b.hasBomb || (b.team==="CT"&&S.bomb.planted);
-    const hold = (mustReach||b.hunting) ? 0 : (b.holdR||2);
+    const rotating = b.team==="CT"&&S.contact&&S.contactT>0&&b.holdSite!==S.contact;
+    const hold = (mustReach||b.hunting||rotating) ? 0 : (b.holdR||2);
     if((nx||ny) && (lost || here>hold)){
       const m=Math.hypot(nx,ny), sp=2.6*dt*(0.85+b.skill*0.3);
       const vx=nx/m*sp, vy=ny/m*sp;
@@ -775,6 +782,7 @@ function botGoal(b){
     }
   }
   if(b.team==="T") return FLOW[S.pushSite];
+  if(S.contact&&S.contactT>0&&b.holdSite!==S.contact) return FLOW[S.contact]; // rotate
   return b.holdSite==="A"?FLOW.A:FLOW.B;
 }
 function los(x0,y0,x1,y1){
@@ -783,6 +791,10 @@ function los(x0,y0,x1,y1){
     if(solid(x0+(x1-x0)*t, y0+(y1-y0)*t)) return false; }
   return true;
 }
+const nearestSite=(x,y)=>{
+  const da=(x-SITE_A.x)**2+(y-SITE_A.y)**2, db=(x-SITE_B.x)**2+(y-SITE_B.y)**2;
+  return Math.min(da,db)>26*26 ? null : (da<db?"A":"B");
+};
 const onSite=(x,y)=>{const t=at(x,y);return t===T.SITE_A||t===T.SITE_B;};
 const siteAt=(x,y)=>at(x,y)===T.SITE_A?"A":at(x,y)===T.SITE_B?"B":null;
 
@@ -792,6 +804,7 @@ function startRound(){
   S.bomb={carried:true,planted:false,t:BOMB_MS,site:null,x:0,y:0,defusing:0,planting:0,
           dropped:false};
   S.pushSite=Math.random()<0.5?"A":"B";
+  S.contact=null; S.contactT=0;
   makeBotsIfNeeded();
   const all=allPlayers();
   const ctOrder=all.filter(p=>p.bot&&p.team==="CT");
@@ -1099,6 +1112,7 @@ function update(dt){
   kickY*=Math.pow(0.0006,dt); muzzle*=Math.pow(1e-6,dt);
   me.hurt=Math.max(0,(me.hurt||0)-dt);
 
+  if(S.contactT>0){ S.contactT-=dt; if(S.contactT<=0) S.contact=null; }
   for(const b of bots) botThink(b,dt);
 
   // clock

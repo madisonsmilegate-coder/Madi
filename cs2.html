@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Breach Point</title>
+<style>
+:root{--ink:#e9ecf2;--dim:#8b93a6;--line:#242a38;--ct:#5aa9ff;--t:#ffb84d;--bad:#ff4d4d;--ok:#4ade80}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#05070c;color:var(--ink);overflow:hidden;
+ font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+#wrap{position:fixed;inset:0}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud{position:absolute;pointer-events:none;text-shadow:0 2px 6px #000}
+
+/* top bar */
+#top{top:10px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;
+ background:rgba(8,10,16,.82);border:1px solid var(--line);border-radius:10px;padding:7px 16px}
+#top .sc{font-size:22px;font-weight:800;min-width:34px;text-align:center}
+#scCT{color:var(--ct)} #scT{color:var(--t)}
+#clock{font-size:19px;font-weight:700;min-width:62px;text-align:center}
+#clock.low{color:var(--bad)}
+#phase{font-size:9.5px;letter-spacing:2px;color:var(--dim);text-align:center}
+#alive{display:flex;gap:4px;justify-content:center;margin-top:3px}
+.dot{width:7px;height:7px;border-radius:50%;background:#2a3142}
+.dot.ct{background:var(--ct)} .dot.t{background:var(--t)} .dot.dead{opacity:.22}
+
+/* bottom left vitals */
+#vit{left:18px;bottom:16px;display:flex;align-items:flex-end;gap:16px}
+.big{font-size:30px;font-weight:800;line-height:1}
+#hp.hurt{color:var(--bad)}
+#ar{color:var(--ct);font-size:17px;font-weight:700}
+#money{color:var(--ok);font-size:19px;font-weight:700}
+.lbl{font-size:9px;letter-spacing:1.6px;color:var(--dim)}
+
+/* bottom right ammo + weapon */
+#wep{right:18px;bottom:16px;text-align:right}
+#ammo{font-size:30px;font-weight:800;line-height:1}
+#ammo span{font-size:17px;color:var(--dim)}
+#wname{font-size:12px;letter-spacing:1.6px;color:var(--dim);margin-top:2px}
+
+/* kill feed */
+#feed{right:14px;top:14px;width:290px;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.kf{background:rgba(8,10,16,.8);border:1px solid var(--line);border-radius:6px;padding:3px 9px;
+ font-size:11.5px;animation:kin .18s ease both}
+@keyframes kin{from{opacity:0;transform:translateX(14px)}}
+.kf b{font-weight:700} .kf .ct{color:var(--ct)} .kf .t{color:var(--t)}
+.kf i{color:var(--dim);font-style:normal;margin:0 5px}
+
+/* centre messages */
+#mid{left:50%;top:30%;transform:translate(-50%,-50%);text-align:center;width:min(640px,92vw)}
+#banner{font-size:clamp(20px,3.6vw,34px);font-weight:800;letter-spacing:2px;opacity:0;
+ transition:opacity .3s}
+#sub{font-size:12px;letter-spacing:3px;color:var(--dim);margin-top:4px;opacity:0;transition:opacity .3s}
+#hint{left:50%;top:62%;transform:translateX(-50%);font-size:12.5px;letter-spacing:1.6px;
+ text-align:center}
+#hint b{color:var(--t)}
+#prog{left:50%;top:67%;transform:translateX(-50%);width:230px;height:5px;
+ background:rgba(255,255,255,.14);border-radius:99px;overflow:hidden;display:none}
+#prog i{display:block;height:100%;width:0;background:var(--ok)}
+
+/* crosshair + hit */
+#xh{left:50%;top:50%;transform:translate(-50%,-50%)}
+#xh div{position:absolute;background:#59ff8a;box-shadow:0 0 3px #000}
+#hitm{left:50%;top:50%;transform:translate(-50%,-50%);opacity:0}
+#hitm div{position:absolute;background:#fff;width:9px;height:2px}
+#dmg{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,
+ transparent 42%,rgba(255,0,0,.6) 100%);opacity:0;transition:opacity .22s}
+
+/* radar */
+#radar{position:absolute;left:16px;top:14px;width:176px;height:176px;border:1px solid var(--line);
+ border-radius:8px;background:rgba(6,8,13,.72);pointer-events:none}
+
+/* bomb */
+#bomb{left:50%;top:14%;transform:translateX(-50%);display:none;text-align:center}
+#bomb.on{display:block}
+#btimer{font-size:26px;font-weight:800;color:var(--bad)}
+
+/* buy menu */
+.scr{position:fixed;inset:0;z-index:20;background:rgba(4,6,10,.93);display:none;
+ align-items:center;justify-content:center;padding:20px}
+.scr.show{display:flex}
+.panel{width:min(880px,100%);max-height:88vh;overflow:auto;border:1px solid var(--line);
+ border-radius:14px;background:#0a0d14;padding:20px}
+.panel h2{margin:0 0 3px;font-size:17px;letter-spacing:2px}
+.panel .m{font-size:12px;color:var(--ok);margin-bottom:14px}
+.cat{font-size:10px;letter-spacing:2px;color:var(--dim);margin:14px 0 7px}
+.row{display:grid;grid-template-columns:repeat(auto-fill,minmax(188px,1fr));gap:7px}
+.item{border:1px solid var(--line);border-radius:9px;padding:9px 11px;cursor:pointer;
+ display:flex;justify-content:space-between;align-items:center;gap:8px;background:#0d1119}
+.item:hover{border-color:#3b4660}
+.item.own{border-color:var(--ok)}
+.item.no{opacity:.35;cursor:not-allowed}
+.item b{font-size:12.5px} .item span{font-size:11px;color:var(--ok)}
+.item .k{font-size:9px;color:var(--dim);display:block;margin-top:1px}
+.btn{font:inherit;font-size:12px;letter-spacing:1.4px;cursor:pointer;border-radius:9px;
+ border:1px solid var(--line);background:#141a26;color:var(--ink);padding:9px 16px}
+.btn:hover{border-color:#3b4660}
+.btn.p{background:linear-gradient(180deg,#3b82f6,#2563eb);border:0;font-weight:700}
+#start .panel{text-align:left;max-width:640px}
+#start h1{margin:0 0 6px;font-size:clamp(26px,5vw,40px);letter-spacing:-1px}
+#start h1 span{color:var(--t)}
+#start p{font-size:13px;line-height:1.65;color:#c3cad8}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:12.5px;margin:12px 0}
+.keys b{color:var(--t)}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+td,th{padding:5px 6px;text-align:left;border-bottom:1px solid var(--line)}
+th{font-size:9.5px;letter-spacing:1.6px;color:var(--dim)}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+  <div id="dmg"></div>
+  <canvas id="radar" width="176" height="176"></canvas>
+
+  <div class="hud" id="top">
+    <div class="sc" id="scCT">0</div>
+    <div>
+      <div id="clock">1:55</div>
+      <div id="phase">FREEZE TIME</div>
+      <div id="alive"></div>
+    </div>
+    <div class="sc" id="scT">0</div>
+  </div>
+
+  <div class="hud" id="bomb"><div class="lbl">C4 ARMED</div><div id="btimer">40</div></div>
+  <div class="hud" id="feed"></div>
+  <div class="hud" id="mid"><div id="banner"></div><div id="sub"></div></div>
+  <div class="hud" id="hint"></div>
+  <div class="hud" id="prog"><i></i></div>
+  <div class="hud" id="xh"></div>
+  <div class="hud" id="hitm"></div>
+
+  <div class="hud" id="vit">
+    <div><div class="lbl">HEALTH</div><div class="big" id="hp">100</div></div>
+    <div><div class="lbl">ARMOR</div><div id="ar">0</div></div>
+    <div><div class="lbl">MONEY</div><div id="money">$800</div></div>
+  </div>
+  <div class="hud" id="wep">
+    <div id="ammo">20<span>/120</span></div><div id="wname">GLOCK-18</div>
+  </div>
+</div>
+
+<div class="scr" id="buy"><div class="panel">
+  <h2>BUY MENU</h2><div class="m" id="buyM">$800</div>
+  <div id="buyBody"></div>
+  <div style="margin-top:16px;display:flex;gap:9px">
+    <button class="btn p" id="buyClose">CLOSE &middot; B</button>
+    <span style="font-size:11px;color:var(--dim);align-self:center">
+      buying is only possible in freeze time, near spawn</span>
+  </div>
+</div></div>
+
+<div class="scr show" id="start"><div class="panel">
+  <h1>BREACH <span>POINT</span></h1>
+  <p style="color:var(--dim);font-size:11.5px;letter-spacing:2px;margin:0 0 12px">
+    5v5 BOMB DEFUSAL &middot; FIRST TO 13</p>
+  <p>You are on the <b style="color:var(--t)">attacking side</b>. Carry the bomb to site A or B,
+  plant it, and survive the fuse. The defenders only have to stop you or cut the wire in time.</p>
+  <p><strong>Standing still matters more than aiming fast.</strong> Your first shot is accurate
+  only if you are not moving. Hold the trigger and the barrel climbs a fixed pattern &mdash; learn
+  it, pull against it, or fire in bursts.</p>
+  <div class="keys">
+    <b>W A S D</b><span>Move &middot; <b>SHIFT</b> walk silently &middot; <b>CTRL</b> crouch</span>
+    <b>MOUSE</b><span>Look &middot; <b>CLICK</b> fire &middot; <b>RIGHT</b> aim (scoped rifles)</span>
+    <b>R</b><span>Reload &middot; <b>1 2 3</b> primary / pistol / knife</span>
+    <b>B</b><span>Buy menu (freeze time, in spawn)</span>
+    <b>E</b><span>Hold to plant on a site, or to defuse</span>
+    <b>TAB</b><span>Scoreboard &middot; <b>ESC</b> release mouse</span>
+  </div>
+  <p style="font-size:12px;color:var(--dim)">Economy runs like the real thing: $3,250 for a round
+  win, an escalating consolation for losing, and kill rewards that depend on the weapon. Save a
+  bad round and you buy properly the next one.</p>
+  <button class="btn p" id="go" style="margin-top:12px">ENTER THE SERVER</button>
+</div></div>
+
+<div class="scr" id="board"><div class="panel">
+  <h2 id="bTitle">SCOREBOARD</h2><div id="bBody"></div>
+  <div style="margin-top:14px;font-size:11px;color:var(--dim)">hold TAB</div>
+</div></div>
+
+<script>
+"use strict";
+/* ============================================================
+   BREACH POINT - a round-based bomb-defusal shooter.
+   Raycast renderer, grid map, bot AI on BFS paths, and the two
+   mechanics the genre actually lives on: movement inaccuracy and
+   a fixed recoil pattern you are expected to learn.
+   ============================================================ */
+const $=id=>document.getElementById(id);
+const TAU=Math.PI*2, clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const rnd=(a,b)=>a+Math.random()*(b-a), pick=a=>a[(Math.random()*a.length)|0];
+
+/* ---------------- map ----------------
+   Carved from rectangles rather than typed as ASCII art, so the layout can be
+   checked by flood fill instead of by eye. */
+const MW=56, MH=44;
+const T={WALL:0,FLOOR:1,CRATE:2,SITE_A:3,SITE_B:4,SPAWN_T:5,SPAWN_CT:6};
+const G=new Uint8Array(MW*MH);
+const at=(x,y)=>G[(x|0)+(y|0)*MW];
+function rect(x0,y0,x1,y1,v){
+  for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++)
+    if(x>0&&y>0&&x<MW-1&&y<MH-1) G[x+y*MW]=v;
+}
+(function build(){
+  G.fill(T.WALL);
+  // attacker half
+  rect(22,36,33,41,T.FLOOR); rect(24,37,31,40,T.SPAWN_T);
+  rect(20,33,35,36,T.FLOOR);                    // T lobby
+  // left lane: tunnels to B
+  rect(8,30,21,34,T.FLOOR);  rect(8,20,13,32,T.FLOOR);
+  rect(4,13,16,22,T.FLOOR);  rect(5,14,14,20,T.SITE_B);
+  // centre lane: mid
+  rect(26,16,31,35,T.FLOOR);
+  rect(24,24,33,27,T.FLOOR);                    // mid doors
+  // right lane: long to A
+  rect(36,30,46,35,T.FLOOR); rect(43,14,48,33,T.FLOOR);
+  rect(38,6,51,16,T.FLOOR);  rect(40,7,49,14,T.SITE_A);
+  // defender half + rotations
+  rect(18,2,37,8,T.FLOOR);   rect(23,3,32,7,T.SPAWN_CT);
+  rect(20,8,24,18,T.FLOOR);                     // CT to B
+  rect(32,8,36,18,T.FLOOR);                     // CT to A / mid
+  rect(14,16,27,19,T.FLOOR);                    // B to mid connector
+  rect(31,12,40,15,T.FLOOR);                    // A to mid connector
+  // cover
+  const crates=[[10,17],[11,17],[12,18],[6,16],[44,10],[45,10],[42,12],[47,9],
+                [28,22],[29,22],[28,30],[29,30],[12,31],[18,34],[40,32],[44,24],
+                [25,25],[32,25],[21,12],[35,12]];
+  for(const [x,y] of crates) if(at(x,y)!==T.WALL) G[x+y*MW]=T.CRATE;
+})();
+const walkable=v=>v!==T.WALL&&v!==T.CRATE;
+const solid=(x,y)=>{
+  if(x<0||y<0||x>=MW||y>=MH) return true;
+  return !walkable(at(x,y));
+};
+/* every site must be reachable from both spawns, or the map is unplayable */
+function reach(sx,sy){
+  const seen=new Uint8Array(MW*MH), q=[[sx,sy]]; seen[sx+sy*MW]=1;
+  while(q.length){
+    const [x,y]=q.pop();
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=x+dx, ny=y+dy, i=nx+ny*MW;
+      if(nx<0||ny<0||nx>=MW||ny>=MH||seen[i]||!walkable(G[i])) continue;
+      seen[i]=1; q.push([nx,ny]);
+    }
+  }
+  return seen;
+}
+/* The centroid of a site can land on the cover sitting in the middle of it,
+   which would seed the flow field on an unreachable crate - so snap to the
+   nearest walkable tile of that same type. */
+const centreOf=tile=>{let n=0,sx=0,sy=0;
+  for(let y=0;y<MH;y++)for(let x=0;x<MW;x++) if(at(x,y)===tile){sx+=x;sy+=y;n++;}
+  if(!n) return {x:MW/2,y:MH/2,n:0};
+  const cx=sx/n, cy=sy/n;
+  let bx=cx|0, by=cy|0, bd=Infinity;
+  for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){
+    if(at(x,y)!==tile||!walkable(at(x,y))) continue;
+    const d=(x-cx)*(x-cx)+(y-cy)*(y-cy);
+    if(d<bd){bd=d;bx=x;by=y;}
+  }
+  return {x:bx+0.5,y:by+0.5,n};};
+const SITE_A=centreOf(T.SITE_A), SITE_B=centreOf(T.SITE_B);
+const SP_T=centreOf(T.SPAWN_T), SP_CT=centreOf(T.SPAWN_CT);
+const MAP_OK=(()=>{ const r=reach(SP_T.x|0,SP_T.y|0);
+  return !!(r[(SITE_A.x|0)+(SITE_A.y|0)*MW]&&r[(SITE_B.x|0)+(SITE_B.y|0)*MW]
+            &&r[(SP_CT.x|0)+(SP_CT.y|0)*MW]); })();
+
+/* BFS flow field toward a goal - every bot reads the same grid, so pathing
+   costs one search per goal per rebuild rather than one per bot */
+function flowTo(gx,gy){
+  const d=new Int16Array(MW*MH).fill(-1);
+  const q=[[gx|0,gy|0]]; d[(gx|0)+(gy|0)*MW]=0;
+  for(let h=0;h<q.length;h++){
+    const [x,y]=q[h], c=d[x+y*MW];
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=x+dx, ny=y+dy, i=nx+ny*MW;
+      if(nx<0||ny<0||nx>=MW||ny>=MH||d[i]>=0||!walkable(G[i])) continue;
+      d[i]=c+1; q.push([nx,ny]);
+    }
+  }
+  return d;
+}
+const FLOW={A:flowTo(SITE_A.x,SITE_A.y), B:flowTo(SITE_B.x,SITE_B.y),
+            T:flowTo(SP_T.x,SP_T.y), CT:flowTo(SP_CT.x,SP_CT.y)};
+
+/* ---------------- weapons ----------------
+   Damage, armour penetration and kill reward follow the genre's conventions:
+   a rifle headshot ends it, the sniper ends it from the body, and the cheap
+   SMG pays far more per kill than the rifle does. */
+const WEAPONS={
+ knife:{n:"KNIFE",cat:"melee",dmg:55,hs:3,rpm:120,mag:0,res:0,cost:0,kill:1500,
+        move:1,acc:0,rec:null,pen:0.85},
+ glock:{n:"GLOCK-18",cat:"pistol",dmg:30,hs:4,rpm:400,mag:20,res:120,cost:0,kill:300,
+        move:0.86,acc:0.022,rec:"pistol",pen:0.47},
+ usp:{n:"USP-S",cat:"pistol",dmg:35,hs:4,rpm:352,mag:12,res:100,cost:0,kill:300,
+      move:0.86,acc:0.016,rec:"pistol",pen:0.505},
+ p250:{n:"P250",cat:"pistol",dmg:38,hs:4,rpm:400,mag:13,res:52,cost:300,kill:300,
+       move:0.86,acc:0.019,rec:"pistol",pen:0.645},
+ deagle:{n:"DESERT EAGLE",cat:"pistol",dmg:63,hs:4,rpm:267,mag:7,res:35,cost:700,kill:300,
+         move:0.84,acc:0.028,rec:"deagle",pen:0.93},
+ mp9:{n:"MP9",cat:"smg",dmg:26,hs:4,rpm:857,mag:30,res:120,cost:1250,kill:600,
+      move:0.93,acc:0.030,rec:"smg",pen:0.60},
+ ak:{n:"AK-47",cat:"rifle",dmg:36,hs:4,rpm:600,mag:30,res:90,cost:2700,kill:300,
+     move:0.78,acc:0.028,rec:"ak",pen:0.775},
+ m4:{n:"M4A4",cat:"rifle",dmg:33,hs:4,rpm:666,mag:30,res:90,cost:3100,kill:300,
+     move:0.78,acc:0.024,rec:"m4",pen:0.70},
+ awp:{n:"AWP",cat:"sniper",dmg:115,hs:4,rpm:41,mag:10,res:30,cost:4750,kill:100,
+      move:0.60,acc:0.060,rec:null,pen:0.975,scope:true}
+};
+/* Fixed recoil patterns: cumulative offsets in degrees. The first few climb,
+   then it walks sideways - the whole skill is pulling against it. */
+const PATTERNS={
+ ak:[[0,0],[0,-1.3],[.1,-2.5],[.2,-3.6],[.1,-4.6],[-.2,-5.4],[-.6,-6.0],[-1.1,-6.4],
+     [-1.7,-6.6],[-2.3,-6.7],[-2.6,-6.6],[-2.3,-6.4],[-1.5,-6.2],[-.4,-6.1],[.9,-6.0],
+     [2.1,-6.0],[3.0,-6.1],[3.4,-6.2],[3.3,-6.3],[2.8,-6.4],[2.0,-6.5],[1.1,-6.6],
+     [.4,-6.7],[0,-6.8],[-.2,-6.9],[-.1,-7.0],[.3,-7.1],[.9,-7.2],[1.5,-7.3],[2.0,-7.4]],
+ m4:[[0,0],[0,-1.1],[.1,-2.1],[.1,-3.0],[0,-3.8],[-.2,-4.4],[-.5,-4.9],[-.9,-5.2],
+     [-1.3,-5.4],[-1.6,-5.5],[-1.6,-5.5],[-1.3,-5.4],[-.7,-5.3],[.1,-5.2],[1.0,-5.2],
+     [1.8,-5.2],[2.3,-5.3],[2.5,-5.4],[2.3,-5.5],[1.8,-5.6],[1.2,-5.7],[.6,-5.8],
+     [.2,-5.9],[0,-6.0],[0,-6.1],[.2,-6.2],[.6,-6.3],[1.0,-6.4],[1.4,-6.5],[1.7,-6.6]],
+ smg:[[0,0],[0,-.9],[.2,-1.7],[.4,-2.4],[.4,-3.0],[.2,-3.5],[-.2,-3.9],[-.7,-4.2],
+      [-1.1,-4.4],[-1.3,-4.5],[-1.2,-4.5],[-.8,-4.4],[-.2,-4.4],[.5,-4.4],[1.1,-4.4]],
+ pistol:[[0,0],[0,-1.0],[.3,-1.8],[-.3,-2.4],[.4,-2.9],[-.4,-3.3],[.3,-3.6]],
+ deagle:[[0,0],[0,-2.4],[.5,-4.2],[-.6,-5.6],[.7,-6.6]]
+};
+const patOf=w=>w.rec?PATTERNS[w.rec]:null;
+
+const BUYABLE=[
+ {k:"p250",c:"PISTOLS"},{k:"deagle",c:"PISTOLS"},
+ {k:"mp9",c:"SMG"},
+ {k:"ak",c:"RIFLES"},{k:"m4",c:"RIFLES"},{k:"awp",c:"RIFLES"},
+ {k:"armor",c:"GEAR",n:"KEVLAR + HELMET",cost:1000},
+ {k:"kit",c:"GEAR",n:"DEFUSE KIT",cost:400,ctOnly:true}
+];
+
+/* ---------------- state ---------------- */
+const MAXR=13, ROUND_MS=115000, FREEZE_MS=9000, BOMB_MS=40000;
+const PLANT_MS=3200, DEFUSE_MS=10000, DEFUSE_KIT_MS=5000;
+const S={
+  phase:"freeze", roundT:0, scoreCT:0, scoreT:0, round:1, running:false,
+  bomb:{carried:true, planted:false, t:0, site:null, x:0, y:0,
+        defusing:0, planting:0},
+  lossCT:1, lossT:1, over:false
+};
+const me={x:SP_T.x,y:SP_T.y,ang:-Math.PI/2,hp:100,armor:0,helm:false,money:800,
+  team:"T",alive:true,wep:"glock",slot:"pistol",prim:null,
+  ammo:{},res:{},shots:0,recT:0,kills:0,deaths:0,bot:false,name:"YOU",kit:false};
+let bots=[], ents=[];
+
+/* ---------------- renderer ---------------- */
+const cvs=$("c"), ctx=cvs.getContext("2d",{alpha:false});
+let W=0,H=0,RW=0,RH=0,img=null,zbuf=null;
+function resize(){
+  W=innerWidth; H=innerHeight;
+  const sc=W>1500?0.52:W>1000?0.6:0.72;
+  RW=Math.max(260,(W*sc)|0); RH=Math.max(160,(H*sc)|0);
+  cvs.width=RW; cvs.height=RH;
+  img=ctx.createImageData(RW,RH); zbuf=new Float32Array(RW);
+  const d=img.data; for(let i=3;i<d.length;i+=4) d[i]=255;
+}
+addEventListener("resize",resize); resize();
+
+const PAL={
+ wall:[[58,64,78],[48,54,66]], crate:[[122,92,54],[96,70,40]],
+ A:[[150,70,60],[110,50,44]], B:[[60,90,150],[46,68,112]],
+ floor:[40,44,54], ceil:[18,20,27]
+};
+function tileCol(t,side){
+  const k=side?1:0;
+  if(t===T.CRATE) return PAL.crate[k];
+  if(t===T.SITE_A) return PAL.A[k];
+  if(t===T.SITE_B) return PAL.B[k];
+  return PAL.wall[k];
+}
+function render(){
+  const d=img.data;
+  const dirX=Math.cos(me.ang), dirY=Math.sin(me.ang);
+  const fov=0.72/(1+aimT*0.9);
+  const pX=-dirY*fov, pY=dirX*fov;
+  const hz=(RH>>1)+bobY+kickY;
+  for(let x=0;x<RW;x++){
+    const cx=2*x/RW-1;
+    const rx=dirX+pX*cx, ry=dirY+pY*cx;
+    let mx=me.x|0, my=me.y|0;
+    const ddx=Math.abs(1/(rx||1e-9)), ddy=Math.abs(1/(ry||1e-9));
+    let sx,sy,sdx,sdy;
+    if(rx<0){sx=-1;sdx=(me.x-mx)*ddx;} else {sx=1;sdx=(mx+1-me.x)*ddx;}
+    if(ry<0){sy=-1;sdy=(me.y-my)*ddy;} else {sy=1;sdy=(my+1-me.y)*ddy;}
+    let side=0,hit=0,tile=T.WALL,n=0;
+    while(!hit&&n++<90){
+      if(sdx<sdy){sdx+=ddx;mx+=sx;side=0;} else {sdy+=ddy;my+=sy;side=1;}
+      if(mx<0||my<0||mx>=MW||my>=MH){hit=1;break;}
+      const t=G[mx+my*MW];
+      if(!walkable(t)){hit=1;tile=t;}
+    }
+    const dist=side===0?(sdx-ddx):(sdy-ddy);
+    zbuf[x]=dist;
+    const full=Math.min(RH*5,RH/Math.max(dist,0.04));
+    const h=tile===T.CRATE?full*0.62:full;
+    const top=tile===T.CRATE?hz+full/2-h:hz-h/2;
+    const y0=Math.max(0,top|0), y1=Math.min(RH-1,(top+h)|0);
+    const col=tileCol(tile,side);
+    const lit=clamp(1.25/(1+dist*0.14),0.14,1)*(side?0.74:1);
+    const r=col[0]*lit, g=col[1]*lit, b=col[2]*lit;
+    for(let y=0;y<RH;y++){
+      let rr,gg,bb;
+      if(y<y0){ const f=(hz-y)/RH; const l=clamp(0.95-f*1.5,0.2,1);
+        rr=PAL.ceil[0]*l; gg=PAL.ceil[1]*l; bb=PAL.ceil[2]*l; }
+      else if(y>y1){ const f=(y-hz)/RH; const l=clamp(0.18+0.9/(0.3+f*4),0.08,1);
+        rr=PAL.floor[0]*l; gg=PAL.floor[1]*l; bb=PAL.floor[2]*l; }
+      else { rr=r; gg=g; bb=b; }
+      const i=(x+y*RW)*4; d[i]=rr; d[i+1]=gg; d[i+2]=bb;
+    }
+  }
+  // players and the bomb, billboarded back to front
+  const list=[...bots.filter(b=>b.alive),
+    ...(S.bomb.planted?[{x:S.bomb.x,y:S.bomb.y,bombEnt:true}]:[])]
+    .map(o=>({o,d:(o.x-me.x)**2+(o.y-me.y)**2})).sort((a,b)=>b.d-a.d);
+  const inv=1/(pX*dirY-dirX*pY);
+  for(const {o} of list){
+    const rx=o.x-me.x, ry=o.y-me.y;
+    const tx=inv*(dirY*rx-dirX*ry), ty=inv*(-pY*rx+pX*ry);
+    if(ty<=0.2) continue;
+    const sxp=((RW/2)*(1+tx/ty))|0;
+    const sh=Math.min(RH*2.2,(RH/ty)|0);
+    const sw=(sh*(o.bombEnt?0.22:0.4))|0;
+    const yb=o.bombEnt?sh*0.42:0;
+    const y0=(-sh/2+hz+yb)|0, y1=(sh/2+hz+yb)|0;
+    const x0=(-sw/2+sxp)|0, x1=(sw/2+sxp)|0;
+    const lit=clamp(1.3/(1+ty*0.16),0.2,1);
+    for(let x=Math.max(0,x0);x<Math.min(RW,x1);x++){
+      if(ty>=zbuf[x]) continue;
+      const u=(x-x0)/(x1-x0||1);
+      for(let y=Math.max(0,y0);y<Math.min(RH,y1);y++){
+        const v=(y-y0)/(y1-y0||1), su=u-0.5;
+        let c=null;
+        if(o.bombEnt){
+          if(v>0.55&&Math.abs(su)<0.4) c=[40,40,46];
+          if(v>0.6&&v<0.72&&Math.abs(su)<0.22)
+            c=(performance.now()%700<340)?[255,60,60]:[90,25,25];
+        } else {
+          const base=o.team==="CT"?[70,110,170]:[170,120,60];
+          const dark=o.team==="CT"?[40,66,108]:[110,76,38];
+          if(v<0.17){ if(Math.abs(su)<0.17) c=[205,170,135]; }        // head
+          else if(v<0.2){ if(Math.abs(su)<0.1) c=dark; }
+          else if(v<0.58){ if(Math.abs(su)<0.26) c=base; }            // torso
+          else if(v<0.97){ if(Math.abs(su)<0.23&&Math.abs(su)>0.03) c=dark; }
+          if(v>0.2&&v<0.3&&su>0.1&&su<0.45) c=[30,32,38];             // weapon
+          if(v<0.12&&Math.abs(su)<0.19) c=o.team==="CT"?[52,78,122]:[128,92,48];
+          if(o.hurt>0) c=c?[255,120,120]:c;
+        }
+        if(!c) continue;
+        const i=(x+y*RW)*4;
+        d[i]=c[0]*lit; d[i+1]=c[1]*lit; d[i+2]=c[2]*lit;
+      }
+    }
+  }
+  ctx.putImageData(img,0,0);
+  drawGun();
+}
+
+/* first-person weapon, drawn rather than an asset */
+let bobX=0,bobY=0,kickY=0,muzzle=0,aimT=0;
+function drawGun(){
+  const w=WEAPONS[me.wep];
+  const s=RH/300;
+  const ox=RW*0.5+RW*(0.20-0.13*aimT)+bobX*(1-aimT*0.8);
+  const oy=RH-(10+kickY*0.5)*s+Math.abs(bobY)*0.5;
+  const tilt=(0.30-0.26*aimT);                 // canted toward the crosshair
+  ctx.save(); ctx.translate(ox,oy); ctx.rotate(-tilt);
+  const B=(x,y,w2,h2,f,r2)=>{ctx.fillStyle=f;
+    if(r2){ctx.beginPath();ctx.roundRect(x*s,y*s,w2*s,h2*s,r2*s);ctx.fill();}
+    else ctx.fillRect(x*s,y*s,w2*s,h2*s);};
+  const STEEL="#2e333d", STEEL2="#3c434f", DARK="#1b1f26", POLY="#23272f",
+        WOOD="#6b4a2c", HAND="#c89a74", HAND2="#a87d5c";
+  let muzY=-110;
+  if(w.cat==="melee"){
+    B(-3,-66,7,56,"#aab3c2",2); B(-4,-70,9,8,"#cfd6e2",2);   // blade + point
+    B(-6,-12,13,24,DARK,3); B(-8,-14,17,6,STEEL2,2);          // grip + guard
+    B(-9,-4,19,14,HAND,4); muzY=-70;
+  } else if(w.cat==="sniper"){
+    B(-3,-128,7,120,STEEL,1);                                  // barrel
+    B(-8,-78,18,26,POLY,3);                                    // receiver
+    B(-11,-96,25,9,DARK,3); B(-9,-99,6,6,STEEL2,2); B(5,-99,6,6,STEEL2,2); // scope
+    B(-7,-52,15,34,POLY,3);                                    // stock
+    B(-5,-54,11,26,DARK,2);                                    // grip
+    B(-10,-50,21,15,HAND,4); B(-9,-47,8,9,HAND2,3);            // hand
+    muzY=-134;
+  } else if(w.cat==="pistol"){
+    B(-4,-46,9,16,STEEL,1);                                    // slide/barrel
+    B(-6,-34,14,14,STEEL2,2);                                  // slide
+    B(-5,-22,11,24,POLY,3);                                    // grip
+    B(-4,-24,8,12,DARK,2);                                     // mag well
+    B(-9,-20,19,17,HAND,4); B(-8,-16,9,10,HAND2,3);            // hand
+    muzY=-50;
+  } else {                                                     // rifle / smg
+    const long=w.cat==="smg"?-80:-104;
+    B(-3,long,7,Math.abs(long)-34,STEEL,1);                    // barrel
+    B(-6,long+16,13,22,STEEL2,2);                              // handguard
+    B(-9,-40,20,30,POLY,3);                                    // receiver
+    B(-7,-46,16,8,DARK,2);                                     // rail
+    B(-6,-14,13,26,w.cat==="smg"?POLY:WOOD,3);                 // stock
+    B(-5,-18,11,20,DARK,2);                                    // mag
+    B(2,-12,9,20,POLY,3);                                      // grip
+    B(-12,-20,16,15,HAND,4); B(-11,-17,7,9,HAND2,3);           // support hand
+    B(0,-6,17,16,HAND,4);                                      // trigger hand
+    muzY=long-6;
+  }
+  if(muzzle>0.02){
+    ctx.globalAlpha=muzzle;
+    const g=ctx.createRadialGradient(0,muzY*s,0,0,muzY*s,18*s*muzzle);
+    g.addColorStop(0,"#fff6d8"); g.addColorStop(0.45,"#ffcc5e");
+    g.addColorStop(1,"rgba(255,150,30,0)");
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,muzY*s,18*s*muzzle,0,TAU); ctx.fill();
+    ctx.globalAlpha=1;
+  }
+  ctx.restore();
+}
+
+/* ---------------- shooting ----------------
+   Spread is the sum of a base cone, a movement penalty and whatever the
+   recoil pattern has already walked up to. Standing still with a fresh
+   magazine is the only way to put a bullet exactly on the crosshair. */
+function spreadOf(p){
+  const w=WEAPONS[p.wep];
+  const mv=Math.hypot(p.vx||0,p.vy||0);
+  const moving=mv>0.012 ? (0.16+mv*5.5) : 0;
+  const crouch=p.crouch?0.55:1;
+  const sprayN=Math.min(p.shots,12)/12;
+  return (w.acc*crouch + moving*(1-(w.cat==="smg"?0.45:0)) + sprayN*w.acc*2.4)
+         * (p.aim&&w.scope?0.08:1);
+}
+function recoilOffset(p){
+  const pat=patOf(WEAPONS[p.wep]); if(!pat) return [0,0];
+  const i=Math.min(p.shots,pat.length-1);
+  const [dx,dy]=pat[i];
+  return [dx*Math.PI/180*1.7, dy*Math.PI/180*1.7];
+}
+function hitscan(from,ang,pitch,range,shooter){
+  // step along the ray; first wall or body wins
+  const dx=Math.cos(ang), dy=Math.sin(ang);
+  const step=0.06;
+  for(let d=0.3;d<range;d+=step){
+    const x=from.x+dx*d, y=from.y+dy*d;
+    if(solid(x,y)) return {wall:true,d,x,y};
+    for(const o of allPlayers()){
+      if(o===shooter||!o.alive||o.team===shooter.team) continue;
+      if((o.x-x)**2+(o.y-y)**2 < 0.1225){           // 0.35 radius
+        // vertical: pitch decides head vs body at this distance
+        const rise=pitch*d;
+        const zone=rise>0.42?"head":rise<-0.55?"legs":"body";
+        return {player:o,d,zone,x,y};
+      }
+    }
+  }
+  return {miss:true,d:range};
+}
+const allPlayers=()=>[me,...bots];
+function damageOf(w,zone,target){
+  let dmg=w.dmg*(zone==="head"?w.hs:zone==="legs"?0.75:1);
+  if(target.armor>0 && (zone!=="head"||target.helm)) dmg*=w.pen;
+  return dmg;
+}
+function applyDamage(target,dmg,by,zone){
+  if(!target.alive) return;
+  if(target.armor>0){
+    const abs=Math.min(target.armor, dmg*0.5);
+    target.armor=Math.max(0,target.armor-abs*0.6);
+  }
+  target.hp-=dmg; target.hurt=0.16;
+  if(target===me){
+    $("dmg").style.opacity=String(clamp((100-me.hp)/100*0.9,0.15,0.9));
+    setTimeout(()=>$("dmg").style.opacity=String(clamp((100-me.hp)/260,0,0.45)),200);
+    sfx("hurt");
+  }
+  if(target.hp<=0){ kill(target,by,zone); }
+}
+function kill(victim,by,zone){
+  victim.alive=false; victim.hp=0; victim.deaths++;
+  if(by&&by!==victim){
+    by.kills++;
+    const w=WEAPONS[by.wep];
+    by.money=Math.min(16000,by.money+w.kill);
+  }
+  killFeed(by,victim,zone);
+  sfx("kill");
+  if(victim===me){ $("dmg").style.opacity="0.75"; }
+  if(victim.hasBomb){ victim.hasBomb=false;
+    S.bomb.carried=false; S.bomb.x=victim.x; S.bomb.y=victim.y; S.bomb.dropped=true; }
+  checkRound();
+}
+function fire(p){
+  const w=WEAPONS[p.wep];
+  if(p.reload>0||p.fireCd>0) return;
+  if(w.mag>0 && (p.ammo[p.wep]|0)<=0){ sfx("dry"); return; }
+  p.fireCd=60/w.rpm;
+  if(w.mag>0) p.ammo[p.wep]--;
+  p.shots++; p.recT=0.32;
+  const [rx,ry]=recoilOffset(p);
+  const sp=spreadOf(p);
+  const ang=p.ang+rx+(Math.random()-0.5)*sp*2;
+  const pitch=(p.pitch||0)-ry*0.9+(Math.random()-0.5)*sp;
+  if(p===me){ kickY+=w.cat==="sniper"?9:w.cat==="pistol"?3:4.2; muzzle=1; sfx("shot",w); }
+  else sfx("shot",w,Math.hypot(p.x-me.x,p.y-me.y));
+  const r=hitscan(p,ang,pitch,w.cat==="melee"?1.6:48,p);
+  if(r.player){
+    applyDamage(r.player,damageOf(w,r.zone,r.player),p,r.zone);
+    if(p===me){ hitMark(r.zone); }
+  }
+}
+function reload(p){
+  const w=WEAPONS[p.wep];
+  if(w.mag<=0||p.reload>0) return;
+  if((p.ammo[p.wep]|0)>=w.mag) return;
+  if((p.res[p.wep]|0)<=0) return;
+  p.reload=w.cat==="sniper"?3.0:w.cat==="pistol"?2.1:2.4;
+  if(p===me) sfx("reload");
+}
+function finishReload(p){
+  const w=WEAPONS[p.wep];
+  const need=w.mag-(p.ammo[p.wep]|0);
+  const take=Math.min(need,p.res[p.wep]|0);
+  p.ammo[p.wep]=(p.ammo[p.wep]|0)+take; p.res[p.wep]-=take; p.shots=0;
+}
+
+/* ---------------- audio ---------------- */
+let AC=null; const ac=()=>AC||(AC=new (window.AudioContext||window.webkitAudioContext)());
+function sfx(k,w,dist){
+  try{
+    const a=ac(),t=a.currentTime;
+    const far=dist?clamp(1-dist/34,0.05,1):1;
+    if(k==="shot"){
+      const dur=w&&w.cat==="sniper"?0.4:0.16;
+      const b=a.createBuffer(1,a.sampleRate*dur,a.sampleRate), ch=b.getChannelData(0);
+      for(let i=0;i<ch.length;i++){const e=1-i/ch.length;ch[i]=(Math.random()*2-1)*e*e;}
+      const src=a.createBufferSource(); src.buffer=b;
+      const f=a.createBiquadFilter(); f.type="lowpass";
+      f.frequency.setValueAtTime(w&&w.cat==="pistol"?2600:1900,t);
+      f.frequency.exponentialRampToValueAtTime(260,t+dur);
+      const g=a.createGain(); g.gain.setValueAtTime(0.32*far,t);
+      g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+      src.connect(f);f.connect(g);g.connect(a.destination);src.start(t);
+    } else {
+      const o=a.createOscillator(),g=a.createGain();
+      const F={dry:[220,.07,"square"],reload:[170,.1,"square"],hit:[900,.05,"square"],
+               hs:[1500,.07,"square"],kill:[520,.18,"triangle"],hurt:[140,.22,"sawtooth"],
+               tick:[1200,.04,"square"],plant:[640,.3,"triangle"],defuse:[420,.3,"triangle"],
+               win:[660,.5,"triangle"],lose:[180,.6,"sawtooth"],buy:[800,.1,"sine"]}[k];
+      if(!F) return;
+      o.type=F[2]; o.frequency.setValueAtTime(F[0],t);
+      g.gain.setValueAtTime(0.1*far,t); g.gain.exponentialRampToValueAtTime(0.001,t+F[1]);
+      o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+F[1]+0.02);
+    }
+  }catch(e){}
+}
+function hitMark(zone){
+  sfx(zone==="head"?"hs":"hit");
+  const h=$("hitm"); h.style.opacity="1";
+  setTimeout(()=>h.style.opacity="0",110);
+}
+
+/* ---------------- bots ---------------- */
+const NAMES_CT=["VOLKOV","REYES","HASSAN","OKADA","MBEKI"];
+const NAMES_T=["KRUGER","SILVA","NOVAK","ADEYEMI","LIN"];
+function makeBots(){
+  bots=[];
+  for(let i=0;i<5;i++){
+    bots.push(newBot("CT",NAMES_CT[i],SP_CT,i));
+    if(i<4) bots.push(newBot("T",NAMES_T[i],SP_T,i));
+  }
+}
+function newBot(team,name,sp,i){
+  return {team,name,bot:true,x:sp.x+rnd(-2,2),y:sp.y+rnd(-1.5,1.5),ang:0,
+    hp:100,armor:0,helm:false,alive:true,money:800,wep:"glock",prim:null,
+    ammo:{},res:{},shots:0,recT:0,fireCd:0,reload:0,kills:0,deaths:0,
+    skill:0.5+i*0.09, goal:null, react:0, target:null, hurt:0, vx:0, vy:0,
+    hasBomb:false, kit:false, pitch:0, repath:0};
+}
+function botThink(b,dt){
+  if(!b.alive) return;
+  b.fireCd-=dt; b.hurt=Math.max(0,b.hurt-dt);
+  if(b.reload>0){ b.reload-=dt; if(b.reload<=0) finishReload(b); }
+  if(b.recT>0){ b.recT-=dt; if(b.recT<=0) b.shots=0; }
+  if((b.ammo[b.wep]|0)<=0 && WEAPONS[b.wep].mag>0) reload(b);
+
+  // acquire: nearest visible enemy
+  let best=null,bd=99;
+  for(const o of allPlayers()){
+    if(!o.alive||o.team===b.team) continue;
+    const d=Math.hypot(o.x-b.x,o.y-b.y);
+    if(d>30||d>bd) continue;
+    if(!los(b.x,b.y,o.x,o.y)) continue;
+    bd=d; best=o;
+  }
+  if(best!==b.target){ b.target=best; b.react=best?rnd(0.14,0.44)*(1.6-b.skill):0; }
+
+  if(b.target){
+    const want=Math.atan2(b.target.y-b.y,b.target.x-b.x);
+    let da=want-b.ang; while(da>Math.PI)da-=TAU; while(da<-Math.PI)da+=TAU;
+    b.ang+=clamp(da,-7*dt,7*dt)*(0.7+b.skill);
+    b.react-=dt;
+    b.vx=b.vy=0;                                 // bots stop to shoot, as you must
+    if(b.react<=0&&Math.abs(da)<0.09){
+      if(Math.random()<0.75) fire(b);
+    }
+    return;
+  }
+  // no contact: walk the flow field toward the objective
+  b.repath-=dt;
+  if(!b.goal||b.repath<=0){ b.repath=2; b.goal=botGoal(b); }
+  const f=b.goal;
+  if(f){
+    const cx=b.x|0, cy=b.y|0, here=f[cx+cy*MW];
+    // A bot nudged onto a tile the field never reached reads -1, and nothing is
+    // lower than -1, so it would stand there for the rest of the round. From
+    // there, head for ANY neighbour the field did reach.
+    const lost = here<0;
+    let bestD = lost ? Infinity : here, nx=0, ny=0;
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]]){
+      const x2=cx+dx, y2=cy+dy;
+      if(x2<0||y2<0||x2>=MW||y2>=MH) continue;
+      if(dx&&dy&&(solid(x2,cy)||solid(cx,y2))) continue;   // no corner-cutting
+      const v=f[x2+y2*MW];
+      if(v>=0&&v<bestD){bestD=v;nx=dx;ny=dy;}
+    }
+    // Defenders hold at a standoff distance so five of them don't share one tile.
+    // Whoever must touch the bomb walks all the way in; everyone else takes up
+    // a position at a standoff distance so a squad doesn't share one tile.
+    const mustReach = b.hasBomb || (b.team==="CT"&&S.bomb.planted);
+    const hold = (mustReach||b.hunting) ? 0 : (b.holdR||2);
+    if((nx||ny) && (lost || here>hold)){
+      const m=Math.hypot(nx,ny), sp=2.6*dt*(0.85+b.skill*0.3);
+      const vx=nx/m*sp, vy=ny/m*sp;
+      const px=b.x, py=b.y;
+      if(!solid(b.x+vx*1.2,b.y)) b.x+=vx;
+      if(!solid(b.x,b.y+vy*1.2)) b.y+=vy;
+      if(Math.abs(b.x-px)+Math.abs(b.y-py)<sp*0.2){
+        // wedged on a corner: slide along whichever axis is open
+        if(!solid(b.x+vx*1.2,b.y+(vy>0?0.6:-0.6))) b.y+=(vy>0?1:-1)*sp*0.7;
+        else if(!solid(b.x+(vx>0?0.6:-0.6),b.y+vy*1.2)) b.x+=(vx>0?1:-1)*sp*0.7;
+        b.repath=0;
+      }
+      b.vx=vx/dt*0.016; b.vy=vy/dt*0.016;
+      b.ang=Math.atan2(vy,vx);
+    } else {
+      b.vx=b.vy=0;
+      // on station: sweep the angle so they aren't statues facing one way
+      b.ang += Math.sin(performance.now()*0.0007+(b.holdR||1))*0.9*dt;
+    }
+  }
+  // plant / defuse
+  if(b.team==="T"&&b.hasBomb&&!S.bomb.planted&&onSite(b.x,b.y)){
+    S.bomb.planting+=dt;
+    if(S.bomb.planting>=PLANT_MS/1000) doPlant(b);
+  } else if(b.team==="CT"&&S.bomb.planted&&
+            Math.hypot(b.x-S.bomb.x,b.y-S.bomb.y)<1.3){
+    S.bomb.defusing+=dt;
+    if(S.bomb.defusing>=(b.kit?DEFUSE_KIT_MS:DEFUSE_MS)/1000) doDefuse(b);
+  }
+}
+function botGoal(b){
+  if(S.bomb.planted) return FLOW[S.bomb.site];
+  // Two squads holding opposite ends of the map will happily stare at a wall
+  // until the clock runs out, so late in the round everyone goes hunting.
+  b.hunting = S.phase==="live" && S.roundT < 42000;
+  if(b.hunting){
+    const foes=allPlayers().filter(o=>o.alive&&o.team!==b.team);
+    if(foes.length){
+      let n=foes[0], nd=Infinity;
+      for(const o of foes){ const d=(o.x-b.x)**2+(o.y-b.y)**2; if(d<nd){nd=d;n=o;} }
+      return flowTo(n.x,n.y);                 // one search every repath, not per frame
+    }
+  }
+  if(b.team==="T") return FLOW[S.pushSite];
+  return b.holdSite==="A"?FLOW.A:FLOW.B;
+}
+function los(x0,y0,x1,y1){
+  const d=Math.hypot(x1-x0,y1-y0), n=Math.ceil(d*5);
+  for(let i=1;i<n;i++){ const t=i/n;
+    if(solid(x0+(x1-x0)*t, y0+(y1-y0)*t)) return false; }
+  return true;
+}
+const onSite=(x,y)=>{const t=at(x,y);return t===T.SITE_A||t===T.SITE_B;};
+const siteAt=(x,y)=>at(x,y)===T.SITE_A?"A":at(x,y)===T.SITE_B?"B":null;
+
+/* ---------------- round flow ---------------- */
+function startRound(){
+  S.phase="freeze"; S.roundT=FREEZE_MS;
+  S.bomb={carried:true,planted:false,t:BOMB_MS,site:null,x:0,y:0,defusing:0,planting:0,
+          dropped:false};
+  S.pushSite=Math.random()<0.5?"A":"B";
+  makeBotsIfNeeded();
+  const all=allPlayers();
+  const ctOrder=all.filter(p=>p.bot&&p.team==="CT");
+  const tOrder=all.filter(p=>p.bot&&p.team==="T");
+  all.forEach((p,i)=>{
+    p.alive=true; p.hp=100; p.hurt=0; p.shots=0; p.fireCd=0; p.reload=0;
+    p.target=null; p.goal=null; p.hasBomb=false; p.vx=p.vy=0;
+    const sp=p.team==="CT"?SP_CT:SP_T;
+    p.x=sp.x+rnd(-2.4,2.4); p.y=sp.y+rnd(-1.6,1.6);
+    p.ang=p.team==="CT"?Math.PI/2:-Math.PI/2;
+    if(p.bot&&p.team==="CT"){
+      const n=ctOrder.indexOf(p);              // index among CTs, not among all
+      p.holdSite = n<2?"A" : n<4?"B" : (Math.random()<0.5?"A":"B");
+      p.holdR = 2 + n*1.3;                     // fan out instead of stacking
+    }
+    if(p.bot&&p.team==="T") p.holdR = 1.5 + (tOrder.indexOf(p))*1.4;
+    // bots rebuy to whatever they can afford
+    if(p.bot) botBuy(p);
+    refill(p);
+  });
+  // the bomb goes to a living attacker
+  const ts=all.filter(p=>p.team==="T");
+  (Math.random()<0.45?me:pick(ts)).hasBomb=true;
+  if(!ts.some(p=>p.hasBomb)) me.hasBomb=true;
+  me.armor=me.armor; // carried over
+  banner("ROUND "+S.round,"BUY TIME");
+  paint();
+}
+function makeBotsIfNeeded(){ if(!bots.length) makeBots(); }
+function refill(p){
+  const w=p.prim||p.wep;
+  for(const k of [p.prim,"glock","usp","p250","deagle","knife"]) if(k){
+    const W2=WEAPONS[k]; if(!W2||!W2.mag) continue;
+    p.ammo[k]=W2.mag; p.res[k]=W2.res;
+  }
+  p.wep=p.prim||(p.team==="CT"?"usp":"glock");
+  p.shots=0;
+}
+function botBuy(b){
+  const money=b.money;
+  if(money>=4750&&Math.random()<0.12){ b.prim="awp"; b.money-=4750; }
+  else if(money>=3100){ b.prim=b.team==="CT"?"m4":"ak"; b.money-=b.team==="CT"?3100:2700; }
+  else if(money>=2700&&b.team==="T"){ b.prim="ak"; b.money-=2700; }
+  else if(money>=1250&&Math.random()<0.6){ b.prim="mp9"; b.money-=1250; }
+  else b.prim=null;
+  if(b.money>=1000){ b.armor=100; b.helm=true; b.money-=1000; } else b.armor=0,b.helm=false;
+  if(b.team==="CT"&&b.money>=400&&Math.random()<0.6){ b.kit=true; b.money-=400; }
+}
+function doPlant(by){
+  S.bomb.planted=true; S.bomb.site=siteAt(by.x,by.y);
+  S.bomb.x=by.x; S.bomb.y=by.y; S.bomb.t=BOMB_MS; by.hasBomb=false;
+  S.bomb.planting=0; S.phase="planted"; by.money=Math.min(16000,by.money+300);
+  banner("BOMB PLANTED AT "+S.bomb.site,"40 SECONDS");
+  sfx("plant"); paint();
+}
+function doDefuse(by){ endRound("CT","BOMB DEFUSED"); by.money=Math.min(16000,by.money+300); }
+function checkRound(){
+  if(S.phase==="over") return;
+  const ctAlive=allPlayers().filter(p=>p.team==="CT"&&p.alive).length;
+  const tAlive=allPlayers().filter(p=>p.team==="T"&&p.alive).length;
+  if(ctAlive===0) endRound("T","ATTACKERS ELIMINATED DEFENDERS");
+  else if(tAlive===0&&!S.bomb.planted) endRound("CT","ATTACKERS ELIMINATED");
+}
+function endRound(winner,why){
+  if(S.phase==="over") return;
+  S.phase="over"; S.roundT=4200;
+  if(winner==="CT"){ S.scoreCT++; S.lossCT=1; S.lossT=Math.min(5,S.lossT+1); }
+  else { S.scoreT++; S.lossT=1; S.lossCT=Math.min(5,S.lossCT+1); }
+  // payouts
+  for(const p of allPlayers()){
+    if(p.team===winner) p.money=Math.min(16000,p.money+3250);
+    else p.money=Math.min(16000,p.money+1400+(p.team==="CT"?S.lossCT:S.lossT)*500);
+  }
+  banner((winner==="CT"?"DEFENDERS":"ATTACKERS")+" WIN",why);
+  sfx(winner===me.team?"win":"lose");
+  if(S.scoreCT>=MAXR||S.scoreT>=MAXR) S.over=true;
+  paint();
+}
+
+/* ---------------- HUD ---------------- */
+function banner(a,b){
+  $("banner").textContent=a; $("sub").textContent=b||"";
+  $("banner").style.opacity="1"; $("sub").style.opacity="1";
+  clearTimeout(banner.t);
+  banner.t=setTimeout(()=>{$("banner").style.opacity="0";$("sub").style.opacity="0";},2600);
+}
+function killFeed(by,victim,zone){
+  const d=document.createElement("div"); d.className="kf";
+  const n=p=>`<b class="${p.team==='CT'?'ct':'t'}">${p.name}</b>`;
+  d.innerHTML=`${by?n(by):"<b>—</b>"}<i>${zone==="head"?"✦":"»"}</i>${n(victim)}`;
+  $("feed").prepend(d);
+  while($("feed").children.length>5) $("feed").lastChild.remove();
+  setTimeout(()=>d.remove(),5200);
+}
+function paint(){
+  $("scCT").textContent=S.scoreCT; $("scT").textContent=S.scoreT;
+  const t=Math.max(0,S.phase==="planted"?S.bomb.t:S.roundT);
+  const sec=Math.ceil(t/1000);
+  $("clock").textContent=Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0");
+  $("clock").classList.toggle("low",sec<=20&&S.phase!=="freeze");
+  $("phase").textContent={freeze:"FREEZE TIME",live:"LIVE",planted:"BOMB DOWN",
+    over:"ROUND OVER"}[S.phase]||"";
+  const al=$("alive"); al.innerHTML="";
+  for(const p of allPlayers()){
+    const d=document.createElement("div");
+    d.className="dot "+(p.team==="CT"?"ct":"t")+(p.alive?"":" dead");
+    al.appendChild(d);
+  }
+  $("hp").textContent=Math.max(0,Math.ceil(me.hp));
+  $("hp").classList.toggle("hurt",me.hp<40);
+  $("ar").textContent=Math.ceil(me.armor)+(me.helm?" ✛":"");
+  $("money").textContent="$"+me.money;
+  const w=WEAPONS[me.wep];
+  $("ammo").innerHTML=w.mag?`${me.ammo[me.wep]|0}<span>/${me.res[me.wep]|0}</span>`:"—";
+  $("wname").textContent=w.n;
+  $("bomb").classList.toggle("on",S.bomb.planted);
+  $("btimer").textContent=Math.ceil(S.bomb.t/1000);
+}
+function xhair(){
+  const sp=spreadOf(me);
+  const gap=clamp(4+sp*300,4,46), len=5, th=2;
+  $("xh").innerHTML=
+    `<div style="left:${-gap-len}px;top:-1px;width:${len}px;height:${th}px"></div>`+
+    `<div style="left:${gap}px;top:-1px;width:${len}px;height:${th}px"></div>`+
+    `<div style="left:-1px;top:${-gap-len}px;width:${th}px;height:${len}px"></div>`+
+    `<div style="left:-1px;top:${gap}px;width:${th}px;height:${len}px"></div>`;
+}
+$("hitm").innerHTML=[[-7,-7,45],[7,-7,-45],[-7,7,-45],[7,7,45]]
+  .map(([x,y,r])=>`<div style="left:${x}px;top:${y}px;transform:rotate(${r}deg)"></div>`).join("");
+
+/* ---------------- radar ---------------- */
+const rad=$("radar"), rx2=rad.getContext("2d");
+function drawRadar(){
+  rx2.clearRect(0,0,176,176);
+  const sc=176/Math.max(MW,MH);
+  for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){
+    const t=at(x,y); if(t===T.WALL) continue;
+    rx2.fillStyle=t===T.SITE_A?"rgba(150,70,60,.5)":t===T.SITE_B?"rgba(60,90,150,.5)"
+      :t===T.CRATE?"rgba(120,92,54,.6)":"rgba(70,78,96,.3)";
+    rx2.fillRect(x*sc,y*sc,sc,sc);
+  }
+  if(S.bomb.planted){
+    rx2.fillStyle=(performance.now()%700<340)?"#ff4040":"#7a2020";
+    rx2.beginPath(); rx2.arc(S.bomb.x*sc,S.bomb.y*sc,4,0,TAU); rx2.fill();
+  }
+  for(const p of allPlayers()){
+    if(!p.alive) continue;
+    if(p!==me&&p.team!==me.team&&!los(me.x,me.y,p.x,p.y)) continue;  // only what you can see
+    rx2.fillStyle=p===me?"#fff":(p.team==="CT"?"#5aa9ff":"#ffb84d");
+    rx2.beginPath(); rx2.arc(p.x*sc,p.y*sc,p===me?3.4:2.6,0,TAU); rx2.fill();
+    if(p===me){
+      rx2.strokeStyle="#fff"; rx2.lineWidth=1.4; rx2.beginPath();
+      rx2.moveTo(p.x*sc,p.y*sc);
+      rx2.lineTo(p.x*sc+Math.cos(p.ang)*9,p.y*sc+Math.sin(p.ang)*9); rx2.stroke();
+    }
+  }
+}
+
+/* ---------------- buy ---------------- */
+function openBuy(){
+  if(S.phase!=="freeze"){ banner("BUY TIME IS OVER",""); return; }
+  const b=$("buyBody"); b.innerHTML="";
+  $("buyM").textContent="$"+me.money;
+  const cats=[...new Set(BUYABLE.map(i=>i.c))];
+  for(const c of cats){
+    const h=document.createElement("div"); h.className="cat"; h.textContent=c; b.appendChild(h);
+    const row=document.createElement("div"); row.className="row";
+    for(const it of BUYABLE.filter(i=>i.c===c)){
+      if(it.ctOnly) continue;
+      const w=WEAPONS[it.k];
+      const cost=it.cost!==undefined?it.cost:w.cost;
+      const slot=(w&&w.cat==="pistol")?"sec":"prim";
+      const owned=it.k==="armor"?me.armor>0:(it.k==="kit"?me.kit:me[slot]===it.k);
+      const can=me.money>=cost&&!owned;
+      const d=document.createElement("div");
+      d.className="item"+(owned?" own":"")+(can?"":" no");
+      d.innerHTML=`<div><b>${it.n||w.n}</b>
+        <span class="k">${w?w.cat.toUpperCase()+" · "+w.dmg+" dmg · $"+w.kill+"/kill":"protection"}</span></div>
+        <span>${owned?"OWNED":"$"+cost}</span>`;
+      if(can) d.onclick=()=>{
+        me.money-=cost; sfx("buy");
+        if(it.k==="armor"){me.armor=100;me.helm=true;}
+        else if(it.k==="kit") me.kit=true;
+        else { me[slot]=it.k; me.wep=it.k; refill(me); }   // a pistol is the
+                                                            // secondary, not the rifle slot
+        paint(); openBuy();
+      };
+      row.appendChild(d);
+    }
+    b.appendChild(row);
+  }
+  $("buy").classList.add("show"); document.exitPointerLock?.();
+}
+const closeBuy=()=>{$("buy").classList.remove("show"); cvs.requestPointerLock?.();};
+
+/* ---------------- scoreboard ---------------- */
+function showBoard(on){
+  if(!on){ $("board").classList.remove("show"); return; }
+  const rows=t=>allPlayers().filter(p=>p.team===t)
+    .sort((a,b)=>b.kills-a.kills)
+    .map(p=>`<tr style="opacity:${p.alive?1:.45}"><td>${p.name}</td>
+      <td class="n">${p.kills}</td><td class="n">${p.deaths}</td>
+      <td class="n">$${p.money}</td></tr>`).join("");
+  $("bTitle").textContent=`DEFENDERS ${S.scoreCT} — ${S.scoreT} ATTACKERS`;
+  $("bBody").innerHTML=
+    `<div class="cat" style="color:var(--ct)">DEFENDERS</div>
+     <table><tr><th>PLAYER</th><th class="n">K</th><th class="n">D</th><th class="n">$</th></tr>
+     ${rows("CT")}</table>
+     <div class="cat" style="color:var(--t)">ATTACKERS</div>
+     <table><tr><th>PLAYER</th><th class="n">K</th><th class="n">D</th><th class="n">$</th></tr>
+     ${rows("T")}</table>`;
+  $("board").classList.add("show");
+}
+
+/* ---------------- input ---------------- */
+const K={};
+addEventListener("keydown",e=>{
+  if(e.code==="Tab"){e.preventDefault();showBoard(true);return;}
+  K[e.key.toLowerCase()]=true; K[e.code]=true;
+  if(e.key==="b"||e.key==="B"){ $("buy").classList.contains("show")?closeBuy():openBuy(); }
+  if(e.code==="KeyR") reload(me);
+  if(e.key==="1"&&me.prim){ me.wep=me.prim; me.shots=0; paint(); }
+  if(e.key==="2"){ me.wep=me.sec||(me.team==="CT"?"usp":"glock"); me.shots=0; paint(); }
+  if(e.key==="3"){ me.wep="knife"; me.shots=0; paint(); }
+  if(e.key==="Escape"){ document.exitPointerLock?.(); }
+});
+addEventListener("keyup",e=>{
+  if(e.code==="Tab"){showBoard(false);return;}
+  K[e.key.toLowerCase()]=false; K[e.code]=false;
+});
+let mdx=0,mdy=0,firing=false;
+addEventListener("mousemove",e=>{
+  if(document.pointerLockElement===cvs){ mdx+=e.movementX; mdy+=e.movementY; }
+});
+cvs.addEventListener("mousedown",e=>{
+  if(document.pointerLockElement!==cvs){ cvs.requestPointerLock?.(); return; }
+  if(e.button===0) firing=true;
+  if(e.button===2) me.aim=true;
+});
+addEventListener("mouseup",e=>{ if(e.button===0)firing=false; if(e.button===2)me.aim=false; });
+addEventListener("contextmenu",e=>e.preventDefault());
+$("go").onclick=()=>{ $("start").classList.remove("show"); S.running=true;
+  startRound(); cvs.requestPointerLock?.(); last=performance.now();
+  requestAnimationFrame(frame); };
+$("buyClose").onclick=closeBuy;
+
+/* ---------------- update ---------------- */
+let last=0, walkPhase=0;
+function update(dt){
+  // look
+  const sens=0.0022*(me.aim?0.45:1);
+  me.ang+=mdx*sens; me.pitch=clamp((me.pitch||0)-mdy*sens*0.9,-1.1,1.1);
+  mdx=mdy=0;
+  aimT+=(((me.aim&&WEAPONS[me.wep].scope)?1:0)-aimT)*Math.min(1,dt*10);
+
+  if(S.phase!=="freeze"&&S.phase!=="over"&&me.alive){
+    const w=WEAPONS[me.wep];
+    const crouch=K.control||K.Control;
+    me.crouch=!!crouch;
+    const walk=K.shift;
+    const base=3.3*w.move*(crouch?0.52:walk?0.52:1);
+    let f=(K.w?1:0)-(K.s?1:0), st=(K.d?1:0)-(K.a?1:0);
+    let vx=0,vy=0;
+    if(f||st){ const L=Math.hypot(f,st);
+      vx=(Math.cos(me.ang)*f-Math.sin(me.ang)*st)/L*base*dt;
+      vy=(Math.sin(me.ang)*f+Math.cos(me.ang)*st)/L*base*dt;
+    }
+    if(!solid(me.x+vx*1.5,me.y)) me.x+=vx;
+    if(!solid(me.x,me.y+vy*1.5)) me.y+=vy;
+    me.vx=vx/Math.max(dt,0.001)*0.016; me.vy=vy/Math.max(dt,0.001)*0.016;
+    if(f||st){ walkPhase+=dt*(walk?6:11); bobX=Math.sin(walkPhase)*3; bobY=Math.abs(Math.cos(walkPhase))*2.4; }
+    else { bobX*=0.9; bobY*=0.9; }
+    // fire
+    if(firing){
+      const w2=WEAPONS[me.wep];
+      if(w2.cat==="sniper"||w2.cat==="pistol"||w2.cat==="melee"){
+        if(!me.heldFire) fire(me);
+      } else fire(me);
+      me.heldFire=true;
+    } else me.heldFire=false;
+    // plant / defuse
+    const canPlant=me.hasBomb&&!S.bomb.planted&&onSite(me.x,me.y);
+    const canDefuse=S.bomb.planted&&me.team==="CT"&&
+      Math.hypot(me.x-S.bomb.x,me.y-S.bomb.y)<1.4;
+    if(K.e&&canPlant){
+      S.bomb.planting+=dt; showProg(S.bomb.planting/(PLANT_MS/1000),"PLANTING");
+      if(S.bomb.planting>=PLANT_MS/1000) doPlant(me);
+    } else if(K.e&&canDefuse){
+      S.bomb.defusing+=dt;
+      const need=(me.kit?DEFUSE_KIT_MS:DEFUSE_MS)/1000;
+      showProg(S.bomb.defusing/need,"DEFUSING");
+      if(S.bomb.defusing>=need) doDefuse(me);
+    } else {
+      if(!S.bomb.planted) S.bomb.planting=0;
+      hideProg();
+    }
+    $("hint").innerHTML = canPlant?"<b>[E]</b> HOLD TO PLANT"
+      : canDefuse?"<b>[E]</b> HOLD TO DEFUSE"
+      : (me.hasBomb&&!S.bomb.planted)?"YOU HAVE THE BOMB &middot; REACH SITE A OR B":"";
+  } else { me.vx=me.vy=0; $("hint").innerHTML=S.phase==="freeze"?"<b>[B]</b> BUY":""; }
+
+  me.fireCd-=dt;
+  if(me.reload>0){ me.reload-=dt; if(me.reload<=0) finishReload(me); }
+  if(me.recT>0){ me.recT-=dt; if(me.recT<=0) me.shots=0; }
+  kickY*=Math.pow(0.0006,dt); muzzle*=Math.pow(1e-6,dt);
+  me.hurt=Math.max(0,(me.hurt||0)-dt);
+
+  for(const b of bots) botThink(b,dt);
+
+  // clock
+  if(S.phase==="freeze"){
+    S.roundT-=dt*1000;
+    if(S.roundT<=0){ S.phase="live"; S.roundT=ROUND_MS; closeBuy(); banner("GO","");}
+  } else if(S.phase==="live"){
+    S.roundT-=dt*1000;
+    if(S.roundT<=0) endRound("CT","TIME EXPIRED");
+  } else if(S.phase==="planted"){
+    const was=Math.ceil(S.bomb.t/1000);
+    S.bomb.t-=dt*1000;
+    if(Math.ceil(S.bomb.t/1000)!==was&&S.bomb.t>0) sfx("tick");
+    if(S.bomb.t<=0) endRound("T","BOMB DETONATED");
+  } else if(S.phase==="over"){
+    S.roundT-=dt*1000;
+    if(S.roundT<=0){
+      if(S.over){ gameOver(); return; }
+      S.round++; startRound();
+    }
+  }
+}
+function showProg(p,label){
+  const el=$("prog"); el.style.display="block";
+  el.firstElementChild.style.width=clamp(p,0,1)*100+"%";
+  $("hint").innerHTML=`<b>${label}</b>`;
+}
+function hideProg(){ $("prog").style.display="none"; }
+function gameOver(){
+  S.running=false;
+  const won=S.scoreT>S.scoreCT;
+  banner(won?"YOU WIN THE MATCH":"MATCH LOST",`${S.scoreT} — ${S.scoreCT}`);
+  showBoard(true);
+  document.exitPointerLock?.();
+}
+function frame(ts){
+  if(!S.running){ render(); return; }
+  const dt=Math.min(0.05,(ts-last)/1000||0); last=ts;
+  update(dt); render(); xhair(); drawRadar();
+  if((frame.n=(frame.n|0)+1)%6===0) paint();
+  requestAnimationFrame(frame);
+}
+makeBots(); paint(); xhair(); drawRadar(); render();
+</script>
+</body>
+</html>

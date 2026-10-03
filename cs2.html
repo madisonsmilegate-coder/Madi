@@ -594,6 +594,7 @@ function kill(victim,by,zone){
 }
 function fire(p){
   const w=WEAPONS[p.wep];
+  if(!LIVE()) return;
   if(p.reload>0||p.fireCd>0) return;
   if(w.mag>0 && (p.ammo[p.wep]|0)<=0){ sfx("dry"); return; }
   p.fireCd=60/w.rpm;
@@ -679,8 +680,12 @@ function newBot(team,name,sp,i){
     skill:0.5+i*0.09, goal:null, react:0, target:null, hurt:0, vx:0, vy:0,
     hasBomb:false, kit:false, pitch:0, repath:0};
 }
+const LIVE=()=>S.phase==="live"||S.phase==="planted";
 function botThink(b,dt){
   if(!b.alive) return;
+  // Freeze time means frozen: without this the bots fought through the buy
+  // phase and rounds went live with half the server already dead.
+  if(!LIVE()){ b.vx=b.vy=0; b.target=null; return; }
   b.fireCd-=dt; b.hurt=Math.max(0,b.hurt-dt);
   if(b.reload>0){ b.reload-=dt; if(b.reload<=0) finishReload(b); }
   if(b.recT>0){ b.recT-=dt; if(b.recT<=0) b.shots=0; }
@@ -735,8 +740,10 @@ function botThink(b,dt){
     // Defenders hold at a standoff distance so five of them don't share one tile.
     // Whoever must touch the bomb walks all the way in; everyone else takes up
     // a position at a standoff distance so a squad doesn't share one tile.
-    const mustReach = b.hasBomb || (b.team==="CT"&&S.bomb.planted);
-    const rotating = b.team==="CT"&&S.contact&&S.contactT>0&&b.holdSite!==S.contact;
+    // Once it is down, both sides converge on it: the defenders to defuse, the
+    // attackers to hold the angles on it rather than loitering out of sight.
+    const mustReach = b.hasBomb || S.bomb.planted;
+    const rotating = b.team==="CT"&&!b.anchor&&S.contact&&S.contactT>0&&b.holdSite!==S.contact;
     const hold = (mustReach||b.hunting||rotating) ? 0 : (b.holdR||2);
     if((nx||ny) && (lost || here>hold)){
       const m=Math.hypot(nx,ny), sp=2.6*dt*(0.85+b.skill*0.3);
@@ -759,14 +766,18 @@ function botThink(b,dt){
     }
   }
   // plant / defuse
+  // Each bot times its own plant/defuse. Sharing S.bomb.planting with the player
+  // meant the player's own update zeroed a bot's progress on every frame it
+  // wasn't planting itself, so a bot could never finish one.
   if(b.team==="T"&&b.hasBomb&&!S.bomb.planted&&onSite(b.x,b.y)){
-    S.bomb.planting+=dt;
-    if(S.bomb.planting>=PLANT_MS/1000) doPlant(b);
+    b.planting=(b.planting||0)+dt;
+    if(b.planting>=PLANT_MS/1000) doPlant(b);
   } else if(b.team==="CT"&&S.bomb.planted&&
             Math.hypot(b.x-S.bomb.x,b.y-S.bomb.y)<1.3){
-    S.bomb.defusing+=dt;
-    if(S.bomb.defusing>=(b.kit?DEFUSE_KIT_MS:DEFUSE_MS)/1000) doDefuse(b);
-  }
+    b.planting=0;
+    b.defusing=(b.defusing||0)+dt;
+    if(b.defusing>=(b.kit?DEFUSE_KIT_MS:DEFUSE_MS)/1000) doDefuse(b);
+  } else { b.planting=0; b.defusing=0; }
 }
 function botGoal(b){
   if(S.bomb.planted) return FLOW[S.bomb.site];
@@ -782,7 +793,7 @@ function botGoal(b){
     }
   }
   if(b.team==="T") return FLOW[S.pushSite];
-  if(S.contact&&S.contactT>0&&b.holdSite!==S.contact) return FLOW[S.contact]; // rotate
+  if(S.contact&&S.contactT>0&&b.holdSite!==S.contact&&!b.anchor) return FLOW[S.contact];
   return b.holdSite==="A"?FLOW.A:FLOW.B;
 }
 function los(x0,y0,x1,y1){
@@ -812,12 +823,14 @@ function startRound(){
   all.forEach((p,i)=>{
     p.alive=true; p.hp=100; p.hurt=0; p.shots=0; p.fireCd=0; p.reload=0;
     p.target=null; p.goal=null; p.hasBomb=false; p.vx=p.vy=0;
+    p.planting=0; p.defusing=0;
     const sp=p.team==="CT"?SP_CT:SP_T;
     p.x=sp.x+rnd(-2.4,2.4); p.y=sp.y+rnd(-1.6,1.6);
     p.ang=p.team==="CT"?Math.PI/2:-Math.PI/2;
     if(p.bot&&p.team==="CT"){
       const n=ctOrder.indexOf(p);              // index among CTs, not among all
       p.holdSite = n<2?"A" : n<4?"B" : (Math.random()<0.5?"A":"B");
+      p.anchor = (n===0||n===2);              // these two never leave their site
       p.holdR = 2 + n*1.3;                     // fan out instead of stacking
     }
     if(p.bot&&p.team==="T") p.holdR = 1.5 + (tOrder.indexOf(p))*1.4;

@@ -177,6 +177,37 @@ pre.doc{margin:0;background:var(--card);border:1px solid var(--rule);border-top:
   font-size:12.5px;cursor:pointer;color:var(--ink2)}
 .pill.on{background:var(--ai);border-color:var(--ai);color:#fff;font-weight:700}
 
+
+/* ---- series info template ---- */
+.info{border:1px solid var(--ai);border-radius:4px;overflow:hidden;margin-bottom:13px;background:var(--paper)}
+.info .ihd{padding:12px 14px;background:var(--ai-soft);border-bottom:1px solid var(--ai)}
+.info .ihd b{font-family:var(--disp);font-size:20px;display:block;line-height:1.2}
+.info .ihd .jp2{font-size:12px;color:var(--ai);letter-spacing:.1em}
+.info .ihd i{font-style:normal;font-size:11.5px;color:var(--ink2);letter-spacing:.04em;display:block;margin-top:3px}
+.info .ibody{padding:13px 14px;max-height:340px;overflow-y:auto}
+.ifield{margin-bottom:11px}
+.ifield:last-child{margin-bottom:0}
+.ifield .k{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink3);font-weight:700;
+  margin-bottom:3px;display:block}
+.ifield .v{font-size:13px;line-height:1.5;color:var(--ink)}
+.ifield .v em{font-style:normal;color:var(--ink2)}
+.iladder{display:flex;flex-direction:column;gap:2px;margin-top:3px}
+.irung{display:flex;gap:7px;font-size:12px;align-items:baseline}
+.irung .rn{font-family:var(--mono);font-size:10px;color:var(--ink3);width:1.3em;flex:none}
+.irung .rl{color:var(--ink)}
+.irung .re{color:var(--ink3);font-style:italic}
+.ipit{margin:4px 0 0;padding-left:16px;font-size:12.5px;line-height:1.5;color:var(--ink2)}
+.ipit li{margin-bottom:3px}
+.iacts{display:flex;gap:8px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid var(--rule);background:var(--card)}
+.rolehd{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink3);font-weight:700;
+  padding:11px 14px 6px;border-top:1px solid var(--rule);background:var(--card)}
+.role{display:block;width:100%;text-align:left;background:var(--card);border:0;border-top:1px solid var(--rule2);
+  padding:10px 14px;cursor:pointer}
+.role:hover,.role:focus{background:var(--ai-soft)}
+.role b{font-family:var(--disp);font-size:15px;display:block}
+.role i{font-style:normal;font-size:12px;color:var(--ink2);display:block;line-height:1.4}
+.role .tg{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ai);font-weight:700;margin-top:3px;display:block}
+
 /* ---- additions: roster, name forge, crest, tools ---- */
 .roster{display:flex;gap:7px;align-items:center;flex-wrap:wrap;padding:10px 14px;background:var(--sunk);
   border:1px solid var(--rule);border-radius:4px;margin-bottom:22px}
@@ -908,6 +939,516 @@ function forgeNames(){
   }
   nameOpts=out; return out;
 }
+
+
+/* ===================== ROLE TEMPLATES =====================
+   Ready-made starts for each series: a place in the world, a bounded ability
+   that already pays for itself, and a reason to be walking into trouble.
+   Every one of them is written to pass the power audit. */
+const ROLES={
+hxh:[
+ {n:"Exam washout",p:"Failed the Hunter Exam once and came back quieter",t:1,a:0,
+  b:"Dropped out in the first phase two years ago in front of three hundred people, went home, and told nobody they were going back.",
+  w:"To pass, and to never be asked about the first attempt again.",
+  pw:"Emitter. Can push a thin wedge of aura ahead of a thrown object, so it arrives harder than it was thrown. It does nothing to anything they have not thrown themselves.",
+  c:"Each throw costs roughly a hard sprint's worth of aura, and the hand that threw it goes numb for a minute.",
+  wk:"Needs something to throw and room to throw it. Useless in a grapple."},
+ {n:"Zoldyck-adjacent hire",p:"Works for the trade, not for the family",t:2,a:2,
+  b:"Trained by an underworld broker who buys cheap talent and sells it dear. Has done four jobs and liked none of them.",
+  w:"To buy out their contract before the broker finds something they can't refuse.",
+  pw:"Transmuter. Can make their own aura behave like heavy cord for as long as they keep a hand on it — binding, climbing, holding a door.",
+  c:"Both hands must stay in contact. The moment they let go it is aura again and whatever it held comes loose.",
+  wk:"Committing a hand to it means not fighting with it. Anyone who attacks while they are holding something wins."},
+ {n:"Association clerk",p:"Licensed, desk-bound, and getting curious",t:1,a:3,
+  b:"Processes bounty paperwork for the Association's regional office and has read more about dangerous people than anyone who has met one.",
+  w:"To find out why three filings from the same territory were quietly closed.",
+  pw:"Specialist, barely. Can tell, by touching a written page, roughly how long ago the ink was laid down.",
+  c:"Nothing physical, but it takes a full minute of contact and they cannot do it twice in an hour.",
+  wk:"An ability for archives, not for fights. In a fight they are an office worker."}],
+jjk:[
+ {n:"First year, Tokyo",p:"Enrolled because the alternative was being exorcised",t:1,a:0,
+  b:"Manifested cursed energy late and messily, took out a corridor of their school, and was collected the next morning.",
+  w:"To be useful enough that nobody revisits the question of what to do with them.",
+  pw:"Innate technique: can make one object they are gripping briefly immovable — it will not be pushed, pulled or lifted by anything.",
+  c:"They must keep hold of it, and holding it costs cursed energy steadily. Thirty seconds is a lot.",
+  wk:"Anchors them in place as surely as the object. Anyone can simply walk around it."},
+ {n:"Window",p:"Not a sorcerer. Sees curses anyway.",t:0,a:2,
+  b:"Non-sorcerer scout who spots curses before they mature and calls them in. Paid badly, insured worse.",
+  w:"To stop being the person who finds the bodies and start being the person who prevents them.",
+  pw:"No cursed energy at all. Fifteen years of knowing which buildings go bad, and a genuine instinct for a room about to turn.",
+  c:"Nothing supernatural to spend, and nothing supernatural to defend with.",
+  wk:"Cannot touch a curse. If one notices them, their only move is distance."},
+ {n:"Grade 3, regional",p:"Posted somewhere nobody important goes",t:2,a:1,
+  b:"Assigned to a prefecture with one sorcerer and a backlog. Has handled more curses alone than most second years have seen.",
+  w:"To get a transfer, or to prove the backlog is not an accident.",
+  pw:"Innate technique: can lend their own cursed energy to another sorcerer by touch, faster than they could spend it themselves.",
+  c:"What they give is gone. Giving generously means finishing the mission on empty.",
+  wk:"Worth far more beside someone strong than alone, and they are usually alone."}],
+naruto:[
+ {n:"Genin, three D-ranks in",p:"A team, a jonin who is bored, and no missions worth the name",t:2,a:0,
+  b:"Graduated mid-table from the Academy. Good at the parts nobody grades: maps, supplies, noticing who is lying.",
+  w:"One C-rank. Any C-rank.",
+  pw:"Earth affinity, narrow: can soften a patch of ground the size of a tatami mat into something that will not hold a footprint.",
+  c:"Six seals and a full breath. Chakra for maybe eight in a day before the hands shake.",
+  wk:"Needs bare earth and warning. Does nothing on stone, floorboards or in the air."},
+ {n:"Chunin, quartermaster",p:"Runs supply for a border post and knows what the numbers mean",t:3,a:2,
+  b:"Passed the exams on the strategy portion. Has spent two years signing for crates and watching which ones go missing.",
+  w:"To find out who the missing crates are arming.",
+  pw:"Sealing, competent: can lay a storage seal that holds roughly a cart's worth, and read most seals well enough to know whether to touch them.",
+  c:"A seal takes four minutes of uninterrupted brushwork and the ink is expensive.",
+  wk:"Four minutes is a very long time with anyone hostile nearby."},
+ {n:"Medic apprentice",p:"Two years of training, no field experience",t:2,a:1,
+  b:"Chosen for chakra control rather than strength, which everyone keeps saying like it is a consolation.",
+  w:"To be sent out with a team, once, and come back with everyone.",
+  pw:"Mystical palm, basic: can close a wound that is not deep and slow one that is, over several minutes of contact.",
+  c:"Healing costs the healer. Serious work leaves them unable to stand.",
+  wk:"Cannot do it under fire, and cannot do it twice without rest."}],
+aot:[
+ {n:"104th cadet",p:"Ranked eleventh and furious about it",t:1,a:0,
+  b:"Inland family, joined because the alternative was the farm. Discovered they are genuinely good at this and it has not made them happier.",
+  w:"Top ten, and the Military Police slot that comes with it.",
+  pw:"No power. Unusually good balance on gear and a cold head at height. Blade work is average.",
+  c:"Gas and blades, counted. Everything costs stamina they are still building.",
+  wk:"Has never seen a Titan outside a textbook and does not know what that will do to them."},
+ {n:"Garrison, Trost wall",p:"Six years of boredom and a cannon",t:2,a:2,
+  b:"Does maintenance on the wall guns, drinks with the same four people, and has made peace with never leaving.",
+  w:"To get a transfer to the interior before their knees go.",
+  pw:"No power. Knows every gun on this section, can lay one alone, and can read weather off the wall better than the forecasts.",
+  c:"Shells are counted and signed for. Powder is damp more often than anyone admits.",
+  wk:"A gun is useless once something is inside the wall, and they are slow on gear."},
+ {n:"Survey Corps, first expedition",p:"Signed the form and has not slept since",t:3,a:1,
+  b:"Transferred in from the Garrison after watching an expedition come back short. Nobody in their family is speaking to them.",
+  w:"To come back from one expedition, which currently feels like the whole of ambition.",
+  pw:"No power. Competent on gear, better than most on a horse, and genuinely steady when told what to do.",
+  c:"Gas, blades, horse. The horse matters more than anyone outside the Corps understands.",
+  wk:"Freezes on initiative. Needs an order, and orders do not always come."}],
+fma:[
+ {n:"Newly certified",p:"A State Alchemist licence and a leash that comes with it",t:3,a:0,
+  b:"Passed the certification on a technical array nobody had submitted before, and is still finding out what signing for it meant.",
+  w:"To use the research access for the thing they actually certified for.",
+  pw:"Array work on metal: can reshape a quantity of iron or steel they are touching into a different form of the same mass.",
+  c:"Equivalent exchange. Mass in, mass out, and the array must be drawn or carried.",
+  wk:"No metal, no alchemy. Someone who takes their chalk and their gauntlets has disarmed them."},
+ {n:"Village alchemist",p:"Fixes roofs, not enemies",t:2,a:1,
+  b:"Learned from a travelling alchemist who stayed one winter. Has never left the district and is good at four things.",
+  w:"To find the teacher again, because something in the notes does not add up.",
+  pw:"Stone and clay: can repair or join worked masonry they can touch, cleanly and permanently.",
+  c:"Equivalent exchange, and the material has to come from somewhere nearby.",
+  wk:"Slow, visible, and completely useless against anything that moves."},
+ {n:"Ishvalan in Central",p:"Survived, and the city has opinions about that",t:1,a:2,
+  b:"Came through the war as a child, lives in the slums, and is registered under a name that is not theirs.",
+  w:"To get three people out of the district before the next sweep.",
+  pw:"No alchemy — they will not touch it. Knows the slums as a system: who owes whom, which doors open, where the patrols thin.",
+  c:"Favours, which run out, and risk to people who are not them.",
+  wk:"Every advantage they have evaporates the moment they leave the district."}],
+op:[
+ {n:"East Blue rookie",p:"A boat, two friends and no bounty",t:1,a:0,
+  b:"Left a fishing town with a stolen sloop and a conviction that the Grand Line is a solvable problem.",
+  w:"A bounty. Any bounty. Preferably one their town will hear about.",
+  pw:"No Devil Fruit. Genuinely excellent with a boat in bad weather, and a passable cutlass.",
+  c:"Supplies, repairs and a crew who need feeding.",
+  wk:"Cannot fight anyone trained. Has not met anyone trained yet."},
+ {n:"Marine, junior officer",p:"Believes the posters, mostly",t:2,a:2,
+  b:"Academy graduate posted to a base where the captain takes money from the people he is meant to arrest.",
+  w:"To file a report that does not get lost.",
+  pw:"No Devil Fruit. Rokushiki basics — one technique, done adequately. Trained, disciplined, outmatched by anyone famous.",
+  c:"Training time they no longer get, and orders they are supposed to follow.",
+  wk:"The chain of command is their biggest obstacle and they still believe in it."},
+ {n:"Fruit user, unlucky",p:"Ate it by accident and cannot swim",t:2,a:1,
+  b:"Found a strange fruit in a ship's stores, ate it on a dare, and has been working out the rules ever since.",
+  w:"To find anyone who can explain what they are now.",
+  pw:"Paramecia: can make a surface they touch slick for about a minute, like wet ice. One surface at a time.",
+  c:"Seawater and Seastone shut it off completely, and they cannot swim at all.",
+  wk:"On a ship, surrounded by water, with a power that makes footing worse for everyone including them."}],
+bleach:[
+ {n:"Academy final year",p:"Good at kido, bad at everything kido is for",t:2,a:0,
+  b:"Rukongai-born, tested in on a fluke, and has spent six years being told they do not carry themselves like an officer.",
+  w:"A seat in any division that will take them.",
+  pw:"Zanpakuto unawakened — it has not given its name yet. Kido to the low thirties, reliably, which is rare.",
+  c:"Kido drains and misfires when rushed. Rushing is what happens in fights.",
+  wk:"No shikai. Against anyone who has one, they lose."},
+ {n:"Seated officer, living world",p:"Posted to a quiet town for reasons nobody explained",t:3,a:1,
+  b:"Twelfth seat, two decades in, assigned to a region with almost no hollow activity and a gigai that does not fit.",
+  w:"To find out whether the posting is a punishment or a test.",
+  pw:"Shikai: the blade lengthens its reach by about a metre while they hold their breath.",
+  c:"While holding their breath. That is the whole limit and it is a hard one.",
+  wk:"Anyone who makes the fight last wins it."},
+ {n:"Rukongai, no training",p:"Spiritually aware and entirely on their own",t:1,a:2,
+  b:"Lives in a district the Gotei does not patrol, has seen three hollows, and survived all three by running.",
+  w:"To get into the Academy, which does not accept applications from this far out.",
+  pw:"No formal training. Enough reiatsu to be visible to things that eat it, and good instincts about when to be elsewhere.",
+  c:"Nothing to spend, and nothing to spend it on.",
+  wk:"Being visible to hollows without being able to fight them is strictly a liability."}],
+mha:[
+ {n:"Class 1-B",p:"At UA, in the other class, and aware of it",t:2,a:0,
+  b:"Scored into the hero course on the rescue points, which the entrance exam counts and nobody else does.",
+  w:"One work study with an agency that will remember their name.",
+  pw:"Quirk: can increase the friction of any surface they press both palms against, over about a square metre.",
+  c:"Their palms blister after the third use and split after the fifth.",
+  wk:"Needs both hands and contact. One second of setup they rarely get."},
+ {n:"Licensed sidekick",p:"Provisional licence, mid-ranked agency, long hours",t:3,a:2,
+  b:"Works a commercial district nobody famous patrols. Mostly traffic accidents, evacuations and one genuinely bad night.",
+  w:"To be given a case rather than a shift.",
+  pw:"Quirk: can hold a weight roughly a car's mass motionless for as long as they can see it clearly.",
+  c:"Blinking breaks it. Holding costs them like a dead lift and they can manage about ninety seconds.",
+  wk:"Cannot move what they hold, and cannot do anything else while holding it."},
+ {n:"Quirkless, support course",p:"Builds the gear instead",t:1,a:1,
+  b:"One of the five percent, in the support course, and better at engineering than most of the hero course is at heroics.",
+  w:"To get a piece of their gear onto a licensed pro in the field.",
+  pw:"No Quirk. Builds equipment that is legal, tested and genuinely good.",
+  c:"Materials, workshop time, and approval from a committee that does not like them.",
+  wk:"Everything they can do, somebody can take away from them."}],
+ds:[
+ {n:"Final Selection survivor",p:"Seven nights on the mountain, lowest rank",t:1,a:0,
+  b:"Trained two years with a cultivator who had not produced a survivor in a decade, and came down the mountain anyway.",
+  w:"To be sent somewhere that matters, which Mizunoto never are.",
+  pw:"Water Breathing, first three forms, done correctly and no further.",
+  c:"Total Concentration for more than a few minutes leaves them unable to hold the blade.",
+  wk:"Three forms is three answers. A demon with a fourth question wins."},
+ {n:"Kakushi",p:"Clears the bodies, sees everything",t:0,a:2,
+  b:"Not a slayer. Carries the wounded off, buries what is left, and has watched four Hashira work.",
+  w:"To stop arriving after the part that could have been changed.",
+  pw:"No Breathing. Field medicine better than most doctors, and nerves that no longer react to anything.",
+  c:"Supplies, and sleep they do not get.",
+  wk:"Unarmed, untrained, and present at every single dangerous thing that happens."},
+ {n:"Swordsmith's apprentice",p:"Makes the blades, forbidden to use them",t:1,a:3,
+  b:"Four years at the forge. Can tell a slayer's breathing style from the wear pattern on a returned Nichirin.",
+  w:"To carry a blade out of the village once, to one slayer, personally.",
+  pw:"No Breathing. Knows metal, knows what the ore does in sunlight, and can repair an edge in the field.",
+  c:"Tools and a fire, neither of which exist on a road at night.",
+  wk:"The village is hidden for a reason and they are safe only inside it."}]
+};
+
+
+Object.assign(ROLES,{
+csm:[
+ {n:"Division 4 rookie",p:"Signed the contract without reading the back",t:1,a:0,
+  b:"Took the job because it paid the rent this month and nobody else would hire them. Has been on two hunts.",
+  w:"Six months of pay and out, which is what everyone says in their first week.",
+  pw:"Contract with a small devil: they can see roughly thirty seconds of a room's past, once, by touching a wall.",
+  c:"The devil takes a memory of their own each time — not chosen, and not returned.",
+  wk:"Tells them what happened, never what is about to. Does nothing in a fight."},
+ {n:"Private hunter",p:"Works off a debt one devil at a time",t:2,a:1,
+  b:"Owes a figure that has not moved in two years because the interest matches the work.",
+  w:"To clear the debt, or find out who holds it now.",
+  pw:"Contract: their blood hardens into a blade for as long as the wound stays open.",
+  c:"The wound. They must keep themselves bleeding, and they lose the blade when it closes.",
+  wk:"A long fight is a bleeding-out problem, and they know it."},
+ {n:"Fiend, employed",p:"A devil wearing a corpse, on the payroll",t:3,a:2,
+  b:"Took a body that nobody reported missing. Public Safety uses them and watches them.",
+  w:"To be let out of the building unsupervised, once.",
+  pw:"Fiend strength and a mouth of teeth. Heals from most things given blood to drink.",
+  c:"Blood. Without it they do not heal and get slower by the hour.",
+  wk:"Everyone they work with has standing orders about them."}],
+frieren:[
+ {n:"Guild mage, escort work",p:"Certified, underemployed, walking north",t:2,a:0,
+  b:"Passed the guild exam eleven years ago and has escorted cargo ever since because the work is steady.",
+  w:"To collect one spell that is not in any guild catalogue.",
+  pw:"Zoltraak and the ordinary working spells, done well. Collects minor spells obsessively — one lights a room by the colour of the last person in it.",
+  c:"Mana, visible to anyone who can read it, and they are not good at hiding their reserves.",
+  wk:"Everything they know, every other guild mage also knows."},
+ {n:"Village apprentice",p:"One teacher, one book, no certification",t:1,a:1,
+  b:"Learned from the village mage, who was competent and is now dead, leaving a grimoire half-annotated.",
+  w:"To reach the Magic Association and be told whether any of it was right.",
+  pw:"Two reliable spells and a third that works about half the time.",
+  c:"Mana runs out fast and they have no sense yet of where the floor is.",
+  wk:"Has never been in a fight and does not know what mana looks like under pressure."},
+ {n:"First-class examinee",p:"Good enough to sit it, maybe not to pass",t:3,a:3,
+  b:"Third attempt. Knows exactly which part of the exam failed them twice and has not fixed it.",
+  w:"The first-class certification, and what it opens.",
+  pw:"A concealment that holds under a reading — their mana reads as about a third of what it is.",
+  c:"Holding it is constant and costs the difference. Fighting while concealed means fighting at a third.",
+  wk:"Dropping the concealment to fight properly tells everyone watching exactly what they did."}],
+vinland:[
+ {n:"Farm thrall",p:"Owned, and counting",t:0,a:2,
+  b:"Taken in a raid as a child. Works Ketil's land, has been promised manumission twice.",
+  w:"To buy or be given their freedom before they are too old for it to matter.",
+  pw:"No power. A lifetime of hard labour, and a genuine understanding of which free men can be talked round.",
+  c:"Time they do not own, and favours from people who can revoke them.",
+  wk:"Cannot leave, cannot carry a weapon, cannot be believed over a free man."},
+ {n:"New blood in the band",p:"Took the oath six weeks ago",t:2,a:1,
+  b:"Joined Askeladd's band after they burned the village they were from, because the alternative was nothing.",
+  w:"To be worth a share, which means being worth keeping.",
+  pw:"No power. A spear, a shield and six weeks of being told how to use both by men who are bored.",
+  c:"Everything is weight and weather. A wet shield is twice the shield.",
+  wk:"Everyone in the band is better, and several of them want to prove it."},
+ {n:"Jomsviking, lapsed",p:"Was one, is not, will not say why",t:3,a:3,
+  b:"Trained at Jomsborg and left under circumstances they do not discuss. Takes work from whoever is paying.",
+  w:"To stay ahead of the two men who are looking for them.",
+  pw:"No power. Genuinely dangerous with an axe in a shield wall, which is a narrow and specific excellence.",
+  c:"Old injuries. The left shoulder does not come back up after the third hour.",
+  wk:"Dangerous in formation, ordinary alone, and they are usually alone now."}],
+geass:[
+ {n:"Ashford transfer",p:"New uniform, Britannian papers, Japanese face",t:1,a:0,
+  b:"Honorary Britannian status bought with their father's collaboration, which makes them unwelcome in two directions.",
+  w:"To get through a year without having to pick a side publicly.",
+  pw:"No Geass. Reads a room exceptionally well, and speaks both languages without an accent in either.",
+  c:"The status is revocable and everyone reminds them.",
+  wk:"Useful to both sides, trusted by neither."},
+ {n:"Shinjuku cell",p:"Four people, two rifles, one radio",t:2,a:1,
+  b:"Lost family in the invasion, joined a cell that is more funeral club than army, and does the logistics.",
+  w:"One operation that works, to prove the cell is worth supplying.",
+  pw:"No Geass. Can drive almost anything, including a Knightmare badly, and knows the ghetto's drains.",
+  c:"Ammunition, fuel and the goodwill of people who will be punished for helping.",
+  wk:"Outgunned in every encounter by an order of magnitude."},
+ {n:"Devicer, regular army",p:"Flies a Sutherland and follows orders",t:2,a:2,
+  b:"Britannian commoner, enlisted for the pension, three years in a frame and increasingly unable to not notice things.",
+  w:"To finish the tour and never think about Area 11 again.",
+  pw:"No Geass. A competent devicer in a mass-production frame, which against an ace is nothing.",
+  c:"Sakuradite, maintenance hours, and a frame that is older than their service.",
+  wk:"The moment an ace shows up, they are scenery."}],
+evangelion:[
+ {n:"NERV technician",p:"Clearance level three, which explains nothing",t:1,a:0,
+  b:"Hired for the salary, works on entry plug systems, and has signed four documents about what they will not discuss.",
+  w:"To understand what the LCL readings actually mean.",
+  pw:"No power. Genuinely expert on plug hardware and able to read telemetry faster than the bridge crew.",
+  c:"Access, which is granted and withdrawn without explanation.",
+  wk:"Knows the machine and nothing about the thing inside it."},
+ {n:"Tokyo-3 student",p:"Second year, lives under the evacuation routes",t:0,a:1,
+  b:"Has done the drill so many times it is boring, and has lost two classmates to a thing the news called an accident.",
+  w:"To get one adult to answer a question honestly.",
+  pw:"No power. A camera, a bicycle and an unhealthy amount of free time.",
+  c:"Nothing, which is the problem.",
+  wk:"A child in a city that is a weapon."},
+ {n:"JSSDF liaison",p:"Attached to NERV, told nothing",t:2,a:2,
+  b:"Career officer seconded to an organisation that outranks their entire chain of command and will not explain why.",
+  w:"To write one report that reflects what is actually happening.",
+  pw:"No power. Command of conventional forces that have never once been sufficient.",
+  c:"Ordnance, and lives that are counted afterwards.",
+  wk:"Everything they command is obsolete against the thing they are pointed at."}],
+steins:[
+ {n:"Lab member 009",p:"Joined for the free soda",t:1,a:0,
+  b:"Hangs around Akihabara, good with hardware, drifted into the lab and has not been formally told they are in it.",
+  w:"To build one gadget that does something.",
+  pw:"No ability. Genuinely good at scavenged electronics and soldering.",
+  c:"Parts money, which the lab does not have.",
+  wk:"Does not know what the lab has actually built, and would not believe it."},
+ {n:"Shop staff, Akihabara",p:"Notices the same customer on three different days",t:1,a:1,
+  b:"Works a parts counter, remembers faces, and has started keeping a notebook about it.",
+  w:"To work out why their notebook contradicts itself.",
+  pw:"No ability. An exceptional memory for faces and dates, which is about to be very confusing.",
+  c:"Nothing to spend. Nothing to defend with.",
+  wk:"Being right about an inconsistency is dangerous here."},
+ {n:"SERN contractor",p:"Low clearance, bad feeling",t:2,a:2,
+  b:"Japanese subcontractor doing data work for an organisation they have never met in person.",
+  w:"To find out what the dataset they are cleaning is actually of.",
+  pw:"No ability. Database access they are not supposed to read, and the skills to read it.",
+  c:"Every query is logged.",
+  wk:"The moment they are noticed, they are a loose end."}],
+mob:[
+ {n:"Spirits and Such client",p:"Came in about a ghost, stayed",t:1,a:0,
+  b:"Hired Reigen, was helped in a way they still cannot explain, and started hanging around the office.",
+  w:"To be useful to the one adult who took them seriously.",
+  pw:"A small esper ability: can make a light flicker, nudge paper, and feel when a room has something in it.",
+  c:"Using it gives them a headache for the rest of the day.",
+  wk:"Too weak to exorcise anything, strong enough for spirits to notice them."},
+ {n:"Body Improvement Club",p:"No powers, excellent push-ups",t:0,a:3,
+  b:"Joined the club to get fit, stayed for the friendships, and has ended up adjacent to things they cannot see.",
+  w:"To get the whole club to a tournament.",
+  pw:"No esper ability whatsoever. Fit, loyal, and unreasonably willing to stand in front of someone.",
+  c:"Nothing supernatural. Just a body that bruises.",
+  wk:"Cannot perceive the thing in the room, let alone stop it."},
+ {n:"Claw, seventh division",p:"Low-ranked, and wants out",t:2,a:2,
+  b:"Recruited at nineteen on the promise that espers deserve more, and has since watched what that means.",
+  w:"To leave without the organisation noticing them leaving.",
+  pw:"Esper: can shove a person-sized object about two metres, once every few seconds.",
+  c:"Every shove costs like a hard throw. A dozen leaves them shaking.",
+  wk:"The organisation has at least six people who can do considerably more."}],
+fate:[
+ {n:"Unprepared Master",p:"Summoned something and does not know the rules",t:2,a:0,
+  b:"Has twelve magic circuits and a family that stopped practising two generations ago. Woke with Command Spells on their hand.",
+  w:"To survive the two weeks, which they now understand is the actual goal.",
+  pw:"Reinforcement only — can strengthen an object or their own body briefly. Three Command Spells.",
+  c:"Twelve circuits is a hard ceiling. Overdrawing damages them permanently.",
+  wk:"A Master alone is a soft target, and everyone knows where to look."},
+ {n:"Church observer",p:"Sent to watch, not to win",t:2,a:1,
+  b:"Executor-trained, assigned to the mediator's office in Fuyuki for a war everyone expects to be routine.",
+  w:"To keep the war inside its own boundaries, which is already failing.",
+  pw:"Church combat training and blessed ordnance. No Servant, no Command Spells.",
+  c:"Sanctioned equipment, issued and accounted for.",
+  wk:"Anything that can fight a Servant is not something they are carrying."},
+ {n:"Second child",p:"The one who was not trained",t:1,a:2,
+  b:"A magus family invested everything in the heir. They were taught enough to not be a liability and nothing more.",
+  w:"To be in the war at all, which the family has forbidden.",
+  pw:"Low circuit count, one inherited mystic code they can barely operate.",
+  c:"The mystic code takes a day to recharge and they get one use.",
+  wk:"Everything they know, the heir knows better."}]
+});
+
+
+Object.assign(ROLES,{
+rezero:[
+ {n:"Summoned, day one",p:"Wrong clothes, no money, no language problem for some reason",t:0,a:0,
+  b:"Was somewhere ordinary an hour ago. Is now in a capital where their money is worthless and their clothes are strange.",
+  w:"Food and a roof, in that order, before anything else becomes interesting.",
+  pw:"Nothing. No gate worth the name, no training, no useful knowledge of this world.",
+  c:"Nothing to spend.",
+  wk:"Every single person here is better equipped for this than they are."},
+ {n:"Roswaal's household",p:"Hired staff, watched closely",t:1,a:1,
+  b:"Taken on at the estate on a recommendation nobody can trace, and the twins have been polite in a way that is worse than rude.",
+  w:"To last the probation period and find out what the east wing is for.",
+  pw:"A minor fire affinity: can light and shape a flame no larger than a lamp.",
+  c:"Mana, and a gate that aches afterwards.",
+  wk:"A lamp is not a weapon, and the household contains several things that are."},
+ {n:"Knight candidate",p:"Sword oath taken, posting pending",t:2,a:2,
+  b:"Passed the trials in the capital and is waiting on an assignment that keeps not arriving.",
+  w:"A posting, and the rank that comes with it.",
+  pw:"Trained swordsmanship and a small wind affinity used to steady a blade.",
+  c:"Mana for the wind; stamina for the rest.",
+  wk:"Reinhard exists, and every comparison is to Reinhard."}],
+ghoul:[
+ {n:"Newly turned",p:"Woke up in the 20th ward unable to eat",t:1,a:0,
+  b:"An accident, an emergency transplant, and a week of being violently unable to keep food down before they understood.",
+  w:"To find a way to live without doing the thing they now need to do.",
+  pw:"Bikaku kagune, untrained — a single tail, strong and clumsy.",
+  c:"Hunger, constantly, and Rc levels that rise where they can be measured.",
+  wk:"Bikaku loses to koukaku, and they have no idea what that sentence means yet."},
+ {n:"Anteiku part-timer",p:"Works the counter, knows the arrangement",t:2,a:1,
+  b:"Has been with the shop for three years and has never once hunted. Knows exactly where the coffee comes from.",
+  w:"To keep the ward's arrangement intact as the CCG presses harder.",
+  pw:"Ukaku kagune, deliberately underused — fast, tiring, and they are out of practice on purpose.",
+  c:"Ukaku burns stamina brutally. Thirty seconds is their limit.",
+  wk:"Out of practice, by choice, against people who are not."},
+ {n:"CCG, rank 2",p:"Carries a quinque made from someone",t:2,a:2,
+  b:"Academy graduate assigned to the 20th ward, issued a bikaku quinque, and told whose it was in a tone that assumed they would not care.",
+  w:"To close one case cleanly.",
+  pw:"Human. A quinque, academy training, and institutional backing.",
+  c:"The quinque needs maintenance and the paperwork is relentless.",
+  wk:"Alone against anything S-rated, they die."}],
+psycho:[
+ {n:"New Inspector",p:"First posting, Division 1",t:3,a:0,
+  b:"Scored into the career track on an aptitude test and has been handed authority over four latent criminals.",
+  w:"To do this job without their own hue clouding, which everyone says is impossible.",
+  pw:"No power. A Dominator that fires only when Sibyl agrees, and command of people who know more than they do.",
+  c:"Every judgement goes on a record. Their own readings are taken weekly.",
+  wk:"The Dominator refuses more often than it fires, and refusing is the whole job."},
+ {n:"Enforcer",p:"Latent criminal, used as a hunting dog",t:2,a:1,
+  b:"Flagged at twenty-two for a coefficient that has never come back down. Has been in the building eleven years.",
+  w:"Nothing they can say out loud. Possibly one afternoon outside without an escort.",
+  pw:"No power. Genuine investigative talent and the instincts that got them flagged in the first place.",
+  c:"Everything they do raises their own number.",
+  wk:"Cannot leave the building unaccompanied, ever."},
+ {n:"Analyst",p:"Reads Sibyl's output, starting to doubt it",t:1,a:2,
+  b:"Works in the bureau's analytics section and has found a pattern in the rejections that should not be there.",
+  w:"To get a second opinion from anyone who is not the system.",
+  pw:"No power. Access to data nobody else bothers to read.",
+  c:"Queries are logged, and curiosity is a measurable mental state here.",
+  wk:"Looking too hard at Sibyl is itself a crime coefficient event."}],
+haikyuu:[
+ {n:"First year, benched",p:"Made the club, not the team",t:1,a:0,
+  b:"Played middle school volleyball badly and got into a decent programme on enthusiasm alone.",
+  w:"One set of real game time before the inter-high.",
+  pw:"No powers. A serve that is genuinely good and nothing else that is.",
+  c:"Jump count, stamina, and a coach's patience.",
+  wk:"Cannot receive. In rotation, the other team will find out in two points."},
+ {n:"Rival setter",p:"Runs a team that beat yours last year",t:3,a:2,
+  b:"Third year, captain, carries a team of adequate players to results they should not get.",
+  w:"The Spring Tournament, which is the last chance they will ever have.",
+  pw:"No powers. An exceptional read of a blocker's weight and a quick set nobody expects.",
+  c:"A shoulder that has been managed, not healed, for two years.",
+  wk:"Their team is ordinary. Everything depends on them not having a bad day."},
+ {n:"Manager",p:"Never played, runs the data",t:0,a:1,
+  b:"Joined to fill a form, stayed because the statistics turned out to be interesting and nobody else was doing them.",
+  w:"To get the coach to act on a substitution the numbers support.",
+  pw:"No powers and no court time. Keeps the best match data in the prefecture.",
+  c:"Hours, and a team that has to be persuaded.",
+  wk:"Cannot play. Everything they see has to go through someone else."}],
+bebop:[
+ {n:"Hunter, same bounty",p:"Working the other end of the job",t:2,a:0,
+  b:"Two years freelance, one ship held together by optimism, and a bounty board habit.",
+  w:"The two million on a man who has been three steps ahead for a month.",
+  pw:"No powers. A sidearm, a usable left hook, and genuine skill at talking into places.",
+  c:"Fuel, ammunition, and a ship that eats both.",
+  wk:"Broke enough that the wrong payday changes their mind."},
+ {n:"Ganymede mechanic",p:"Fixes ships, owes the wrong people",t:1,a:1,
+  b:"Runs a one-bay yard on Ganymede and took a repair job that turned out to be evidence.",
+  w:"To get the ship out of the bay before its owner comes back for it.",
+  pw:"No powers. Can fix almost anything that flies and has a legitimate reason to be near any ship.",
+  c:"Parts, which are expensive, and time, which is short.",
+  wk:"Not a fighter. Has never been in one and it shows."},
+ {n:"ISSP, with a conscience",p:"A badge that stops at the jurisdiction line",t:2,a:2,
+  b:"Twelve years in, watched three cases close for reasons that were not evidence, and has started keeping copies.",
+  w:"To hand one file to someone who will actually use it.",
+  pw:"No powers. A badge, a service weapon and access to records.",
+  c:"The badge works in one jurisdiction and the case is in four.",
+  wk:"The department is the problem and they still work for it."}],
+dungeon:[
+ {n:"Party down a member",p:"Lost someone on three and cannot afford the resurrection",t:2,a:0,
+  b:"Four became three on an ordinary floor, through an ordinary mistake, and the bill was more than the party's total funds.",
+  w:"To earn the resurrection cost before the body degrades past use.",
+  pw:"Fighter. Sword and board, competent, no magic at all.",
+  c:"Rations, water, torches, and a body they are carrying.",
+  wk:"A party of three cannot hold a formation that needs four."},
+ {n:"Island shopkeeper",p:"Sells to adventurers, has never descended",t:0,a:2,
+  b:"Runs a supply stall at the dungeon mouth and has watched eleven years of parties go down and some come back.",
+  w:"To collect on about forty outstanding tabs, which means going down after them.",
+  pw:"No combat ability. Knows exactly what every party needs, who owes what, and who is lying about their depth.",
+  c:"Stock and credit, both finite.",
+  wk:"Zero experience below ground and everybody knows it."},
+ {n:"Canary",p:"Elven enforcement, sent to clean up",t:4,a:3,
+  b:"Posted to the island to monitor dungeon use, with orders they find distasteful and follow anyway.",
+  w:"To file an honest report, which their orders do not want.",
+  pw:"Elven magic, properly trained, with the Canaries' standard restraints and detection work.",
+  c:"Mana, and authority that comes with instructions attached.",
+  wk:"Their orders are the obstacle, and disobeying them has consequences at home."}],
+deathnote:[
+ {n:"Task force detective",p:"Assigned to a case nobody believes in",t:2,a:0,
+  b:"Fifteen years in homicide, pulled onto a task force investigating a pattern of heart attacks.",
+  w:"To be taken seriously by a detective who does not explain himself.",
+  pw:"No ability. Ordinary excellent police work, and access to everything the investigation has.",
+  c:"Warrants, manpower and time.",
+  wk:"Everything they do is visible to the person they are hunting."},
+ {n:"Second notebook",p:"Found one, has not used it",t:1,a:1,
+  b:"A student who picked up a notebook in a park and has read every rule four times without writing a name.",
+  w:"To get rid of it safely, which the rules make difficult.",
+  pw:"A Death Note and a shinigami they did not ask for. They have written nothing.",
+  c:"Ownership. Trading it away costs the memory of it.",
+  wk:"Using it once makes them the thing two sides are looking for."},
+ {n:"FBI, in Japan",p:"Twelve agents, no local authority",t:2,a:2,
+  b:"One of a dozen sent in quietly to tail suspects the Japanese police have not been told about.",
+  w:"To finish the surveillance list and get out of the country.",
+  pw:"No ability. Surveillance training and a badge that means nothing here.",
+  c:"Cover, which is thin, and backup, which is on another continent.",
+  wk:"Their name and face are findable, and that is the whole danger."}],
+dbz:[
+ {n:"Tournament fighter",p:"Human, trained, outclassed and committed",t:1,a:0,
+  b:"Ten years at a mountain dojo, entered the World Tournament twice, lost in the second round both times.",
+  w:"A quarter-final, which would be the best result their school has ever had.",
+  pw:"Ki basics: can sense a strong power at distance and fly short, clumsy hops.",
+  c:"Ki runs out quickly and flight is exhausting.",
+  wk:"Anyone from the main cast is beyond them by orders of magnitude, and they know it."},
+ {n:"Capsule Corp engineer",p:"Builds the gear, dodges the fallout",t:1,a:1,
+  b:"Works under Bulma on gravity chamber systems and has rebuilt the same room nine times.",
+  w:"To get one project signed off before somebody destroys the prototype.",
+  pw:"No ki worth the name. Genuine engineering talent on technology nobody else on the planet understands.",
+  c:"Budget, parts and a schedule that keeps being interrupted by the end of the world.",
+  wk:"Physically ordinary in a cast that is not."},
+ {n:"Namekian, surviving",p:"One of the ones who stayed",t:2,a:2,
+  b:"An elder's student from a village the Frieza Force has not reached yet, who can hear what happened to the others.",
+  w:"To get the village's dragon clan child somewhere safe.",
+  pw:"Namekian regeneration of a limb, once, and basic ki control.",
+  c:"Regenerating costs enormous energy and leaves them nearly helpless.",
+  wk:"The Frieza Force's rank and file already outclass them."}],
+gits:[
+ {n:"Section 9 recruit",p:"Transferred in from the Rangers",t:2,a:0,
+  b:"Military background, full prosthetic issued on transfer, and a cyberbrain they are still learning to trust.",
+  w:"To be given a case rather than a door to stand at.",
+  pw:"No powers. Military-grade prosthetic body and conventional tactical training.",
+  c:"Maintenance downtime, and a body the department owns.",
+  wk:"Barely literate in network warfare, which is where the cases actually live."},
+ {n:"Seconded detective",p:"Local police, out of their depth",t:1,a:1,
+  b:"Twenty years in a metropolitan department, loaned to Section 9 for a case that crossed into their jurisdiction.",
+  w:"To work the case the way they know how, which nobody here does any more.",
+  pw:"No powers. Minimal cyberisation, which makes them unusually hard to ghost-hack.",
+  c:"Clearance they do not have and favours from a department that resents the secondment.",
+  wk:"Cannot operate at network speed. Everything takes them longer."},
+ {n:"Corporate security",p:"Found something in the logs",t:2,a:2,
+  b:"Works internal security for a prosthetics manufacturer and has found a maintenance backdoor in forty thousand bodies.",
+  w:"To get the finding to someone outside the company before the company notices.",
+  pw:"No powers. Deep access to the manufacturer's systems and a good attack barrier.",
+  c:"Access that is logged and revocable.",
+  wk:"The company employs people whose job is finding exactly what they are doing."}]
+});
 
 /* ===================== CHARACTER LIBRARIES ===================== */
 const VOICES=["plain and short, rarely finishes a sentence","formal to the point of stiffness",
@@ -1648,8 +2189,99 @@ function renderPicked(){
   btn.onclick=()=>{S.sid="";$("search").value="";save();renderAll();$("search").focus();};
   d.appendChild(t); d.appendChild(btn); box.appendChild(d);
 }
+let preview=null;
+function infoCard(ser){
+  const box=document.createElement("div"); box.className="info";
+  const hd=document.createElement("div"); hd.className="ihd";
+  const b=document.createElement("b"); b.textContent=ser.t;
+  if(ser.jp){const j=document.createElement("span");j.className="jp2";j.textContent="  "+ser.jp;b.appendChild(j);}
+  const i=document.createElement("i"); i.textContent=ser.tag;
+  hd.appendChild(b); hd.appendChild(i); box.appendChild(hd);
+
+  const body=document.createElement("div"); body.className="ibody";
+  const F=(k,fill)=>{const d=document.createElement("div");d.className="ifield";
+    const kk=document.createElement("span");kk.className="k";kk.textContent=k;
+    const vv=document.createElement("div");vv.className="v";fill(vv);
+    d.appendChild(kk);d.appendChild(vv);body.appendChild(d);};
+  F("The world",v=>v.textContent=ser.world);
+  F("Power system \u2014 "+ser.ps.n,v=>{
+    v.textContent=ser.ps.how;
+    const c=document.createElement("div");c.style.marginTop="5px";
+    const e1=document.createElement("em");e1.textContent="Costs: "+ser.ps.cost;
+    const br=document.createElement("div");
+    const e2=document.createElement("em");e2.textContent="Bounds: "+ser.ps.limit;
+    c.appendChild(e1);c.appendChild(br);br.appendChild(e2);v.appendChild(c);});
+  F("The ladder",v=>{const l=document.createElement("div");l.className="iladder";
+    ser.tiers.forEach((t,ix)=>{const r=document.createElement("div");r.className="irung";
+      const n=document.createElement("span");n.className="rn";n.textContent=ix;
+      const lab=document.createElement("span");lab.className="rl";lab.textContent=t.l+" ";
+      const eg=document.createElement("span");eg.className="re";eg.textContent=t.e;
+      lab.appendChild(eg);r.appendChild(n);r.appendChild(lab);l.appendChild(r);});
+    v.appendChild(l);});
+  if(ser.leads&&ser.leads.length) F("The story already belongs to",v=>v.textContent=ser.leads.join(", "));
+  if(ser.fac&&ser.fac.length) F("Powers in play",v=>v.textContent=ser.fac.join(" \u00b7 "));
+  if(ser.terms&&ser.terms.length) F("Say it their way",v=>v.textContent=ser.terms.join(" \u00b7 "));
+  F("How long things take",v=>v.textContent=ser.clock);
+  F("Register",v=>v.textContent=ser.reg);
+  if(ser.pit&&ser.pit.length) F("What goes wrong here",v=>{
+    const ul=document.createElement("ul");ul.className="ipit";
+    for(const x of ser.pit){const li=document.createElement("li");li.textContent=x;ul.appendChild(li);}
+    v.appendChild(ul);});
+  F("Places to start",v=>{const ul=document.createElement("ul");ul.className="ipit";
+    for(const o of ser.open){const li=document.createElement("li");li.textContent=o;ul.appendChild(li);}
+    v.appendChild(ul);});
+  const roles=ROLES[ser.id]||[];
+  if(roles.length){
+    const rh=document.createElement("div"); rh.className="rolehd";
+    rh.textContent="Ready-made starts \u2014 these fill the whole sheet";
+    box.appendChild(rh);
+    roles.forEach((r,ix)=>{
+      const rb=document.createElement("button"); rb.type="button"; rb.className="role";
+      const n=document.createElement("b"); n.textContent=r.n;
+      const pp=document.createElement("i"); pp.textContent=r.p;
+      const tg=document.createElement("span"); tg.className="tg";
+      tg.textContent=(ser.tiers[r.t]||{}).l+"  \u00b7  starts: "+(ser.open[r.a]||ser.open[0]);
+      rb.appendChild(n); rb.appendChild(pp); rb.appendChild(tg);
+      rb.onclick=()=>applyRole(ser,r);
+      box.appendChild(rb);
+    });
+  }
+  const acts=document.createElement("div"); acts.className="iacts";
+  const use=document.createElement("button"); use.className="btn"; use.type="button";
+  use.textContent="Use this series, blank character";
+  use.onclick=()=>{S.sid=ser.id;S.tier=Math.min(2,ser.tiers.length-1);S.anchor=0;preview=null;
+    $("search").value="";save();renderAll();};
+  const back=document.createElement("button"); back.className="btn ghost"; back.type="button";
+  back.textContent="Back to results";
+  back.onclick=()=>{preview=null;renderResults();};
+  acts.appendChild(use); acts.appendChild(back); box.appendChild(acts);
+  const dh=document.createElement("div"); dh.className="rolehd";
+  dh.textContent="What this world runs on";
+  box.appendChild(dh);
+  box.appendChild(body);
+  return box;
+}
+function applyRole(ser,r){
+  S.sid=ser.id; S.tier=r.t; S.anchor=r.a;
+  S.ocBio=r.b; S.ocWant=r.w; S.ocPower=r.pw; S.ocCost=r.c; S.ocWeak=r.wk;
+  S.ocRank=r.n;
+  if(!(S.ocVoice||"").trim()) S.ocVoice=pick(VOICES);
+  if(!(S.ocFlaw||"").trim()) S.ocFlaw=pick(FLAWS);
+  S.ocGear=(GEARSETS[NM_OF[ser.id]]||GEARSETS.default).slice(0,3).join(", ");
+  preview=null; $("search").value=""; seeded=false;
+  const sn=$("seedNote"); if(sn) sn.hidden=true;
+  save(); syncFields(); renderAll();
+  toast(r.n+" loaded \u2014 now give them a name");
+}
 function renderResults(){
-  const q=($("search").value||"").trim().toLowerCase(), w=$("results"); w.textContent="";
+  const w=$("results"); w.textContent="";
+  if(preview){
+    const ser=SERIES.find(x=>x.id===preview);
+    if(ser){ w.style.maxHeight="none"; w.style.border="0"; w.appendChild(infoCard(ser)); return; }
+    preview=null;
+  }
+  w.style.maxHeight=""; w.style.border="";
+  const q=($("search").value||"").trim().toLowerCase();
   if(!q) return;
   const hits=SERIES.filter(s=>s.t.toLowerCase().includes(q)||s.jp.includes(q)||
     s.aka.some(a=>a.includes(q))||s.tag.includes(q)).slice(0,8);
@@ -1658,7 +2290,7 @@ function renderResults(){
     const n=document.createElement("b"); n.textContent=s.t;
     const g=document.createElement("i"); g.textContent=s.tag;
     b.appendChild(n); b.appendChild(g);
-    b.onclick=()=>{S.sid=s.id;S.tier=Math.min(2,s.tiers.length-1);S.anchor=0;save();renderAll();};
+    b.onclick=()=>{ preview=s.id; renderResults(); };
     w.appendChild(b);
   }
   const b=document.createElement("button"); b.className="hit custom"; b.type="button";
@@ -1888,7 +2520,7 @@ for(const f of ALLF){
     save(); if(f==="ocName") renderCrest(); renderAudit(); renderDoc();});
 }
 $("seedNote").hidden=!seeded;
-$("search").addEventListener("input",renderResults);
+$("search").addEventListener("input",()=>{preview=null;renderResults();});
 $("anchor").addEventListener("change",e=>{S.anchor=+e.target.value;save();renderCrest();renderDoc();});
 for(const [id,key] of [["cuSetting","set"],["cuPower","pow"],["cuTone","tone"],["cuCast","cast"]]){
   const el=$(id); el.value=S.custom[key]||"";

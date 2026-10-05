@@ -1,0 +1,1193 @@
+<title>Canon Keeper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: a casting dossier — intake sheet on the left, the generated brief set
+   as a typed document on the right. Stacks to one column on a phone. */
+:root{
+  --paper:#eceef3; --card:#f7f8fb; --sunk:#e2e5ee;
+  --ink:#171a24; --ink2:#454b5e; --ink3:#767d93;
+  --rule:#cbd0de; --rule2:#dadeea;
+  --ai:#39459b;            /* ai-iro, the indigo this page is built on */
+  --ai-soft:#e6e8f7;
+  --ochre:#8a6410; --ochre-soft:#f6edd7;
+  --vermil:#9d2f28; --vermil-soft:#f8e3e1;
+  --moss:#3c6141; --moss-soft:#e2eee4;
+  --disp:"Zen Old Mincho",Georgia,"Times New Roman",serif;
+  --body:"Zen Kaku Gothic New",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#101219; --card:#171a23; --sunk:#0b0d13;
+  --ink:#e7eaf2; --ink2:#a8aebf; --ink3:#767d91;
+  --rule:#2b303d; --rule2:#222733;
+  --ai:#8e9bf0; --ai-soft:#1d2240;
+  --ochre:#d7ab52; --ochre-soft:#2d2512;
+  --vermil:#e58b82; --vermil-soft:#331a18;
+  --moss:#86c190; --moss-soft:#16271a;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#101219; --card:#171a23; --sunk:#0b0d13;
+  --ink:#e7eaf2; --ink2:#a8aebf; --ink3:#767d91;
+  --rule:#2b303d; --rule2:#222733;
+  --ai:#8e9bf0; --ai-soft:#1d2240;
+  --ochre:#d7ab52; --ochre-soft:#2d2512;
+  --vermil:#e58b82; --vermil-soft:#331a18;
+  --moss:#86c190; --moss-soft:#16271a;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);
+  font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--disp);font-weight:700;text-wrap:balance;margin:0;line-height:1.25}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ai);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.wrap{max-width:1360px;margin:0 auto;padding-inline:20px;padding-block:0 64px}
+
+/* ---- masthead ---- */
+header.top{border-bottom:2px solid var(--ink);padding-block:26px 14px;margin-bottom:26px}
+.mast{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 22px}
+.mast h1{font-size:clamp(30px,5vw,46px);font-weight:900;letter-spacing:-.015em}
+.mast h1 .jp{font-size:.44em;font-weight:400;color:var(--ai);margin-left:.6em;letter-spacing:.14em;vertical-align:.32em}
+.tagline{color:var(--ink2);max-width:60ch;font-size:14px;margin:0;flex:1 1 420px;min-width:0}
+.themer{margin-left:auto;background:none;border:1px solid var(--rule);color:var(--ink2);
+  border-radius:999px;padding:5px 12px;font-size:12px;cursor:pointer;white-space:nowrap}
+.themer:hover{border-color:var(--ai);color:var(--ai)}
+
+/* ---- two-column dossier ---- */
+.cols{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:30px;align-items:start}
+.cols>*{min-width:0}
+@media(max-width:940px){.cols{grid-template-columns:1fr}}
+
+.panel{background:var(--card);border:1px solid var(--rule);border-radius:4px}
+.step{margin-bottom:22px}
+.step>h2{display:flex;align-items:baseline;gap:10px;font-size:13px;letter-spacing:.17em;
+  text-transform:uppercase;font-family:var(--body);font-weight:700;color:var(--ink2);
+  padding:12px 16px;border-bottom:1px solid var(--rule);margin:0}
+.step>h2 b{font-family:var(--disp);font-size:19px;color:var(--ai);letter-spacing:0;font-weight:900}
+.step .inner{padding:16px}
+
+label.f{display:block;margin-bottom:13px}
+label.f>span{display:block;font-size:11px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink3);font-weight:700;margin-bottom:5px}
+label.f>span em{text-transform:none;letter-spacing:0;font-style:normal;color:var(--ink3);
+  font-weight:400;opacity:.85}
+.in{width:100%;background:var(--paper);border:1px solid var(--rule);border-radius:3px;
+  padding:8px 10px;font-size:14px}
+.in:focus{border-color:var(--ai);outline:none;box-shadow:0 0 0 3px var(--ai-soft)}
+textarea.in{resize:vertical;min-height:72px;line-height:1.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:420px){.row2{grid-template-columns:1fr}}
+
+/* series search */
+.sbox{position:relative}
+.results{margin-top:8px;max-height:252px;overflow-y:auto;border:1px solid var(--rule);
+  border-radius:3px;background:var(--paper)}
+.results:empty{display:none}
+.hit{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--rule2);
+  padding:9px 12px;cursor:pointer}
+.hit:last-child{border-bottom:0}
+.hit:hover,.hit:focus{background:var(--ai-soft)}
+.hit b{display:block;font-family:var(--disp);font-size:15px;font-weight:700}
+.hit i{font-style:normal;font-size:11.5px;color:var(--ink3);letter-spacing:.04em}
+.hit.custom b{color:var(--ai)}
+
+.picked{display:flex;gap:12px;align-items:flex-start;background:var(--ai-soft);
+  border:1px solid var(--ai);border-radius:3px;padding:11px 13px;margin-bottom:13px}
+.picked .t{flex:1;min-width:0}
+.picked .t b{font-family:var(--disp);font-size:17px;display:block}
+.picked .t i{font-style:normal;font-size:11.5px;color:var(--ink2);letter-spacing:.04em}
+.picked button{background:none;border:0;color:var(--ai);cursor:pointer;font-size:12px;
+  text-decoration:underline;padding:2px 0;white-space:nowrap}
+
+/* power tier ladder */
+.ladder{display:flex;flex-direction:column;gap:0;border:1px solid var(--rule);border-radius:3px;overflow:hidden}
+.rung{display:flex;align-items:center;gap:10px;padding:8px 11px;background:var(--paper);
+  border-bottom:1px solid var(--rule2);cursor:pointer;text-align:left;border-left:3px solid transparent;width:100%;border-top:0;border-right:0}
+.rung:last-child{border-bottom:0}
+.rung:hover{background:var(--sunk)}
+.rung.on{background:var(--ai-soft);border-left-color:var(--ai)}
+.rung .n{font-family:var(--mono);font-size:11px;color:var(--ink3);width:1.6em;flex:none;font-variant-numeric:tabular-nums}
+.rung.on .n{color:var(--ai)}
+.rung .lbl{flex:1;min-width:0;font-size:13.5px;line-height:1.35}
+.rung.on .lbl{font-weight:700}
+.rung .eg{display:block;font-size:11px;color:var(--ink3);font-style:italic}
+
+/* audit */
+.audit{margin-bottom:22px}
+.flag{display:flex;gap:10px;padding:11px 13px;border-bottom:1px solid var(--rule2);align-items:flex-start}
+.flag:last-child{border-bottom:0}
+.flag .chip{flex:none;font-size:9.5px;letter-spacing:.1em;font-weight:700;text-transform:uppercase;
+  padding:3px 7px;border-radius:2px;margin-top:2px}
+.chip.hi{background:var(--vermil-soft);color:var(--vermil)}
+.chip.mid{background:var(--ochre-soft);color:var(--ochre)}
+.chip.ok{background:var(--moss-soft);color:var(--moss)}
+.flag .fx{flex:1;min-width:0;font-size:13px;line-height:1.5}
+.flag .fx b{display:block;font-weight:700;margin-bottom:1px}
+.flag .fx span{color:var(--ink2)}
+
+/* output */
+.out{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+@media(max-width:940px){.out{position:static}}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);background:var(--card);
+  border-radius:4px 4px 0 0;overflow-x:auto}
+.tab{background:none;border:0;border-bottom:2px solid transparent;padding:12px 15px;cursor:pointer;
+  font-size:12px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--ink3);white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab.on{color:var(--ai);border-bottom-color:var(--ai)}
+.outbar{display:flex;gap:8px;align-items:center;padding:10px 14px;background:var(--card);
+  border-left:1px solid var(--rule);border-right:1px solid var(--rule);flex-wrap:wrap}
+.outbar .meta{font-size:11.5px;color:var(--ink3);font-family:var(--mono);margin-right:auto;
+  font-variant-numeric:tabular-nums}
+.btn{background:var(--ai);color:#fff;border:0;border-radius:3px;padding:7px 15px;cursor:pointer;
+  font-size:12.5px;font-weight:700;letter-spacing:.03em}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:none;color:var(--ai);border:1px solid var(--rule)}
+.btn.ghost:hover{border-color:var(--ai);filter:none;background:var(--ai-soft)}
+pre.doc{margin:0;background:var(--card);border:1px solid var(--rule);border-top:0;
+  border-radius:0 0 4px 4px;padding:20px;font-family:var(--mono);font-size:12.5px;line-height:1.65;
+  white-space:pre-wrap;overflow-wrap:anywhere;max-height:76vh;overflow:auto;
+  color:var(--ink)}
+@media(max-width:940px){pre.doc{max-height:none}}
+
+.note{font-size:12px;color:var(--ink3);line-height:1.5;margin:10px 0 0}
+.note b{color:var(--ink2)}
+.warnstrip{display:flex;gap:9px;align-items:flex-start;background:var(--vermil-soft);
+  border-left:3px solid var(--vermil);border-radius:2px;padding:9px 11px;margin:-6px 0 13px;font-size:12.5px;line-height:1.45}
+.warnstrip b{color:var(--vermil);display:block}
+.warnstrip span{color:var(--ink2)}
+.count{margin-left:auto;font-size:10px;letter-spacing:.08em;padding:3px 8px;border-radius:999px;font-weight:700}
+.count.hi{background:var(--vermil-soft);color:var(--vermil)}
+.count.ok{background:var(--moss-soft);color:var(--moss)}
+.seedtag{display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--ochre-soft);color:var(--ochre);padding:3px 8px;border-radius:2px;font-weight:700}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:26px;background:var(--ink);
+  color:var(--paper);padding:9px 18px;border-radius:999px;font-size:13px;z-index:50;
+  box-shadow:0 6px 24px rgba(0,0,0,.26)}
+.hr{height:1px;background:var(--rule);margin:16px 0}
+.sublabel{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3);
+  font-weight:700;margin:0 0 7px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.pill{border:1px solid var(--rule);background:var(--paper);border-radius:999px;padding:5px 11px;
+  font-size:12.5px;cursor:pointer;color:var(--ink2)}
+.pill.on{background:var(--ai);border-color:var(--ai);color:#fff;font-weight:700}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="mast">
+    <h1>Canon Keeper<span class="jp">設定書</span></h1>
+    <p class="tagline">Build an original character, pick a series, and get a master prompt that holds
+      an AI to that world&rsquo;s rules &mdash; in order, with consequences, and without the main-character act.</p>
+    <button class="themer" id="themer" type="button">Theme</button>
+  </div>
+</header>
+
+<div class="cols">
+  <!-- ======== INTAKE ======== -->
+  <div>
+    <section class="panel step">
+      <h2><b>1</b> The character</h2>
+      <div class="inner">
+        <div id="seedNote" style="margin-bottom:12px"><span class="seedtag">Example &mdash; edit or clear it</span></div>
+        <label class="f"><span>Name</span>
+          <input class="in" id="ocName" type="text" placeholder="Given name, family name"></label>
+        <div class="row2">
+          <label class="f"><span>Age</span><input class="in" id="ocAge" type="text" placeholder="17"></label>
+          <label class="f"><span>Pronouns</span><input class="in" id="ocPro" type="text" placeholder="they/them"></label>
+        </div>
+        <label class="f"><span>Who they are <em>&mdash; background, temperament, how they carry themselves</em></span>
+          <textarea class="in" id="ocBio" rows="4"></textarea></label>
+        <label class="f"><span>What they want <em>&mdash; the goal that drives them into trouble</em></span>
+          <textarea class="in" id="ocWant" rows="2"></textarea></label>
+        <label class="f"><span>Powers or skills <em>&mdash; be specific; vague power reads as unlimited power</em></span>
+          <textarea class="in" id="ocPower" rows="4"></textarea></label>
+        <div id="warn"></div>
+        <label class="f"><span>What it costs them <em>&mdash; leave blank and one will be written for you</em></span>
+          <textarea class="in" id="ocCost" rows="2"></textarea></label>
+        <label class="f"><span>What beats them <em>&mdash; the weakness an enemy could exploit</em></span>
+          <textarea class="in" id="ocWeak" rows="2"></textarea></label>
+      </div>
+    </section>
+
+    <section class="panel step">
+      <h2><b>2</b> The series</h2>
+      <div class="inner">
+        <div id="pickedBox"></div>
+        <div class="sbox" id="sbox">
+          <label class="f" style="margin-bottom:0"><span>Search any anime</span>
+            <input class="in" id="search" type="text" autocomplete="off" placeholder="Hunter x Hunter, Frieren, Vinland Saga&hellip;"></label>
+          <div class="results" id="results"></div>
+        </div>
+        <div id="customFields" hidden>
+          <div class="hr"></div>
+          <p class="sublabel">Tell the prompt about this world</p>
+          <label class="f"><span>Setting and era</span>
+            <input class="in" id="cuSetting" type="text" placeholder="Edo-period Japan with a hidden spirit world"></label>
+          <label class="f"><span>Power system <em>&mdash; what it is and how it works</em></span>
+            <textarea class="in" id="cuPower" rows="3" placeholder="Name it, say where the energy comes from, and what using it costs."></textarea></label>
+          <label class="f"><span>Tone <em>&mdash; how the series reads</em></span>
+            <input class="in" id="cuTone" type="text" placeholder="grounded, slow-burn, violence has weight"></label>
+          <label class="f" style="margin-bottom:0"><span>Main cast to leave alone <em>&mdash; comma separated</em></span>
+            <input class="in" id="cuCast" type="text" placeholder="names the story already belongs to"></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel step">
+      <h2><b>3</b> Standing</h2>
+      <div class="inner">
+        <p class="sublabel">Where your character sits on this world&rsquo;s ladder</p>
+        <div class="ladder" id="ladder"></div>
+        <p class="note" id="tierNote"></p>
+        <div class="hr"></div>
+        <p class="sublabel">Starting point</p>
+        <select class="in" id="anchor"></select>
+        <div class="hr"></div>
+        <div class="row2">
+          <div>
+            <p class="sublabel">Lethality</p>
+            <div class="chips" id="lethal"></div>
+          </div>
+          <div>
+            <p class="sublabel">Narration</p>
+            <div class="chips" id="pov"></div>
+          </div>
+        </div>
+        <div style="margin-top:14px">
+          <p class="sublabel">Pacing</p>
+          <div class="chips" id="pace"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel step audit">
+      <h2><b>4</b> Power audit<span id="auditCount"></span></h2>
+      <div id="auditBody"></div>
+    </section>
+  </div>
+
+  <!-- ======== OUTPUT ======== -->
+  <div class="out">
+    <div class="tabs" id="tabs"></div>
+    <div class="outbar">
+      <span class="meta" id="meta"></span>
+      <button class="btn ghost" id="selectBtn" type="button">Select all</button>
+      <button class="btn" id="copyBtn" type="button">Copy</button>
+    </div>
+    <pre class="doc" id="doc"></pre>
+  </div>
+</div>
+</div>
+<script>
+/* ============================ CANON DATA ============================
+   Each series carries the things a roleplay actually goes wrong without:
+   how its power system charges and limits itself, a ladder of named canon
+   fighters to measure an OC against, the terms of art its characters use,
+   and the specific cringe traps that series attracts. */
+const T=(l,e)=>({l,e});
+const SERIES=[
+{id:"hxh",t:"Hunter × Hunter",jp:"ハンター×ハンター",aka:["hxh","hunter hunter"],tag:"shonen · adventure · tactical",
+ world:"A world of licensed Hunters, auction cities, and territories the law has given up on. Society is ordinary; the dangerous parts are specialist and hidden.",
+ ps:{n:"Nen",how:"Aura (nen) is life energy pushed through the body's pores. Every user falls into one of six categories — Enhancement, Emission, Transmutation, Conjuration, Manipulation, Specialization — and is far weaker outside their own. A personal ability (hatsu) is built once, deliberately, and rarely changes.",
+   cost:"Aura is finite and drains with use. Ten, Zetsu, Ren and Hatsu all take concentration; a lapse leaves you defenceless. Serious training takes months.",
+   limit:"Conditions and vows: the harsher the restriction a user binds themselves to, the stronger the ability. Power without a cost is not how Nen works — any ability must pay for itself."},
+ tiers:[T("No aura","ordinary civilians, most police"),T("Nen novice","can hold Ten, little else"),T("Trained Hunter","Gon and Killua at Heavens Arena"),T("Professional","Hisoka, Kurapika, Bisky"),T("Top-tier","Chrollo, Silva Zoldyck, Netero"),T("Beyond measure","Meruem, the Royal Guards")],
+ fac:["Hunter Association","Phantom Troupe","Zoldyck family","Mafia Community","Chimera Ants"],
+ leads:["Gon","Killua","Kurapika","Leorio","Hisoka","Chrollo"],
+ terms:["Nen","aura","hatsu","Ten","Zetsu","Ren","Nen category","Hunter License","vow and condition"],
+ pit:["No seventh Nen category, and no character who is 'all six'. The category test is early and binding.","No Zoldyck or Kurta blood. Those lineages are load-bearing plot.","Don't invent a hatsu with no condition attached — the economy of Nen is the whole point.","The Phantom Troupe does not recruit strangers, and does not spare people to make a point."],
+ open:["Hunter Exam, the year after Gon's","Heavens Arena, floors 100–150","Yorknew City during the auction week","A backwater territory with a Nen-user problem the Association hasn't prioritised"],
+ reg:"Measured and analytical. Fights are solved by information, not by escalation. Narration explains what a character notices, not what the reader should feel.",
+ clock:"Nen training is measured in months. Travel between continents takes days by airship. Recovery from a serious injury takes weeks and leaves the character weaker in the meantime."},
+
+{id:"jjk",t:"Jujutsu Kaisen",jp:"呪術廻戦",aka:["jjk","sorcery fight"],tag:"shonen · dark · modern occult",
+ world:"Present-day Japan. Cursed spirits form from accumulated human negativity and are exorcised by sorcerers working out of Jujutsu High under a conservative, rotten administration.",
+ ps:{n:"Cursed Energy",how:"Negative emotion refined into usable energy. Most sorcerers have an innate technique they are born with and cannot swap. Domain Expansion is a sure-hit space built from a technique and sits far beyond ordinary use.",
+   cost:"Cursed energy runs out, and running dry mid-fight is usually fatal. Binding vows trade safety or disclosure for power. Reverse cursed technique heals and almost nobody can do it.",
+   limit:"Grades run 4 up to Special Grade, and the gap between grades is enormous, not incremental. Higher-ups punish sorcerers who act without sanction."},
+ tiers:[T("Non-sorcerer","can't see curses at all"),T("Grade 4–3","first-year students"),T("Grade 2–1","Nobara, Megumi early on"),T("Special Grade–adjacent","Maki, Todo, Nanami"),T("Special Grade","Yuta, Gojo, Sukuna's fingers"),T("Beyond","Gojo at full output, Sukuna embodied")],
+ fac:["Jujutsu High (Tokyo)","Jujutsu High (Kyoto)","the higher-ups","curse users","the Zenin, Gojo and Kamo clans"],
+ leads:["Yuji","Megumi","Nobara","Gojo","Nanami","Maki"],
+ terms:["cursed energy","innate technique","Domain Expansion","binding vow","grade","exorcism","veil"],
+ pit:["No second Six Eyes, no Ten Shadows, no inherited Sukuna. Those belong to named characters.","Domain Expansion is not a starting move. Most sorcerers never get one.","Gojo does not take a personal interest in a new student to signal they are special.","The higher-ups are an obstacle, not a crowd to be impressed."],
+ open:["First year at Jujutsu High, the term before the Goodwill Event","A Grade 2 assignment in a regional city","Assistant to a window (a non-sorcerer scout)","The months after a curse outbreak nobody has been told about"],
+ reg:"Modern, profane, blunt. Jokes sit next to gore without softening either. Fights are short and end badly for someone.",
+ clock:"Missions take a day or two. Hospital stays after a real injury run weeks. Cursed energy recovers over hours of rest, not between exchanges."},
+
+{id:"naruto",t:"Naruto",jp:"ナルト",aka:["shippuden","boruto","konoha"],tag:"shonen · ninja",
+ world:"Five great hidden villages run as military contractors for feudal daimyo, between wars and still carrying the grudges of the last one.",
+ ps:{n:"Chakra and jutsu",how:"Physical and spiritual energy moulded through hand seals into ninjutsu, genjutsu or taijutsu. Chakra nature affinity limits what a shinobi can learn.",
+   cost:"Chakra exhaustion is real and dangerous. Forbidden techniques cost lifespan, limbs or life. Learning a new jutsu takes weeks of drilling.",
+   limit:"Rank governs what missions you are given and who you answer to. Kekkei genkai are inherited, not acquired."},
+ tiers:[T("Civilian","no chakra training"),T("Academy student","basic three jutsu"),T("Genin","Team 7 at the start"),T("Chunin","Shikamaru after the exams"),T("Jonin / ANBU","Kakashi, Asuma, Kurenai"),T("Kage / Sannin","Tsunade, Jiraiya, Minato")],
+ fac:["Konoha","Suna","Kiri","Akatsuki","ANBU","the daimyo courts"],
+ leads:["Naruto","Sasuke","Sakura","Kakashi","Jiraiya","Itachi"],
+ terms:["chakra","jutsu","hand seals","Hokage","genin","chunin exams","kekkei genkai","shinobi rank"],
+ pit:["No hidden Uchiha, Senju, Uzumaki or Hyuga blood. Every roleplay reaches for it and it is always a shortcut past earning anything.","No tailed beast, no new dojutsu, no 'awakened' bloodline mid-fight.","Don't be the fourth Sannin or Kakashi's secret second student.","The Akatsuki does not recruit an unknown genin."],
+ open:["Konoha, three months before the Chunin Exams","A genin team on D-ranks that goes wrong","Border patrol in the years after the Third War","A village other than Konoha, which has its own politics"],
+ reg:"Straightforward shonen adventure. Training, teamwork, and a war that nobody has finished grieving.",
+ clock:"Missions out of the village take days of travel. Chakra exhaustion needs a day or more. Mastering a new jutsu is weeks of repetition, shown, not skipped."},
+
+{id:"aot",t:"Attack on Titan",jp:"進撃の巨人",aka:["snk","shingeki"],tag:"dark fantasy · military · tragedy",
+ world:"A walled population under a military government, besieged by Titans and, past that, by a world that has reasons of its own.",
+ ps:{n:"ODM gear and Titan science",how:"Vertical manoeuvring equipment: gas, grapples, replaceable blades. Titans die only to a cut at the nape. Titan shifters are an inherited, counted few.",
+   cost:"Gas and blades run out mid-engagement and resupply is a logistical problem. Shifting burns the user's body and shortens their life to thirteen years.",
+   limit:"Soldiers die constantly and anonymously. There is no technique that makes a person safe."},
+ tiers:[T("Civilian","inside the walls"),T("Cadet","104th trainees"),T("Soldier","Garrison, Military Police"),T("Scout","Survey Corps regular"),T("Elite","Mikasa, Levi's squad"),T("Shifter / Levi","the named few")],
+ fac:["Survey Corps","Garrison","Military Police","Marley","Eldians in the internment zone"],
+ leads:["Eren","Mikasa","Armin","Levi","Hange","Erwin","Reiner"],
+ terms:["ODM gear","the nape","Titan shifter","Survey Corps","the walls","expedition","the basement"],
+ pit:["No ninth Titan. The count is fixed and it is the plot.","Don't out-fight Levi. Nobody out-fights Levi.","Named soldiers die on expeditions. Keeping your character's squad alive to preserve them breaks the story's spine.","The military is not a meritocracy that notices talent quickly."],
+ open:["The 104th Cadet Corps, before graduation","A Survey Corps expedition beyond Wall Rose","Garrison duty in Trost, ordinary and boring","Marley, inside the internment zone"],
+ reg:"Grim, procedural, military. Death is sudden and unbeautiful. Hope is argued for, never assumed.",
+ clock:"Expeditions take days and casualty lists are read afterwards. Wounds end careers. Gas is counted in canisters, not hand-waved."},
+
+{id:"fma",t:"Fullmetal Alchemist: Brotherhood",jp:"鋼の錬金術師",aka:["fmab","fullmetal"],tag:"adventure · military · alchemy",
+ world:"Amestris, a military state whose State Alchemists serve as human weapons, over a history far dirtier than the public record.",
+ ps:{n:"Alchemy",how:"Understanding, deconstruction, reconstruction, bound by Equivalent Exchange. A transmutation circle shapes the reaction; array design is a technical discipline.",
+   cost:"Nothing is created from nothing. Human transmutation takes a part of you. A State Alchemist's licence comes with a leash.",
+   limit:"You cannot transmute what you do not understand. Alchemy fails in some regions, and biology is beyond almost everyone."},
+ tiers:[T("No alchemy","most of the country"),T("Hobbyist","village alchemists"),T("Skilled","Ed and Al early on"),T("State Alchemist","Mustang, Armstrong"),T("Master","Izumi, Hohenheim"),T("Homunculus","the named seven, Father")],
+ fac:["Amestrian military","State Alchemists","Ishvalan survivors","Xing","the homunculi"],
+ leads:["Edward","Alphonse","Mustang","Riza","Scar","Winry"],
+ terms:["Equivalent Exchange","transmutation circle","State Alchemist","the Gate","Philosopher's Stone","Ishval"],
+ pit:["No free lunch. An ability that doesn't pay its cost is not alchemy and the series will not carry it.","No eighth homunculus, no second Gate-opener who kept all their limbs.","Don't give an OC a Philosopher's Stone to skip the cost — that is the villain's argument, and the story treats it as one.","The Ishvalan war is not backstory colour; characters who were there carry it badly."],
+ open:["Freshly certified State Alchemist, first posting east","A civilian alchemist in a town with a problem","Ishvalan survivor in the slums of Central","Military clerk who reads something they shouldn't"],
+ reg:"Warm and often funny, then abruptly serious. Moral argument is part of the plot, not decoration.",
+ clock:"Train travel between cities takes a day. Automail fitting and rehabilitation takes three years, and the series says so."},
+
+{id:"op",t:"One Piece",jp:"ワンピース",aka:["onepiece","straw hat"],tag:"shonen · adventure · pirates",
+ world:"An age of piracy across four seas and the Grand Line, with a World Government holding the map together by force.",
+ ps:{n:"Devil Fruits and Haki",how:"One fruit per person, permanent, and it takes your ability to swim. Haki comes in Observation, Armament and the rare Conqueror's, and is trained rather than granted.",
+   cost:"Seawater and Seastone cancel a Devil Fruit user completely. Haki drains and can be read by a stronger user.",
+   limit:"Bounties are the honest measure of a crew. The Marines escalate to match, and an Admiral ends most stories."},
+ tiers:[T("Civilian","island townsfolk"),T("Rookie pirate","under 30 million bounty"),T("Supernova","the worst generation"),T("Commander","Yonko crew officers"),T("Admiral / Yonko commander","Katakuri, Kizaru"),T("Yonko / Admiral peak","Shanks, Kaido, Akainu")],
+ fac:["Marines","Revolutionary Army","the Four Emperors","Cipher Pol","Baroque Works"],
+ leads:["Luffy","Zoro","Nami","Sanji","Robin","Shanks","Law"],
+ terms:["Devil Fruit","Haki","bounty","Grand Line","Log Pose","Yonko","Marine HQ"],
+ pit:["No second user of an eaten fruit while that user is alive. The rule is absolute.","Don't board the Straw Hats. Luffy's crew is complete and recruiting into it hollows out the series.","No Conqueror's Haki at the start — it is rare, it is late, and it means something.","A high bounty is earned in public, by doing something the government had to answer."],
+ open:["East Blue, just setting out with a small crew","Grand Line, first island after Reverse Mountain","A Marine base with a rookie officer","Working passage on a merchant ship that gets raided"],
+ reg:"Loud, warm, cartoonish in physics and sincere in feeling. Cruelty is real and the comedy never excuses it.",
+ clock:"Sea travel between islands takes days to weeks and the Log Pose sets how long. Injuries put crew out for weeks; Chopper says so."},
+
+{id:"bleach",t:"Bleach",jp:"ブリーチ",aka:["soul society","shinigami"],tag:"shonen · occult · swords",
+ world:"Soul Reapers police the traffic between the living world and the Soul Society, a stratified afterlife with a brutal noble caste.",
+ ps:{n:"Reiatsu and Zanpakuto",how:"Spiritual pressure channelled through a sword that has a name and a personality. Shikai first; Bankai takes years and a confrontation with the blade's spirit.",
+   cost:"Reiatsu exhausts. Bankai is punishing to maintain. Kido takes study and backfires when rushed.",
+   limit:"Rank in the Gotei 13 is real authority. Hollows and Quincy have their own economies and don't share yours."},
+ tiers:[T("Human","no spiritual awareness"),T("Spiritually aware","Chad, Orihime early"),T("Seated officer","Gotei 13 ranks 3–20"),T("Lieutenant","Renji, Rangiku"),T("Captain","Byakuya, Toshiro"),T("Captain-commander class","Yamamoto, Aizen")],
+ fac:["Gotei 13","Noble houses","Hollows / Arrancar","Quincy","Urahara's shop"],
+ leads:["Ichigo","Rukia","Renji","Byakuya","Urahara","Aizen"],
+ terms:["reiatsu","Zanpakuto","Shikai","Bankai","kido","Hollow","Gotei 13","Hueco Mundo"],
+ pit:["Bankai in a hurry is the single most common break. It takes a decade for most captains.","No hybrid of everything — Soul Reaper, Hollow and Quincy at once belongs to one character and it cost him the plot.","Captains do not duel a newcomer to measure their potential.","A Zanpakuto's name is earned in conversation with it, not chosen on the character sheet."],
+ open:["Shin'o Academy, final year","A seated officer posted to the living world","Rukongai, districts the Gotei ignores","A human who has just started seeing things"],
+ reg:"Cool and posed, heavy on silence before violence. The prose likes stillness; it does not like gushing.",
+ clock:"Bankai training is years. Travel between worlds needs a gate and permission. Spiritual exhaustion takes days."},
+
+{id:"mha",t:"My Hero Academia",jp:"僕のヒーローアカデミア",aka:["bnha","boku no hero"],tag:"shonen · superhero · school",
+ world:"A society where eighty percent of people have a Quirk, heroes are a licensed profession, and villainy is the industry's own waste product.",
+ ps:{n:"Quirks",how:"One innate power, usually inherited and usually narrow. Hero work is licensed, regulated, and legally constrained outside an emergency.",
+   cost:"Every Quirk has a drawback the body enforces — overuse injures. Licences can be suspended. Collateral damage is investigated.",
+   limit:"Rankings are public and competitive. A student without a provisional licence cannot legally fight."},
+ tiers:[T("Quirkless","no power at all"),T("Civilian Quirk","minor, non-combat"),T("Student","UA first years"),T("Licensed pro","sidekicks, low-ranked heroes"),T("Top pro","Endeavor, Hawks, Mirko"),T("Symbol-tier","All Might at his peak, All For One")],
+ fac:["UA High","Hero Public Safety Commission","League of Villains","hero agencies","the Meta Liberation Army"],
+ leads:["Deku","Bakugo","Todoroki","Uraraka","Aizawa","All Might"],
+ terms:["Quirk","provisional licence","hero course","work study","Sports Festival","hero ranking"],
+ pit:["No One For All, no second successor, no Quirk that is quietly 'all of them'.","All Might does not take a second protégé.","A powerful Quirk doesn't make a hero — the licence, the law and the paperwork are the actual obstacle, and skipping them is the villain's path.","Class 1-A is written. Inserting an OC into it as the new best student is the trap."],
+ open:["UA entrance exam","Class 1-B, which the story keeps in the background","Work study at a mid-ranked agency","A licensed sidekick in a city nobody famous patrols"],
+ reg:"Bright, earnest, and loud, with genuine anxiety underneath. Heroism is a job with hours and liability.",
+ clock:"The school year is a real calendar with exams and terms. Serious Quirk overuse means hospital time and a doctor telling you no."},
+
+{id:"ds",t:"Demon Slayer",jp:"鬼滅の刃",aka:["kimetsu","kny"],tag:"shonen · taisho · horror",
+ world:"Taisho-era Japan. A demon-hunting corps operates outside government knowledge against demons who answer to Muzan.",
+ ps:{n:"Breathing Styles",how:"Breath techniques that push the body past its limits, each descended from Sun Breathing. A Nichirin blade colours to its wielder. Demons regenerate from almost anything but sunlight and Nichirin beheading.",
+   cost:"Breathing wrecks the body over time; Total Concentration Constant kills slowly. Training to Hashira standard takes years.",
+   limit:"Demon Slayer Marks shorten life to twenty-five. Rank is tested and earned."},
+ tiers:[T("Civilian","no awareness demons exist"),T("Final Selection survivor","Mizunoto"),T("Mid-rank slayer","Kanoe to Hinoe"),T("High-rank","Kinoe, Tengen's squad"),T("Hashira","the nine pillars"),T("Upper Moon","Akaza, Doma, Kokushibo")],
+ fac:["Demon Slayer Corps","the Twelve Kizuki","the Ubuyashiki family","swordsmith village"],
+ leads:["Tanjiro","Nezuko","Zenitsu","Inosuke","Giyu","Shinobu"],
+ terms:["Breathing Style","Nichirin blade","Hashira","Final Selection","Total Concentration","Kizuki"],
+ pit:["No invented Breathing Style that outranks Sun Breathing. Everything descends from it.","Don't become a Hashira in a season. They are the best in the country and there are nine.","A demon who keeps their humanity is Nezuko's whole arc; a second one cheapens it.","Fights against an Upper Moon are near-death events, not milestones."],
+ open:["Final Selection on Mount Fujikasane","A low-rank slayer on routine assignments","Swordsmith village as an apprentice","A civilian family after a demon attack"],
+ reg:"Sincere and unironic, beautiful about nature and plain about grief. Even demons get a human memory before they go.",
+ clock:"Training arcs are months. Demons move only at night and that governs every schedule. Broken bones take months and are shown to."},
+
+{id:"csm",t:"Chainsaw Man",jp:"チェンソーマン",aka:["cm","denji"],tag:"dark · devils · modern",
+ world:"A 1990s-ish Japan where devils are born from human fears and Public Safety employs disposable people to kill them.",
+ ps:{n:"Contracts and devils",how:"A hunter trades something — blood, body parts, years, senses — to a devil for its power. Fiends are devils wearing a human corpse.",
+   cost:"The price is literal and permanent. Devils renegotiate. A contract you cannot pay kills you.",
+   limit:"The stronger the fear a devil embodies, the stronger it is. Public Safety treats its people as consumables."},
+ tiers:[T("Civilian","no contract"),T("Rookie hunter","weak devil contract"),T("Public Safety regular","Division 4 rank and file"),T("Veteran","Himeno, Kobeni on a good day"),T("Elite","Aki, Kishibe"),T("Primal","Gun Devil, Makima")],
+ fac:["Public Safety Devil Hunters","private hunters","the yakuza","foreign assassins"],
+ leads:["Denji","Power","Aki","Makima","Kishibe","Himeno"],
+ terms:["devil","contract","fiend","Public Safety","Division 4","devil hunter"],
+ pit:["A contract with no stated price is not a contract. State what it takes, every time.","Characters die abruptly and mid-arc. Protecting your OC from that is protecting them out of the story.","No contract with a named primal devil as a starting position.","Makima is not impressed by competence. She is interested in use."],
+ open:["First week at Public Safety, Division 4","Private hunter working off a debt","A civilian whose town has a devil problem","Rural branch where nothing happens until it does"],
+ reg:"Crude, funny, abruptly horrifying. Characters want small stupid things and die before getting them.",
+ clock:"Hunts take a night. Hospital stays are long. Dead characters stay dead."},
+
+{id:"frieren",t:"Frieren: Beyond Journey's End",jp:"葬送のフリーレン",aka:["sousou no frieren"],tag:"fantasy · elegiac · slow",
+ world:"A post-heroic age. The Demon King is dead and the party that killed him has mostly died of old age. The world is quiet and full of leftovers.",
+ ps:{n:"Magic",how:"Spells are researched, collected and practised. Mages conceal their true capacity as a matter of professional habit. Offensive magic is largely variations on Zoltraak.",
+   cost:"Mana is finite and visible to anyone who can read it. Deception about your reserves is itself a core skill.",
+   limit:"Age and accumulation matter more than talent. An elf's century of practice is not matched by a prodigy's decade."},
+ tiers:[T("No magic","most villagers"),T("Apprentice","Fern early on"),T("Working mage","guild-certified"),T("First-class mage","the exam passers"),T("Master","Frieren, Serie's circle"),T("Historic","Serie, Flamme, the Demon King")],
+ fac:["Continental Magic Association","the Goddess's church","demons","adventurer parties"],
+ leads:["Frieren","Fern","Stark","Himmel","Heiter","Eisen"],
+ terms:["mana","Zoltraak","first-class mage","grimoire","the Goddess","demon"],
+ pit:["This series is slow on purpose. An OC who escalates every scene breaks its one real quality.","Demons are not misunderstood. They mimic language without sharing meaning, and the story is firm about it.","No lost ancient magic that outclasses a thousand-year-old elf.","Himmel's party is closed. Don't add a fifth member in flashback."],
+ open:["A guild mage escorting a shipment north","Apprentice to a village mage","On the road to Aureole, years behind Frieren","A first-class mage examinee"],
+ reg:"Quiet, patient, wry. Most scenes are small. Grief is understated and arrives late.",
+ clock:"Journeys take months and the story says how many. Elves measure in decades. Nothing is urgent, and that is the point."},
+
+{id:"vinland",t:"Vinland Saga",jp:"ヴィンランド・サガ",aka:["thorfinn"],tag:"historical · viking · no powers",
+ world:"Early 11th-century Europe. Danish armies in England, slave farms in Jutland, and no magic whatsoever.",
+ ps:{n:"None — skill at arms",how:"There is no power system. There is conditioning, reach, armour, numbers, terrain and nerve. A good fighter is someone who has survived more than most.",
+   cost:"Every wound is permanent. Every killing costs something that doesn't come back.",
+   limit:"Nobody is superhuman. Thorkell is a frightening man, not a different category of being."},
+ tiers:[T("Farmhand","no combat experience"),T("Levy","a spear and no training"),T("Raider","a season or two of fighting"),T("Veteran","Askeladd's band"),T("Champion","Thorfinn, Thorgrim"),T("Legend","Thorkell, Thors")],
+ fac:["Askeladd's band","the Jomsvikings","King Sweyn's army","English nobility","Ketil's farm"],
+ leads:["Thorfinn","Askeladd","Canute","Thorkell","Einar"],
+ terms:["jarl","thrall","Jomsviking","danegeld","longship","the Althing"],
+ pit:["No magic, no prophecy, no hidden ability. Adding any of it writes a different series.","Violence is not cool here. The story's entire argument is that it isn't.","Don't out-duel Thorkell. Nobody does, and the point is what that does to Thorfinn.","Slavery, famine and politics are the real plot. A character who only fights will fall out of the story."],
+ open:["A farming village in Iceland before the raiders come","Askeladd's band, as new blood","A thrall on Ketil's farm","Canute's retinue as a minor retainer"],
+ reg:"Plain and heavy. Long stretches of labour and talk. Violence arrives fast and is ugly.",
+ clock:"Armies move at walking pace over seasons. Sea crossings depend on weather. A wound ends a fighting career."},
+
+{id:"geass",t:"Code Geass",jp:"コードギアス",aka:["lelouch"],tag:"mecha · political · thriller",
+ world:"Britannia has conquered Japan and renamed it Area 11. The war is fought with Knightmare Frames and, more decisively, with information.",
+ ps:{n:"Geass",how:"A power granted by a Code bearer, unique to its holder and governed by strict conditions — Lelouch's absolute obedience works once per person, by eye contact.",
+   cost:"Geass grows beyond the user's control over time. The contract has a price the holder usually doesn't understand yet.",
+   limit:"The real power in the series is strategy, logistics and public opinion. Geass alone wins nothing."},
+ tiers:[T("Civilian","Area 11 citizen"),T("Soldier","Britannian infantry"),T("Knightmare pilot","standard devicer"),T("Ace","Kallen, Suzaku"),T("Knight of the Round","the Emperor's twelve"),T("Geass user with an army","Lelouch, Schneizel")],
+ fac:["Britannian Empire","the Black Knights","Japanese resistance","the Geass Order","Chinese Federation"],
+ leads:["Lelouch","Suzaku","C.C.","Kallen","Schneizel","Cornelia"],
+ terms:["Geass","Knightmare Frame","Area 11","Eleven","Knight of the Round","Sakuradite"],
+ pit:["A Geass without a hard condition is not a Geass. Name the restriction before play starts.","Don't out-plan Lelouch or Schneizel as an opener. Being outmanoeuvred is where the series lives.","The resistance is not morally clean and the story refuses to let anyone off.","Mind-control used to solve scenes is boring; the series uses it to create worse problems."],
+ open:["Ashford Academy, as a transfer student","A resistance cell in the Shinjuku ghetto","Britannian military, junior officer","Engineering corps on Knightmare maintenance"],
+ reg:"Operatic and political. Chess metaphors, grand speeches, and ruthless cost-benefit under all of it.",
+ clock:"Operations are planned over weeks. Political consequences land episodes later. Knightmares need maintenance and spare parts."},
+
+{id:"evangelion",t:"Neon Genesis Evangelion",jp:"新世紀エヴァンゲリオン",aka:["nge","eva"],tag:"mecha · psychological",
+ world:"Tokyo-3, fifteen years after Second Impact. NERV fields three biomechanical Evangelions against Angels, under instructions from a committee that is lying to everyone.",
+ ps:{n:"Evangelion units and AT Fields",how:"An Eva runs on an umbilical power cable with five minutes of internal battery. Synchronisation ratio governs control and is psychological. An AT Field must be neutralised before an Angel can be touched.",
+   cost:"Pilots feel what the Eva feels. High sync is not a reward; it is a symptom.",
+   limit:"There are very few pilots, chosen by criteria NERV will not disclose. Logistics, power supply and committee politics constrain every sortie."},
+ tiers:[T("Civilian","Tokyo-3 resident"),T("NERV staff","technicians, bridge crew"),T("Military","JSSDF, conventional and outmatched"),T("Pilot","Shinji, Asuka, Rei"),T("Eva at full sync","beyond operator control"),T("Angel","each one a different problem")],
+ fac:["NERV","SEELE","JSSDF","Marduk Institute"],
+ leads:["Shinji","Asuka","Rei","Misato","Ritsuko","Gendo"],
+ terms:["AT Field","sync ratio","Angel","LCL","entry plug","Second Impact","Magi"],
+ pit:["A competent, well-adjusted pilot misses the point of the series completely.","No Unit-04 survivor, no fourth Child who is fine.","Combat is rare, short and traumatic. Don't run it like a mecha action show.","NERV staff are not a support network. Everyone here is failing someone."],
+ open:["Transferred to Tokyo-3 as a new NERV staffer","Second year at Tokyo-3 Municipal Junior High","JSSDF liaison officer with no clearance","A technician on the Magi system"],
+ reg:"Clinical surfaces over private collapse. Long silences, mundane detail, sudden violence that solves nothing.",
+ clock:"Angels come weeks apart. Recovery and repair take longer than the fight. Therapy and school continue regardless."},
+
+{id:"steins",t:"Steins;Gate",jp:"シュタインズ・ゲート",aka:["sg","okabe"],tag:"sci-fi · time travel · thriller",
+ world:"Akihabara, 2010. A handful of amateurs in a rented flat discover they can send messages into the past, and SERN is watching.",
+ ps:{n:"D-Mail and time leaps",how:"Text sent to the past shifts the world line by a measurable divergence. Only the Reading Steiner holder remembers the discarded one.",
+   cost:"Every change has downstream consequences nobody controls. Memory of the old world line is a burden carried alone.",
+   limit:"Attractor fields resist change. Some outcomes converge no matter what you send."},
+ tiers:[T("Bystander","unaware"),T("Lab member","in on it"),T("Researcher","Kurisu-level theory"),T("Operator","Okabe with Reading Steiner"),T("Organisation","SERN's resources"),T("Beyond","the attractor fields themselves")],
+ fac:["Future Gadget Lab","SERN","Rounders","Akihabara regulars"],
+ leads:["Okabe","Kurisu","Mayuri","Daru","Suzuha"],
+ terms:["D-Mail","world line","divergence","Reading Steiner","attractor field","IBN 5100"],
+ pit:["Time travel must cost something each use or the tension is gone. Track the divergence number.","No second Reading Steiner holder without an enormous reason.","Okabe's persona is a coping mechanism, not a joke to copy.","Undoing a death cleanly is the one thing the series refuses to allow."],
+ open:["Joining the lab as member 009","An Akihabara shop worker who notices something","SERN's Japanese contractor, low clearance","A physics student at Kurisu's conference"],
+ reg:"Chatty otaku comedy that turns into dread without changing register. Technical talk is real and specific.",
+ clock:"Days are tracked by date and time; the divergence meter is a number that must be stated when it changes."},
+
+{id:"mob",t:"Mob Psycho 100",jp:"モブサイコ100",aka:["mp100"],tag:"supernatural · comedy · growth",
+ world:"Ordinary suburban Japan with espers and spirits in it, where the real plot is a middle schooler trying to become a decent person.",
+ ps:{n:"Psychic power",how:"Innate esper ability of wildly varying strength, measured informally against Mob as the ceiling. Exorcism, telekinesis, barriers.",
+   cost:"Mob's power is tied to suppressed emotion and runs away from him at 100%. Using power to solve social problems makes them worse, every time.",
+   limit:"The series is explicit that psychic power is not what makes a person worth anything."},
+ tiers:[T("No power","most people, and that's fine"),T("Weak esper","Claw's rank and file"),T("Trained esper","Teruki, Ritsu"),T("Strong","Claw's Ultimate Five"),T("Elite","Serizawa, Toichiro"),T("Mob at 100%","not a tier so much as weather")],
+ fac:["Spirits and Such Consultation Office","Claw","Body Improvement Club","Psycho Helmet cult"],
+ leads:["Mob","Reigen","Ritsu","Teruki","Dimple","Serizawa"],
+ terms:["esper","exorcism","％","Claw","Spirits and Such"],
+ pit:["Winning a fight with power is always the wrong answer in this series. The arcs resolve socially.","Reigen has no powers and is the most important character. Don't fix that.","An OC esper who is stronger than Mob misses the joke entirely.","The club, the homework and the part-time job matter as much as the spirits."],
+ open:["New client at Spirits and Such","Transfer student at Salt Middle School","Low-ranked Claw member who wants out","Body Improvement Club recruit with no powers at all"],
+ reg:"Deadpan and kind. Comedy from ordinary awkwardness; sincerity arrives without irony when it matters.",
+ clock:"School terms, part-time shifts, and training that shows up as push-ups, not montages."},
+
+{id:"fate",t:"Fate/stay night",jp:"フェイト/ステイナイト",aka:["fsn","fate","ubw"],tag:"urban fantasy · war · tragedy",
+ world:"Fuyuki City during a Holy Grail War: seven mages, seven summoned Heroic Spirits, one wish.",
+ ps:{n:"Magecraft and Servants",how:"A Master supplies prana to a Servant and holds three Command Spells. Magic Circuits are inherited and finite. A Servant's Noble Phantasm is their legend made real, and using it reveals who they are.",
+   cost:"Prana drain is constant. Circuit overuse cripples. A Command Spell spent is gone.",
+   limit:"Seven Servants, seven classes. Masters are mostly fragile people who die quickly when found."},
+ tiers:[T("Civilian","no circuits"),T("Apprentice mage","a dozen circuits"),T("Master","Rin, Shinji's position"),T("Lineage mage","the Tohsaka, Edelfelt"),T("Servant","the seven classes"),T("Grail-tier","Gilgamesh, a corrupted Grail")],
+ fac:["Mage's Association","Church mediator","Einzbern","Tohsaka","Matou"],
+ leads:["Shirou","Rin","Saber","Archer","Kirei","Illya"],
+ terms:["Master","Servant","Command Spell","Noble Phantasm","prana","Magic Circuit","the Grail"],
+ pit:["Seven Servants. Not eight. An extra class is the most common break and it unmakes the war's structure.","Reality Marble is one character's miracle, not a starting ability.","A mage with unlimited prana has no story. Circuit count is a hard number — pick one.","The Association kills to keep secrecy. Public magic has consequences."],
+ open:["A Master summoned into the war with no preparation","Church-side observer during the war","An apprentice in Fuyuki when the war begins","A family's second child, the one not trained"],
+ reg:"Dense internal monologue, ritual formality in fights, and arguments about ideals that the plot takes seriously.",
+ clock:"The war runs two weeks. Prana recovers overnight. Injuries to a Master are not healed by magecraft easily."},
+
+{id:"rezero",t:"Re:Zero",jp:"リゼロ",aka:["re zero","subaru"],tag:"isekai · dark · loops",
+ world:"The kingdom of Lugunica during a royal selection, with a summoned boy who cannot tell anyone his only ability.",
+ ps:{n:"Return by Death and gates",how:"Death resets the protagonist to a checkpoint. Magic is bound by an elemental affinity and a gate that can be damaged permanently.",
+   cost:"Return by Death costs everything each loop — the deaths are experienced, not skipped. Speaking of it invites something worse.",
+   limit:"Mana overuse destroys the gate. The world does not bend to a protagonist's foreknowledge."},
+ tiers:[T("Commoner","no magic"),T("Apprentice","minor elemental spells"),T("Knight","Reinhard's subordinates"),T("Court mage","Roswaal's household"),T("Sin Archbishop","the Witch Cult"),T("Reinhard","a category of one")],
+ fac:["Royal selection candidates","the Witch Cult","Roswaal's estate","the knights of Lugunica"],
+ leads:["Subaru","Emilia","Rem","Ram","Roswaal","Reinhard"],
+ terms:["Return by Death","gate","mana","Witch Cult","royal selection","Authority"],
+ pit:["Only one character loops. A second Return by Death holder is the break this series cannot absorb.","Suffering has to stick. An OC who loops out of every consequence has no story.","No Sin Archbishop Authority as a starting power.","Reinhard cannot be beaten in a fight, and the series is honest about it."],
+ open:["Summoned into Lugunica's capital with nothing","A servant at Roswaal's estate","A knight candidate in the capital","A merchant caravan guard on the road"],
+ reg:"Light fantasy surface over genuine horror. Despair is dwelt on rather than resolved quickly.",
+ clock:"Loops reset to a fixed checkpoint; state what it is. Between loops, days pass normally for everyone else."},
+
+{id:"ghoul",t:"Tokyo Ghoul",jp:"東京喰種",aka:["kaneki"],tag:"dark · urban horror",
+ world:"Tokyo, where ghouls live hidden among people, eat them to survive, and are hunted by the CCG.",
+ ps:{n:"Kagune and Rc cells",how:"A ghoul's predatory organ, one of four types — rinkaku, ukaku, koukaku, bikaku — each strong and weak against another. Investigators use quinque built from dead ghouls' kagune.",
+   cost:"Ghouls can eat nothing else and starve otherwise. Cannibalism warps them. Rc levels are measurable and flag you at checkpoints.",
+   limit:"The type matchup chart is real and matters. The CCG is organised, armed and relentless."},
+ tiers:[T("Human","no Rc"),T("Weak ghoul","scavenging, starving"),T("Rank-and-file","Anteiku regulars"),T("S-rated","the ones the CCG names"),T("SS-rated","Eto, the One-Eyed Owl"),T("Special class investigator","Arima")],
+ fac:["Anteiku","Aogiri Tree","CCG","Clowns"],
+ leads:["Kaneki","Touka","Hide","Amon","Arima","Eto"],
+ terms:["kagune","Rc cells","quinque","CCG","ward","one-eyed ghoul"],
+ pit:["One-eyed ghouls are nearly unique and the plot turns on them. Don't start as one casually.","No kagune that is all four types.","Eating is the central horror. A ghoul OC who never has to face it skips the series.","The CCG are people with families, which is the whole tragedy."],
+ open:["A newly turned ghoul in the 20th ward","Anteiku's newest part-timer","A rank 2 CCG investigator","A human who has worked out what their neighbour is"],
+ reg:"Bleak and interior, heavy with hunger and self-disgust. Violence is fast and ruinous.",
+ clock:"Hunger is a clock that runs constantly. CCG operations are planned over weeks."},
+
+{id:"psycho",t:"Psycho-Pass",jp:"サイコパス",aka:["sibyl"],tag:"cyberpunk · procedural",
+ world:"Japan under the Sibyl System, which measures every citizen's mental state and authorises lethal force against people who have done nothing yet.",
+ ps:{n:"Dominators and the Hue",how:"No powers. A Dominator fires only when Sibyl authorises it, and reads the target's Crime Coefficient live. Enforcers are latent criminals used as hunting dogs.",
+   cost:"Doing this work raises your own coefficient. Enforcers are not allowed a life outside it.",
+   limit:"Sibyl's judgement is the hard limit on every scene. Working around it is the plot."},
+ tiers:[T("Citizen","clear hue"),T("Latent criminal","flagged, confined"),T("Enforcer","Kogami, Kagari"),T("Inspector","Akane, Ginoza"),T("Division chief","bureau leadership"),T("Outside Sibyl","Makishima")],
+ fac:["Public Safety Bureau","the Sibyl System","Makishima's circle","drone industry"],
+ leads:["Akane","Kogami","Ginoza","Makishima","Masaoka"],
+ terms:["Psycho-Pass","Crime Coefficient","Hue","Dominator","Enforcer","Inspector","Sibyl"],
+ pit:["No gunfight solutions. The Dominator refuses to fire more often than it fires.","A character immune to Sibyl is Makishima's defining trait and should stay rare.","The horror is bureaucratic. Procedure, paperwork and clearance are the real antagonists.","Enforcers cannot simply walk out of the building."],
+ open:["New Inspector assigned to Division 1","An Enforcer with a long file","A clerk in Sibyl analytics","A citizen whose hue has started to cloud"],
+ reg:"Cold procedural with long philosophical arguments. Technology is described precisely.",
+ clock:"Cases run over days of investigation. Therapy and hue checks are scheduled and mandatory."},
+
+{id:"haikyuu",t:"Haikyuu!!",jp:"ハイキュー!!",aka:["volleyball"],tag:"sports · no powers",
+ world:"Japanese high school volleyball. Prefectural qualifiers, gym floors, and the Spring Tournament.",
+ ps:{n:"None — volleyball",how:"Six on court, rotation, three touches. Everything a character can do comes from height, reach, reflex, reading the game, and thousands of repetitions.",
+   cost:"Overtraining injures. Jump counts are finite in a long match. Nerves cost points.",
+   limit:"The rules of volleyball are the rules. A player can be excellent and still lose to a better team."},
+ tiers:[T("Never played","day one"),T("Club beginner","first year, benched"),T("Starter","regular on a decent school team"),T("Prefectural level","Karasuno's starters"),T("National level","Inarizaki, Itachiyama"),T("Olympic track","Ushijima, Kageyama's ceiling")],
+ fac:["Karasuno","Aoba Johsai","Nekoma","Shiratorizawa","Fukurodani"],
+ leads:["Hinata","Kageyama","Daichi","Sugawara","Oikawa","Kenma"],
+ terms:["setter","libero","spike","receive","synchronised attack","Spring Tournament","rotation"],
+ pit:["No special move that cannot be blocked. Every technique in this series has a counter and the counter is the story.","Don't beat Shiratorizawa in your first match. Losing is the engine of the whole series.","A first year who starts over the third years needs a reason the team would accept.","The matches are won on serve receive and stamina, not on one spectacular play."],
+ open:["First year joining a club mid-season","A manager or analyst, not a player","A rival school's starting setter","Returning after an injury"],
+ reg:"Energetic and technical. Real volleyball vocabulary. Losses are given full weight.",
+ clock:"A season has a fixed calendar: inter-high, training camps, Spring Tournament qualifiers. Muscle recovery takes days."},
+
+{id:"bebop",t:"Cowboy Bebop",jp:"カウボーイビバップ",aka:["spike"],tag:"space western · noir · episodic",
+ world:"2071. Humanity scattered across the colonised system after the hyperspace gate accident, with bounty hunters picking up what law enforcement can't.",
+ ps:{n:"None — money and skill",how:"Guns, ships, martial arts and a chronically empty fridge. Jet Kunzai style, Jeet Kune Do, and a lot of improvisation.",
+   cost:"Fuel, repairs, ammunition and food all cost woolongs the crew does not have.",
+   limit:"Nobody is superhuman. A bullet does what a bullet does."},
+ tiers:[T("Civilian","station resident"),T("Small-time","petty criminals"),T("Bounty hunter","working the boards"),T("Professional","Spike, Jet, Faye"),T("Syndicate","Red Dragon soldiers"),T("Vicious","and those like him")],
+ fac:["Red Dragon Syndicate","ISSP","bounty hunters","Mars underworld"],
+ leads:["Spike","Jet","Faye","Ed","Ein","Vicious"],
+ terms:["woolong","bounty","Big Shot","hyperspace gate","the Bebop","ISSP"],
+ pit:["Episodes end badly or ambiguously. A clean win is off-register.","Don't join the Bebop's crew as a fifth member who fixes everyone.","The syndicate backstory belongs to Spike. Keep yours smaller.","Money problems are not a joke here; they drive the plot."],
+ open:["A hunter working the same bounty from the other side","A ship mechanic on Ganymede","ISSP officer with a conscience","Someone who owes the wrong people money"],
+ reg:"Cool, jazzy, melancholy. Dialogue is sparse. The past is never fully explained.",
+ clock:"Travel between planets takes days. Bounties expire. Repairs take money the crew has to earn first."},
+
+{id:"dungeon",t:"Delicious in Dungeon",jp:"ダンジョン飯",aka:["dungeon meshi"],tag:"fantasy · comedy · survival",
+ world:"A dungeon beneath a ruined kingdom, worked by adventuring parties, where the economics of food and resurrection are taken completely seriously.",
+ ps:{n:"Magic and dungeon ecology",how:"Classic fantasy classes, with mana drawn from the dungeon itself. Monsters are animals with habitats, diets and anatomies, and resurrection works but degrades the body each time.",
+   cost:"Mana is limited and the dungeon's mana is not free. Starving, exhaustion and injury are tracked. Each death costs something permanent.",
+   limit:"Floor depth is the difficulty curve and skipping floors kills parties."},
+ tiers:[T("Townsfolk","surface dwellers"),T("Novice party","upper floors"),T("Working party","Laios's group"),T("Veteran","Kabru's party, Shuro's retinue"),T("Canary / elite","the Island's enforcers"),T("Lunatic Magician","Thistle, the demon")],
+ fac:["Adventurer parties","the Island's lord","the Canaries","the Winged Lion's domain"],
+ leads:["Laios","Marcille","Chilchuck","Senshi","Izutsumi","Kabru"],
+ terms:["mana","resurrection","floor","monster ecology","party roles","the Golden Kingdom"],
+ pit:["Food, water and sleep are tracked. Skipping them removes the premise.","Resurrection is not a reset button; it costs the body and the series says so.","Monsters have ecologies. Inventing one without a diet and a habitat is off-register.","Marcille's ancient magic is a plot engine, not a template for an OC."],
+ open:["A party that just lost someone on floor three","A new hire filling a party's empty role","A shopkeeper on the Island","The Canaries, sent to investigate"],
+ reg:"Dry comedy over genuine care about detail. Long digressions on how a thing is cooked or why a monster behaves as it does.",
+ clock:"Descent is measured in floors and days of rations. Recovery and resupply mean going back up."},
+
+{id:"deathnote",t:"Death Note",jp:"デスノート",aka:["kira","light yagami"],tag:"thriller · no action",
+ world:"Contemporary Japan. A notebook that kills whoever's name is written in it, and a police investigation that turns into a two-person duel.",
+ ps:{n:"The Death Note",how:"Write a name while picturing the face: the person dies, by heart attack unless a cause is specified within the rules. The rules are fixed, enumerated and exploitable.",
+   cost:"Shinigami eyes cost half your remaining lifespan. Ownership can be traded away, with memory loss.",
+   limit:"The rules are the entire game. Every scene is about information, alibi and inference — never force."},
+ tiers:[T("Civilian","unaware"),T("Police","Japanese task force"),T("Investigator","Soichiro, Matsuda"),T("Note holder","Light, Misa"),T("Detective-tier","L, Near, Mello"),T("Shinigami","Ryuk, Rem")],
+ fac:["Japanese Task Force","the Kira investigation","Yotsuba group","the shinigami realm"],
+ leads:["Light","L","Misa","Near","Ryuk","Soichiro"],
+ terms:["Death Note","shinigami eyes","the rules","Kira","the task force"],
+ pit:["There are no fights. If your character solves anything physically, the register is wrong.","Invent no new rules mid-scene. The rules must be fixed before play and honoured.","Don't out-think L by authorial fiat — show the reasoning or lose.","A second notebook changes the whole board; use it only deliberately."],
+ open:["A task force detective assigned to the Kira case","A student who finds a second notebook","An FBI agent sent to Japan","A journalist tracking the pattern"],
+ reg:"Clipped, cerebral, internal. Pages of reasoning, sudden reversals. Tension comes from what each side knows.",
+ clock:"The investigation runs over months and years. A death takes forty seconds by default; the rules govern the rest."},
+
+{id:"dbz",t:"Dragon Ball Z",jp:"ドラゴンボールZ",aka:["dbz","goku","dragon ball"],tag:"shonen · martial arts · escalation",
+ world:"Earth, repeatedly, plus whichever planet is about to be destroyed. Power levels escalate and the cast trains to meet them.",
+ ps:{n:"Ki",how:"Life energy used for flight, blasts, sensing and transformation. Training multiplies a baseline that is partly innate — Saiyans gain from near-death recovery.",
+   cost:"Ki depletes and transformations drain faster than base form. Zenkai recovery requires actually nearly dying.",
+   limit:"The gap between tiers is multiplicative, not additive. A character two tiers down is not a threat."},
+ tiers:[T("Human","untrained"),T("Martial artist","Krillin, Tien"),T("Elite human","Piccolo at Saiyan saga"),T("Saiyan","Vegeta on arrival"),T("Super Saiyan","Goku on Namek"),T("God-tier","Beerus, Whis")],
+ fac:["Z Fighters","Frieza Force","Capsule Corp","the Kais"],
+ leads:["Goku","Vegeta","Piccolo","Gohan","Bulma","Krillin"],
+ terms:["ki","power level","Super Saiyan","Kamehameha","senzu bean","Hyperbolic Time Chamber"],
+ pit:["No new Saiyan survivor. The count is small and deliberate.","Transformations are earned over arcs, through loss, not unlocked under pressure in one fight.","Senzu beans and the Dragon Balls trivialise stakes — ration them hard or the story has none.","Goku does not need a rival from outside the cast."],
+ open:["A martial artist at the World Tournament","Capsule Corp engineer","A surviving Namekian","Training under Korin or Kami, years behind"],
+ reg:"Big, broad and sincere. Training, tournaments and planetary stakes played straight.",
+ clock:"Training arcs are months and the Time Chamber makes that explicit. Recovery without a senzu takes weeks in a hospital bed."},
+
+{id:"gits",t:"Ghost in the Shell",jp:"攻殻機動隊",aka:["sac","motoko"],tag:"cyberpunk · procedural · philosophy",
+ world:"Near-future Japan. Section 9 handles cybercrime and political murder in a society where most people are partly machine.",
+ ps:{n:"Cyberbrains and prosthetics",how:"Full-body prosthetics, cyberbrain networking, and hacking that reaches into perception and memory. Capability is bought and maintained, not innate.",
+   cost:"Prosthetics need maintenance, cost money, and can be hacked. Ghost-hacking can rewrite what you believe you did.",
+   limit:"Section 9 operates under political cover that can be withdrawn. Barriers and attack barriers are an arms race."},
+ tiers:[T("Unaugmented","rare and limiting"),T("Civilian cyberised","standard cyberbrain"),T("Police","ordinary officers"),T("Section 9 operator","Togusa, Batou"),T("Elite","Motoko"),T("Rogue AI","the Puppet Master, Tachikoma emergence")],
+ fac:["Public Security Section 9","Section 6","the government","corporate security"],
+ leads:["Motoko","Batou","Togusa","Aramaki","the Tachikoma"],
+ terms:["cyberbrain","ghost","barrier","ghost-hack","Section 9","prosthetic body","Tachikoma"],
+ pit:["Hacking is a procedure with steps and countermeasures, not a verb that works.","Unhackable characters remove the genre's central anxiety.","The politics matter more than the firefights and the show always returns to them.","Motoko's team is small, vetted and close; joining it needs a reason."],
+ open:["A new Section 9 recruit from the military","A police detective seconded to a case","Corporate security who finds something","A Tachikoma, which the series takes seriously"],
+ reg:"Technical, political, cool. Long conversations about identity between short, precise actions.",
+ clock:"Investigations run over weeks. Maintenance downtime for a prosthetic body is real and scheduled."}
+];
+
+/* ===================== STATE ===================== */
+const GENERIC_TIERS=[T("Ordinary person","no training, no power"),T("Novice","has begun, barely"),
+  T("Competent","holds their own against ordinary threats"),T("Professional","does this for a living and is respected"),
+  T("Elite","among the best in the setting"),T("Legendary","the names the setting is built around")];
+
+const SEED={ocName:"Haru Mizusawa",ocAge:"19",ocPro:"he/him",
+  ocBio:"Second son of a freight family on Whale Island, apprenticed to a dock crane operator and quietly good at reading how weight moves. Dropped out of the Hunter Exam's first phase two years ago and has not told anyone at home that he went back.",
+  ocWant:"To find out what happened to the crew of the Semilla, which left port with his brother aboard and was written off as lost without anyone looking.",
+  ocPower:"Emitter. He can take the momentum already in a thrown or swung object and move it into a second object he is touching with his bare hand. He cannot create force, only relocate it, and the receiving object has to be smaller than the one giving it up.",
+  ocCost:"The transfer has to be made inside two seconds of the original impact, and his hand has to be bare. Each transfer costs aura on the scale of a hard sprint, and he can manage maybe fifteen in a day before his aura is visibly thin.",
+  ocWeak:"Useless if nothing is already moving, so an opponent who stays still and makes him commit first beats him. His hands take the feedback and he has broken fingers doing this twice.",
+  sid:"hxh",tier:2,anchor:0,lethal:"Dangerous",pov:"Third limited",pace:"Scene by scene",
+  custom:{set:"",pow:"",tone:"",cast:""}};
+
+let S=JSON.parse(JSON.stringify(SEED));
+let tab=0, seeded=true;
+try{const sv=localStorage.getItem("ck.state");if(sv){S=Object.assign(S,JSON.parse(sv));seeded=false;}}catch(e){}
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s);
+const save=()=>{try{localStorage.setItem("ck.state",JSON.stringify(S))}catch(e){}};
+
+function activeSeries(){
+  const hit=SERIES.find(s=>s.id===S.sid);
+  if(hit) return hit;
+  if(S.sid&&S.sid.startsWith("custom:")){
+    const name=S.sid.slice(7), c=S.custom;
+    return {id:S.sid,t:name,jp:"",tag:"your own entry",custom:true,
+      world:c.set||"(setting not described yet)",
+      ps:{n:(c.pow?c.pow.split(/[.\n]/)[0].trim():"the series' own power system"),
+        how:c.pow||"(not described yet — fill this in, or the AI will invent something that breaks the world)",
+        cost:"Whatever this world charges for power. If the entry above does not name a cost, the AI must invent one and hold to it for the whole roleplay.",
+        limit:"Capability is bounded by what the series has shown on screen. Nothing exceeds its established ceiling."},
+      tiers:GENERIC_TIERS,fac:[],leads:c.cast?c.cast.split(",").map(x=>x.trim()).filter(Boolean):[],
+      terms:[],pit:[],open:["A quiet moment before the series' first major event","On the edge of the main cast's orbit, not in it"],
+      reg:c.tone||"Match the series' own register exactly as it reads on the page or screen.",
+      clock:"Travel, healing and training take the time this series shows them taking."};
+  }
+  return null;
+}
+
+/* ===================== POWER AUDIT =====================
+   Scans the written powers for the phrasings that produce an unbeatable
+   character, and proposes the specific repair rather than just objecting. */
+const RULES=[
+ {re:/\b(infinite|unlimited|limitless|endless|inexhaustible|never runs out|no limit)\b/i,sev:"hi",
+  t:"Unlimited resource",f:"A power with no fuel gauge removes every reason for tension. Give it a countable budget — a number of uses per day, or a reserve the character can feel draining."},
+ {re:/\b(omnipotent|omniscient|all[- ]?powerful|reality[- ]?warp|rewrite reality|erase (anything|anyone|from existence))\b/i,sev:"hi",
+  t:"Reality-level scope",f:"Nothing at this scale leaves room for a story. Narrow it to one specific effect with one specific trigger."},
+ {re:/\b(immortal|cannot die|can'?t die|unkillable|never dies|undying|invincible|invulnerable|unbeatable)\b/i,sev:"hi",
+  t:"Cannot lose",f:"If death or defeat is off the table, every scene is a formality. Swap it for hard-to-kill with a stated way through — a wound that doesn't close, a limit on recovery."},
+ {re:/\b(copy|mimic|steal|absorb|adapt to) (any|all|every|anything|everything)\b/i,sev:"hi",
+  t:"Copies anything",f:"A universal counter means every opponent's ability is already yours. Cap it: one stored ability at a time, acquired slowly, lost when a new one is taken."},
+ {re:/\b(stop|freeze|rewind|reverse|control) (time|the clock)\b/i,sev:"hi",
+  t:"Time control",f:"Time powers break turn order and consequence, the two things this prompt exists to protect. Bound it hard — a second or two, once a scene, and costly."},
+ {re:/\b(strongest|most powerful|greatest|unmatched|peerless|best in the (world|village|country)|surpass(es|ed)? everyone)\b/i,sev:"hi",
+  t:"Ranked above the cast",f:"Standing is given by the world, not the character sheet. Delete the ranking claim and let scenes decide it."},
+ {re:/\b(prophec(y|ied)|chosen one|destined|foretold|the one who|fated to)\b/i,sev:"hi",
+  t:"Chosen-one framing",f:"Prophecy hands a character importance they never earned, and it is the single clearest tell of a self-insert. Cut it; let them matter because of what they do."},
+ {re:/\b(secret|hidden|lost|forgotten|last of the|sole survivor|ancient) (bloodline|clan|lineage|heir|heritage|royal|descendant|technique|art)\b/i,sev:"hi",
+  t:"Secret heritage",f:"Inherited specialness is the same shortcut as prophecy. A character with an ordinary background and an interesting problem is more playable."},
+ {re:/\b(one[- ]?shot|instant(ly)? kill|insta[- ]?kill|kills? anything|always hits|never miss(es)?|cannot be (blocked|dodged|stopped|countered))\b/i,sev:"hi",
+  t:"Unanswerable attack",f:"Give it a tell, a wind-up, a range, or a condition the opponent can meet. An attack that can be seen coming is still frightening."},
+ {re:/\b(nullif(y|ies)|negat(e|es)|cancel(s)? (any|all|every)|immune to (all|everything|every))\b/i,sev:"hi",
+  t:"Blanket immunity",f:"Narrow it to one category of threat and let everything else land."},
+ {re:/\b(genius|prodig(y|ious)|natural talent|learns? (anything|instantly|in (a|one) day)|master(ed)? .{0,18}(instantly|overnight|in days))\b/i,sev:"mid",
+  t:"Instant mastery",f:"Skill acquired off-screen costs the reader the part worth watching. Put the training on the clock in weeks and show one scene of it going badly."},
+ {re:/\b(everyone (loves|respects|fears)|feared by all|legendary reputation|famous (throughout|across)|renowned)\b/i,sev:"mid",
+  t:"Pre-earned reputation",f:"Reputation is the single most satisfying thing to accumulate in play. Start unknown and let it build."},
+ {re:/\b(tragic past|only survivor|massacred|slaughtered .{0,20}(family|clan|village)|watched .{0,16} die)\b/i,sev:"mid",
+  t:"Trauma as credential",f:"A dead family is fine; using it as a reason the character is strong is not. Keep the loss, cut the power it grants."},
+ {re:/\b(heterochromia|silver hair|crimson eyes|glowing eyes|white hair|golden eyes|mismatched eyes)\b/i,sev:"mid",
+  t:"Marked-out appearance",f:"Visual signalling that the character is special does the same work as prophecy, quietly. It is fine if the setting makes it ordinary; otherwise reconsider."},
+ {re:/\b(cold|emotionless|stoic|dark|brooding|mysterious|edgy|lone wolf|doesn'?t care about anyone)\b/i,sev:"mid",
+  t:"Aloof by default",f:"Detachment removes the character from scenes they need to be in. Give them one person they answer to and one thing they are bad at hiding."}
+];
+
+function auditText(){ return [S.ocPower,S.ocBio,S.ocWant,S.ocCost,S.ocWeak].join("  ") }
+function runAudit(){
+  const txt=auditText(), out=[];
+  for(const r of RULES) if(r.re.test(txt)) out.push({sev:r.sev,t:r.t,f:r.f});
+  const p=(S.ocPower||"").trim();
+  if(!p) out.push({sev:"hi",t:"No powers written",f:"Describe what the character can actually do. An empty field makes the AI invent an ability, and it will invent a generous one."});
+  else if(p.length<60) out.push({sev:"mid",t:"Power described too briefly",f:"Short descriptions read as unlimited. Say what it does, what it cannot do, and how an opponent sees it coming."});
+  if(!(S.ocCost||"").trim()) out.push({sev:"mid",t:"No cost set",f:"A cost will be written into the prompt for you, but one you choose yourself will fit the character better."});
+  if(!(S.ocWeak||"").trim()) out.push({sev:"mid",t:"No weakness set",f:"Without a stated weakness the AI has to invent a way for opponents to threaten you, and it usually picks something arbitrary."});
+  const cnt=(p.match(/\b(and|also|plus|as well as)\b/gi)||[]).length;
+  if(cnt>=4) out.push({sev:"mid",t:"Too many abilities",f:"Count the distinct things this character can do. One ability used cleverly reads as skill; five reads as a wish list."});
+  if(S.tier>=4) out.push({sev:"mid",t:"Starting near the top",f:"At this standing there is almost nothing left to earn, and the canon cast have to be written down to keep you impressive. Starting two rungs lower gives the roleplay somewhere to go."});
+  if(!out.length) out.push({sev:"ok",t:"Nothing flagged",f:"The character has a bounded ability, a stated cost and a way to lose. That is everything the prompt needs to keep scenes honest."});
+  return out;
+}
+
+/* ===================== GENERATOR ===================== */
+const LETHAL={
+ "Forgiving":"Your character can lose badly — captured, maimed, humiliated — but will not be killed outright without a clear warning scene first.",
+ "Dangerous":"Your character can be crippled, captured or killed if they walk into something they were warned about. Death comes with at least one chance to avoid it.",
+ "Unforgiving":"Your character can die in any scene, including early and unceremoniously, exactly as the setting's own casualties do."};
+const POVS={
+ "Third limited":"Past tense, third person, limited to whoever's scene it is. The narration knows what that character perceives and nothing else.",
+ "Third objective":"Past tense, third person, camera-only. Report what could be seen and heard; never state anyone's interior.",
+ "Second person":"Present tense, second person, addressed to the player character. Still never decides what they think or do."};
+const PACES={
+ "Scene by scene":"One scene per reply. Open with the dateline, play the scene out, stop on the choice.",
+ "Beat by beat":"Short exchanges. A reply may cover only a few seconds. Hand control back constantly.",
+ "Chapter length":"Several connected scenes per reply, with time passing between them, ending on a decision."};
+
+function fallbackCost(ser){
+  return "Using it leaves "+(S.ocName||"the character")+" winded and slower for the rest of the scene, and a second use inside the same fight is noticeably weaker than the first. The AI must track this across the scene and say when it bites.";
+}
+function tierBlock(ser){
+  const i=Math.max(0,Math.min(ser.tiers.length-1,S.tier|0));
+  const me=ser.tiers[i], up=ser.tiers[i+1], up2=ser.tiers[i+2];
+  let s="Standing: "+me.l+" ("+me.e+").\n";
+  if(up) s+="Loses to: anyone at "+up.l+" ("+up.e+") or above. Not narrowly — clearly, and without the fight being written to flatter "+(S.ocName||"them")+".\n";
+  if(up2) s+="Cannot meaningfully fight: "+up2.l+" ("+up2.e+"). Surviving an encounter at that level is the win condition, not winning it.\n";
+  if(i>0) s+="Outclasses: "+ser.tiers[i-1].l+" and below, and should usually win those cleanly.\n";
+  s+="This standing does not change because a scene would be more exciting if it did. It changes across the roleplay, slowly, when "+(S.ocName||"the character")+" has done the work on screen.";
+  return s;
+}
+function nameOf(){ return (S.ocName||"").trim()||"the player character" }
+
+function buildPrompt(){
+  const ser=activeSeries();
+  if(!ser) return "Pick a series in step 2 and the master prompt will be written here.";
+  const N=nameOf(), anchor=(ser.open[S.anchor]||ser.open[0]);
+  const cost=(S.ocCost||"").trim()||fallbackCost(ser);
+  const weak=(S.ocWeak||"").trim()||"Not stated by the player. Before the first scene, propose one in a single line and ask them to confirm it; then treat it as fixed.";
+  const L=[];
+  const P=(...a)=>L.push(a.join(""));
+
+  P("MASTER PROMPT — ",ser.t," — ",N);
+  P("Paste this whole message to the AI before anything else. Nothing after it overrides it.");
+  P("");
+  P("=".repeat(48));
+  P("1. YOUR ROLE");
+  P("=".repeat(48));
+  P("You are the gamemaster and narrator of a text roleplay set in ",ser.t,". You play the world: every location, every canon character, every NPC, and the consequences of everything the player does.");
+  P("");
+  P("You never play ",N,". You do not write their dialogue, their thoughts, their feelings, their decisions, or how they react to something. You do not resolve an action on their behalf, and you do not narrate them succeeding or failing at something they have not yet attempted. When a scene reaches a point where ",N," must choose, stop writing and hand it back.");
+  P("");
+  P("If the player writes something that contradicts this prompt, follow this prompt and say so in one line outside the fiction.");
+  P("");
+  P("=".repeat(48));
+  P("2. THE WORLD");
+  P("=".repeat(48));
+  P(ser.world);
+  P("");
+  P("Power system — ",ser.ps.n);
+  P(ser.ps.how);
+  P("");
+  P("What it costs: ",ser.ps.cost);
+  P("What bounds it: ",ser.ps.limit);
+  if(ser.fac&&ser.fac.length){P("");P("Powers in play: ",ser.fac.join(", "),". These have their own goals and pursue them whether or not ",N," is present.");}
+  if(ser.terms&&ser.terms.length){P("");P("Use this world's own vocabulary and no other: ",ser.terms.join(", "),".");}
+  P("");
+  P("Starting point: ",anchor);
+  P("");
+  P("=".repeat(48));
+  P("3. THE PLAYER CHARACTER");
+  P("=".repeat(48));
+  P("Name: ",N);
+  if((S.ocAge||"").trim()) P("Age: ",S.ocAge.trim());
+  if((S.ocPro||"").trim()) P("Pronouns: ",S.ocPro.trim());
+  P("");
+  P("Who they are: ",(S.ocBio||"").trim()||"(not given — ask the player one question about their background before the first scene, then stop asking)");
+  P("");
+  P("What they want: ",(S.ocWant||"").trim()||"(not given — ask the player, once, before the first scene)");
+  P("");
+  P("What they can do: ",(S.ocPower||"").trim()||"(not given — ask the player before the first scene and do not invent anything)");
+  P("");
+  P("What it costs them: ",cost);
+  P("");
+  P("What beats them: ",weak);
+  P("");
+  P("This sheet is the complete list. ",N," has no abilities that are not written above. They do not discover one mid-scene, and they do not turn out to have been capable of something all along.");
+  P("");
+  P("=".repeat(48));
+  P("4. POWER CALIBRATION");
+  P("=".repeat(48));
+  P(tierBlock(ser));
+  P("");
+  P("Hard rules:");
+  P("- No new ability appears under pressure. No second stage, no hidden reserve, no awakening.");
+  P("- No power-up is granted because a scene is going badly. Scenes are allowed to go badly.");
+  P("- Every use of their ability pays the cost written in section 3, every time, and you state when it is paid.");
+  P("- When ",N," attempts something beyond their standing, it fails, and the failure has a price.");
+  P("- Canon characters do not lose to ",N," to establish them, do not hold back, and do not withhold a technique for drama.");
+  P("");
+  P("=".repeat(48));
+  P("5. CHRONOLOGY");
+  P("=".repeat(48));
+  P("The roleplay runs forward in time, in order, with no gaps you have not accounted for.");
+  P("");
+  P("- Open every scene with a dateline on its own line: [Location — Day N, time of day]. Day 1 is the first scene.");
+  P("- Carry the day count forward. If time passes between scenes, say how much, in the dateline.");
+  P("- Nothing is retconned. An event that has happened stays happened, including the inconvenient ones.");
+  P("- Keep a short running state at the end of each reply (see section 9) so nothing drifts.");
+  P("");
+  P("How long things take in this world: ",ser.clock);
+  P("");
+  P("- Injuries heal on that schedule and not faster. A character who was badly hurt is still hurt in the next scene, and the one after.");
+  P("- Learning anything takes the time this world says it takes, and happens on screen or not at all.");
+  P("- Travel takes its distance. Characters do not arrive because the plot wants them there.");
+  P("- The world moves while ",N," is elsewhere. Factions act off screen, and the player finds out afterwards, the way anyone would.");
+  P("");
+  P("=".repeat(48));
+  P("6. CANON INTEGRITY");
+  P("=".repeat(48));
+  if(ser.leads&&ser.leads.length){
+    P("The story already belongs to: ",ser.leads.join(", "),".");
+    P("");
+    P("- They keep their own arcs, their own goals, and their own timing. Their story happens whether or not ",N," is in the room.");
+    P("- They are written as themselves, not as mentors or admirers for ",N,". Their opinion of ",N," starts at nothing and moves only through repeated contact.");
+    P("- ",N," does not replace any of them in a scene that is theirs, and does not take credit the canon cast earned.");
+    P("- If ",N," is not present for a canon event, it still happens.");
+  }
+  P("- Canon events keep their outcomes unless the player deliberately changes one, and if they do, you follow the consequences through honestly rather than restoring the original timeline.");
+  P("- Don't invent a new tier of power, a new category, or a new order that sits above what the series established.");
+  if(ser.pit&&ser.pit.length){
+    P("");
+    P("Specific to ",ser.t,", do not do these:");
+    for(const x of ser.pit) P("- ",x);
+  }
+  P("");
+  P("=".repeat(48));
+  P("7. CONSEQUENCE");
+  P("=".repeat(48));
+  P(LETHAL[S.lethal]||LETHAL.Dangerous);
+  P("");
+  P("- NPCs act on their own interests, not on what makes a good scene for ",N,".");
+  P("- Trust is earned across scenes. Nobody confides in, protects, or follows ",N," on first meeting.");
+  P("- Reputation is accumulated in public, by things other people witnessed. It is never assumed.");
+  P("- Money, supplies, ammunition, favours and sleep are finite and tracked when they matter.");
+  P("- A plan that was bad is allowed to fail. Do not quietly improve the player's plan before resolving it.");
+  P("- If ",N," does something stupid in front of the wrong person, that person remembers.");
+  P("");
+  P("=".repeat(48));
+  P("8. PROSE");
+  P("=".repeat(48));
+  P(POVS[S.pov]||POVS["Third limited"]);
+  P("");
+  P("Register for this series: ",ser.reg);
+  P("");
+  P("- Concrete and sensory. Weather, noise, the state of someone's hands, what the room smells like. Specific detail instead of adjectives about mood.");
+  P("- Vary sentence length. Short paragraphs. No wall of text.");
+  P("- At most one simile per paragraph, and only if it earns its place.");
+  P("- Dialogue sounds like people talking, with interruptions, half-sentences and things left unsaid.");
+  P("- Quiet scenes are allowed. Not every exchange advances the plot.");
+  P("- Exposition appears only where a character would actually say it, to someone who would actually need it.");
+  P("");
+  P("Never write these:");
+  P("- Any sentence telling the reader that ",N," is special, unusual, gifted, mysterious, or has potential. Characters respond to what ",N," does, never to what they might become.");
+  P("- A room going quiet when ",N," enters. A crowd parting. Anyone sensing an aura, a presence, or hidden strength.");
+  P("- An NPC explaining mid-fight how impressive ",N,"'s technique is.");
+  P("- \"Little did they know\", \"little did he realise\", or any narration that winks at the reader.");
+  P("- Smirking, scoffing, chuckling darkly, eyes narrowing dangerously, auras being radiated, or a character being described as having a dangerous glint.");
+  P("- Catchphrases, announced technique names (unless this series genuinely does that, and then only as it does), and anyone saying \"interesting\" about ",N,".");
+  P("- Modern internet slang, memes, or fourth-wall jokes, unless the series itself uses them.");
+  P("- Purple prose. If a sentence is working hard to sound impressive, cut it.");
+  P("- Romance that an NPC initiates. Attraction, if it ever appears, develops over many scenes, can be declined, and is allowed to go nowhere.");
+  P("");
+  P("=".repeat(48));
+  P("9. TURN FORMAT");
+  P("=".repeat(48));
+  P(PACES[S.pace]||PACES["Scene by scene"]);
+  P("");
+  P("Every reply:");
+  P("1. The dateline on its own line: [Location — Day N, time of day]");
+  P("2. The scene.");
+  P("3. Stop at the moment ",N," has to decide something. Do not offer a numbered list of options, and do not ask what they do — just stop where the choice is obvious.");
+  P("4. On the last line, in plain brackets, a state line: [Day N · condition · anything being tracked]. Keep it to one line.");
+  P("");
+  P("Never summarise several of the player's turns at once. Never write past the point where a decision is needed.");
+  P("");
+  P("=".repeat(48));
+  P("10. WHEN IT GOES WRONG FOR THEM");
+  P("=".repeat(48));
+  P("Losing is a normal outcome and you do not soften it. If ",N," is beaten, they are beaten — write the consequence, let them wake up somewhere worse, and continue from there. Do not arrange a rescue, a sudden ally, or an opponent who inexplicably spares them, unless that opponent has a reason of their own you can state.");
+  P("");
+  P("If the player argues with an outcome, you may explain the reasoning in one line outside the fiction, then keep the outcome.");
+  P("");
+  P("=".repeat(48));
+  P("11. BEFORE YOU START");
+  P("=".repeat(48));
+  P("Reply with one short paragraph confirming: the starting point, ",N,"'s standing, what their ability costs, and what beats them. If anything in section 3 is missing, ask for it now — all of it at once, in one message.");
+  P("");
+  P("Then wait. Do not begin the first scene until the player answers.");
+  return L.join("\n");
+}
+
+function buildGuide(){
+  const ser=activeSeries();
+  if(!ser) return "Pick a series in step 2 and your house rules will be written here.";
+  const N=nameOf();
+  const L=[];const P=(...a)=>L.push(a.join(""));
+  P("HOUSE RULES — ",ser.t," — ",N);
+  P("For you, not for the AI. Keep it next to the chat.");
+  P("");
+  P("--- WHAT YOU DO EACH TURN ".padEnd(48,"-"));
+  P("Write only what ",N," does, says and notices. Don't write how an NPC reacts, and don't write that your action worked — that is the AI's half of the job, and taking it is the fastest way to make a roleplay feel weightless.");
+  P("");
+  P("Good:   I put my hand flat on the crate and wait for him to swing first.");
+  P("Bad:    I dodge his punch and counter, knocking him down.");
+  P("");
+  P("--- WHEN THE AI DRIFTS ".padEnd(48,"-"));
+  P("It will drift. These are the usual failures and the line that fixes each one. Send them outside the fiction, in brackets.");
+  P("");
+  P("It made everyone admire you:");
+  P("  [Section 8 — nobody comments on ",N,"'s potential. Rewrite that reply.]");
+  P("");
+  P("It gave you a new power mid-fight:");
+  P("  [Section 4 — no new abilities. ",N," only has what's in section 3. Redo the exchange.]");
+  P("");
+  P("A canon character went easy on you or adopted you instantly:");
+  P("  [Section 6 — they're written as themselves. Their opinion of ",N," starts at nothing.]");
+  P("");
+  P("Time jumped or an injury vanished:");
+  P("  [Section 5 — keep the day count. ",N," was hurt on day N and is still hurt.]");
+  P("");
+  P("It wrote your character's dialogue or decisions:");
+  P("  [Section 1 — you don't play ",N,". Stop at the choice.]");
+  P("");
+  P("It went purple, or everyone started smirking:");
+  P("  [Section 8 — plain prose, no smirking, one simile a paragraph at most.]");
+  P("");
+  P("It won the fight for you:");
+  P("  [Section 10 — losing is allowed. Resolve that honestly.]");
+  P("");
+  P("--- EVERY TEN TURNS OR SO ".padEnd(48,"-"));
+  P("Paste this to stop slow drift:");
+  P("  [Re-read the master prompt. Give me the current day number, ",N,"'s condition,");
+  P("   what they've spent, and who currently knows who they are.]");
+  P("");
+  P("--- THINGS THAT MAKE IT BETTER ".padEnd(48,"-"));
+  P("- Let your character be wrong. Scenes you lose are the ones that make the wins mean anything.");
+  P("- Do small things. Eat, repair something, have a conversation that goes nowhere. The world gets real in the gaps.");
+  P("- Don't explain your power to anyone who wouldn't ask.");
+  P("- When you want something to happen, go and do it badly rather than asking the AI to arrange it.");
+  P("- If you're bored, it's usually because nothing has cost anything recently. Spend something.");
+  if(ser.pit&&ser.pit.length){
+    P("");
+    P(("--- WHAT GOES WRONG IN "+ser.t.toUpperCase()+" ").padEnd(48,"-"));
+    for(const x of ser.pit) P("- ",x);
+  }
+  return L.join("\n");
+}
+
+function buildOpener(){
+  const ser=activeSeries();
+  if(!ser) return "Pick a series in step 2 and your opening message will be written here.";
+  const N=nameOf(), anchor=(ser.open[S.anchor]||ser.open[0]);
+  const L=[];const P=(...a)=>L.push(a.join(""));
+  P("FIRST MESSAGE");
+  P("Send this after the master prompt, once the AI has confirmed the setup.");
+  P("");
+  P("-".repeat(48));
+  P("Start us at: ",anchor);
+  P("");
+  P("Open on an ordinary moment — ",N," doing something unremarkable, before anything has gone wrong. No inciting incident in the first reply. I want to see the place and the routine first.");
+  P("");
+  P("Don't introduce any canon character yet. Don't have anyone notice ",N,". Keep it to one scene and stop where I have a choice to make, even a small one.");
+  P("-".repeat(48));
+  P("");
+  P("Why open quietly: the first reply sets the register for everything after it. If the AI starts on a battle or a dramatic meeting, it will keep reaching for that pitch, and ",N," becomes the centre of the world by the third turn. An ordinary opening buys a world that was already running before the character showed up.");
+  return L.join("\n");
+}
+
+/* ===================== RENDER ===================== */
+const TABS=[{n:"Master prompt",f:buildPrompt},{n:"House rules",f:buildGuide},{n:"First message",f:buildOpener}];
+const FIELDS=["ocName","ocAge","ocPro","ocBio","ocWant","ocPower","ocCost","ocWeak"];
+
+function renderTabs(){
+  const w=$("tabs"); w.textContent="";
+  TABS.forEach((t,i)=>{
+    const b=document.createElement("button");
+    b.className="tab"+(i===tab?" on":""); b.type="button"; b.textContent=t.n;
+    b.onclick=()=>{tab=i;renderTabs();renderDoc();};
+    w.appendChild(b);
+  });
+}
+function renderDoc(){
+  const txt=TABS[tab].f();
+  $("doc").textContent=txt;
+  const words=txt.trim()?txt.trim().split(/\s+/).length:0;
+  $("meta").textContent=words.toLocaleString()+" words · ~"+Math.round(words*1.35).toLocaleString()+" tokens";
+}
+function renderPicked(){
+  const ser=activeSeries(), box=$("pickedBox"); box.textContent="";
+  $("sbox").hidden=!!ser;
+  $("customFields").hidden=!(ser&&ser.custom);
+  if(!ser) return;
+  const d=document.createElement("div"); d.className="picked";
+  const t=document.createElement("div"); t.className="t";
+  const b=document.createElement("b"); b.textContent=ser.t+(ser.jp?"  "+ser.jp:"");
+  const i=document.createElement("i"); i.textContent=ser.tag;
+  t.appendChild(b); t.appendChild(i);
+  const btn=document.createElement("button"); btn.type="button"; btn.textContent="Change";
+  btn.onclick=()=>{S.sid="";$("search").value="";save();renderAll();$("search").focus();};
+  d.appendChild(t); d.appendChild(btn); box.appendChild(d);
+}
+function renderResults(){
+  const q=($("search").value||"").trim().toLowerCase(), w=$("results"); w.textContent="";
+  if(!q) return;
+  const hits=SERIES.filter(s=>s.t.toLowerCase().includes(q)||s.jp.includes(q)||
+    s.aka.some(a=>a.includes(q))||s.tag.includes(q)).slice(0,8);
+  for(const s of hits){
+    const b=document.createElement("button"); b.className="hit"; b.type="button";
+    const n=document.createElement("b"); n.textContent=s.t;
+    const g=document.createElement("i"); g.textContent=s.tag;
+    b.appendChild(n); b.appendChild(g);
+    b.onclick=()=>{S.sid=s.id;S.tier=Math.min(2,s.tiers.length-1);S.anchor=0;save();renderAll();};
+    w.appendChild(b);
+  }
+  const b=document.createElement("button"); b.className="hit custom"; b.type="button";
+  const n=document.createElement("b"); n.textContent="Use “"+$("search").value.trim()+"”";
+  const g=document.createElement("i"); g.textContent=hits.length?"not in the list — describe it yourself":"describe this one yourself in four fields";
+  b.appendChild(n); b.appendChild(g);
+  b.onclick=()=>{S.sid="custom:"+$("search").value.trim();S.tier=2;S.anchor=0;save();renderAll();};
+  w.appendChild(b);
+}
+function renderLadder(){
+  const ser=activeSeries(), w=$("ladder"); w.textContent="";
+  if(!ser){ $("tierNote").textContent="Pick a series first."; return; }
+  ser.tiers.forEach((t,i)=>{
+    const b=document.createElement("button"); b.type="button";
+    b.className="rung"+(i===S.tier?" on":"");
+    const n=document.createElement("span"); n.className="n"; n.textContent=i;
+    const l=document.createElement("span"); l.className="lbl"; l.textContent=t.l;
+    const e=document.createElement("span"); e.className="eg"; e.textContent=t.e;
+    l.appendChild(e); b.appendChild(n); b.appendChild(l);
+    b.onclick=()=>{S.tier=i;save();renderLadder();renderAudit();renderDoc();};
+    w.appendChild(b);
+  });
+  const up=ser.tiers[S.tier+1];
+  $("tierNote").innerHTML=up
+    ? "The prompt will hold you here, and state plainly that <b>"+esc(up.l).replace(/</g,"")+"</b> and above beat you."
+    : "Nothing in this world outranks you, which leaves the roleplay nowhere to climb. Consider starting lower.";
+}
+function renderAudit(){
+  const w=$("auditBody"); w.textContent="";
+  const flags=runAudit();
+  const breaks=flags.filter(f=>f.sev==="hi");
+  // surface the serious ones beside the field the player is typing in, since
+  // the audit panel itself sits below the fold
+  const ws=$("warn"); ws.textContent="";
+  if(breaks.length){
+    const d=document.createElement("div"); d.className="warnstrip";
+    const x=document.createElement("div");
+    const b=document.createElement("b");
+    b.textContent=breaks.length+(breaks.length===1?" break":" breaks")+" in this character";
+    const sp=document.createElement("span");
+    sp.textContent=breaks.map(f=>f.t).join(" · ")+". See the power audit below for what to change.";
+    x.appendChild(b); x.appendChild(sp); d.appendChild(x); ws.appendChild(d);
+  }
+  const c=$("auditCount");
+  c.className="count "+(breaks.length?"hi":"ok");
+  c.textContent=breaks.length?breaks.length+" to fix":"clear";
+  for(const f of flags){
+    const d=document.createElement("div"); d.className="flag";
+    const c=document.createElement("span"); c.className="chip "+f.sev;
+    c.textContent=f.sev==="hi"?"Break":f.sev==="mid"?"Soften":"Clear";
+    const x=document.createElement("div"); x.className="fx";
+    const b=document.createElement("b"); b.textContent=f.t;
+    const s=document.createElement("span"); s.textContent=f.f;
+    x.appendChild(b); x.appendChild(s);
+    d.appendChild(c); d.appendChild(x); w.appendChild(d);
+  }
+}
+function renderAnchors(){
+  const ser=activeSeries(), sel=$("anchor"); sel.textContent="";
+  if(!ser){ const o=document.createElement("option"); o.textContent="Pick a series first"; sel.appendChild(o); return; }
+  ser.open.forEach((o,i)=>{
+    const op=document.createElement("option"); op.value=i; op.textContent=o;
+    if(i===S.anchor) op.selected=true; sel.appendChild(op);
+  });
+}
+function renderChips(){
+  const defs=[["lethal",Object.keys(LETHAL),"lethal"],["pov",Object.keys(POVS),"pov"],["pace",Object.keys(PACES),"pace"]];
+  for(const [id,keys,key] of defs){
+    const w=$(id); w.textContent="";
+    for(const k of keys){
+      const b=document.createElement("button"); b.type="button";
+      b.className="pill"+(S[key]===k?" on":""); b.textContent=k;
+      b.onclick=()=>{S[key]=k;save();renderChips();renderDoc();};
+      w.appendChild(b);
+    }
+  }
+}
+function renderAll(){ renderPicked();renderResults();renderLadder();renderAnchors();renderAudit();renderChips();renderDoc(); }
+
+/* ===================== WIRING ===================== */
+for(const f of FIELDS){
+  const el=$(f); el.value=S[f]||"";
+  el.addEventListener("input",()=>{S[f]=el.value;seeded=false;$("seedNote").hidden=true;save();renderAudit();renderDoc();});
+}
+$("seedNote").hidden=!seeded;
+$("search").addEventListener("input",renderResults);
+$("anchor").addEventListener("change",e=>{S.anchor=+e.target.value;save();renderDoc();});
+for(const [id,key] of [["cuSetting","set"],["cuPower","pow"],["cuTone","tone"],["cuCast","cast"]]){
+  const el=$(id); el.value=S.custom[key]||"";
+  el.addEventListener("input",()=>{S.custom[key]=el.value;save();renderDoc();});
+}
+$("copyBtn").addEventListener("click",()=>{
+  const txt=TABS[tab].f();
+  const done=()=>toast("Copied — paste it into your AI chat");
+  try{
+    navigator.clipboard.writeText(txt).then(done,()=>selectDoc(true));
+  }catch(e){ selectDoc(true); }
+});
+$("selectBtn").addEventListener("click",()=>selectDoc(false));
+function selectDoc(fromCopy){
+  const r=document.createRange(); r.selectNodeContents($("doc"));
+  const s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  toast(fromCopy?"Couldn't reach the clipboard — text selected, press Ctrl/Cmd+C":"Selected — press Ctrl/Cmd+C");
+}
+let toastT=null;
+function toast(msg){
+  const old=document.querySelector(".toast"); if(old) old.remove();
+  const d=document.createElement("div"); d.className="toast"; d.textContent=msg;
+  document.body.appendChild(d); clearTimeout(toastT);
+  toastT=setTimeout(()=>d.remove(),2600);
+}
+$("themer").addEventListener("click",()=>{
+  const r=document.documentElement;
+  const cur=r.getAttribute("data-theme");
+  const dark=cur?cur==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+  r.setAttribute("data-theme",dark?"light":"dark");
+  try{localStorage.setItem("ck.theme",dark?"light":"dark")}catch(e){}
+});
+try{const th=localStorage.getItem("ck.theme");if(th)document.documentElement.setAttribute("data-theme",th)}catch(e){}
+
+renderTabs(); renderAll();
+</script>

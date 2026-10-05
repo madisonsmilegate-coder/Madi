@@ -176,6 +176,81 @@ pre.doc{margin:0;background:var(--card);border:1px solid var(--rule);border-top:
 .pill{border:1px solid var(--rule);background:var(--paper);border-radius:999px;padding:5px 11px;
   font-size:12.5px;cursor:pointer;color:var(--ink2)}
 .pill.on{background:var(--ai);border-color:var(--ai);color:#fff;font-weight:700}
+
+/* ---- additions: roster, name forge, crest, tools ---- */
+.roster{display:flex;gap:7px;align-items:center;flex-wrap:wrap;padding:10px 14px;background:var(--sunk);
+  border:1px solid var(--rule);border-radius:4px;margin-bottom:22px}
+.roster .lab{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);font-weight:700}
+.slot{border:1px solid var(--rule);background:var(--card);border-radius:999px;padding:4px 10px;font-size:12px;
+  cursor:pointer;color:var(--ink2);display:inline-flex;align-items:center;gap:6px}
+.slot.on{background:var(--ai);border-color:var(--ai);color:#fff;font-weight:700}
+.slot .x{opacity:.6;font-size:14px;line-height:1}
+.slot .x:hover{opacity:1}
+.mini{background:none;border:1px dashed var(--rule);border-radius:999px;padding:4px 10px;font-size:12px;
+  cursor:pointer;color:var(--ink3)}
+.mini:hover{border-color:var(--ai);color:var(--ai);border-style:solid}
+
+.namerow{display:flex;gap:8px;align-items:flex-end}
+.namerow .in{flex:1;min-width:0}
+.forge{flex:none;background:var(--ai);color:#fff;border:0;border-radius:3px;padding:9px 13px;cursor:pointer;
+  font-size:12.5px;font-weight:700;white-space:nowrap}
+.forge:hover{filter:brightness(1.1)}
+.namepanel{border:1px solid var(--ai);border-radius:3px;background:var(--paper);margin:9px 0 13px;overflow:hidden}
+.namepanel .hd{display:flex;align-items:center;gap:8px;padding:8px 11px;background:var(--ai-soft);
+  font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--ai)}
+.namepanel .hd button{margin-left:auto;background:none;border:0;color:var(--ai);cursor:pointer;
+  font-size:11.5px;text-decoration:underline;padding:0}
+.ngrid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+@media(max-width:430px){.ngrid{grid-template-columns:1fr}}
+.nopt{text-align:left;background:none;border:0;border-right:1px solid var(--rule2);
+  border-bottom:1px solid var(--rule2);padding:9px 11px;cursor:pointer}
+.nopt:hover{background:var(--ai-soft)}
+.nopt b{display:block;font-family:var(--disp);font-size:15px;font-weight:700}
+.nopt i{font-style:normal;font-size:11px;color:var(--ink3);display:block;line-height:1.35}
+
+.crestrow{display:flex;gap:13px;align-items:center;margin-bottom:14px}
+.crestrow canvas{flex:none;width:76px;height:76px;border:1px solid var(--rule);border-radius:3px;background:var(--paper)}
+.crestrow .ct{flex:1;min-width:0}
+.crestrow .ct b{font-family:var(--disp);font-size:19px;display:block;line-height:1.2}
+.crestrow .ct i{font-style:normal;font-size:11.5px;color:var(--ink3);display:block;margin-top:2px}
+.crestrow .ct .m{font-size:11.5px;color:var(--ink2);margin-top:4px;line-height:1.4}
+
+.tie{display:grid;grid-template-columns:118px 1fr;gap:7px;margin-bottom:7px}
+@media(max-width:430px){.tie{grid-template-columns:1fr}}
+.tie select,.tie input{font-size:13px;padding:6px 8px}
+.dropbtn{background:none;border:0;color:var(--ink3);cursor:pointer;font-size:12px;text-decoration:underline;padding:2px 0}
+.dropbtn:hover{color:var(--ai)}
+
+.tools{margin-top:22px}
+.toolgrid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+@media(max-width:700px){.toolgrid{grid-template-columns:1fr}}
+.tool{padding:14px 16px;border-right:1px solid var(--rule)}
+.tool:last-child{border-right:0}
+@media(max-width:700px){.tool{border-right:0;border-bottom:1px solid var(--rule)}}
+.dierow{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.dieout{font-family:var(--mono);font-size:13px;background:var(--paper);border:1px solid var(--rule);
+  border-radius:3px;padding:10px 12px;line-height:1.6;max-height:150px;overflow-y:auto}
+.dieout .big{font-size:21px;font-weight:700;color:var(--ai);font-variant-numeric:tabular-nums}
+.dieout .v{color:var(--moss);font-weight:700}
+.dieout .x{color:var(--vermil);font-weight:700}
+.jlist{max-height:170px;overflow-y:auto;border:1px solid var(--rule);border-radius:3px;background:var(--paper)}
+.jrow{display:flex;gap:9px;padding:7px 10px;border-bottom:1px solid var(--rule2);font-size:12.5px;align-items:flex-start}
+.jrow:last-child{border-bottom:0}
+.jrow .d{font-family:var(--mono);font-size:11px;color:var(--ai);flex:none;font-weight:700;padding-top:1px}
+.jrow .t{flex:1;min-width:0;line-height:1.45}
+.jrow .k{background:none;border:0;color:var(--ink3);cursor:pointer;font-size:14px;line-height:1;padding:0}
+.jrow .k:hover{color:var(--vermil)}
+.empty{padding:14px;text-align:center;color:var(--ink3);font-size:12.5px}
+.fixbtn{background:none;border:1px solid var(--rule);border-radius:3px;padding:3px 9px;font-size:11px;
+  cursor:pointer;color:var(--ai);margin-top:5px;font-weight:700}
+.fixbtn:hover{background:var(--ai-soft);border-color:var(--ai)}
+.kbd{font-family:var(--mono);font-size:10.5px;background:var(--sunk);border:1px solid var(--rule);
+  border-radius:3px;padding:1px 5px;color:var(--ink2)}
+.inlinechips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.tag{border:1px solid var(--rule);background:var(--paper);border-radius:3px;padding:3px 8px;font-size:11.5px;
+  cursor:pointer;color:var(--ink3)}
+.tag.on{background:var(--vermil-soft);border-color:var(--vermil);color:var(--vermil);font-weight:700}
+
 </style>
 
 <div class="wrap">
@@ -191,12 +266,22 @@ pre.doc{margin:0;background:var(--card);border:1px solid var(--rule);border-top:
 <div class="cols">
   <!-- ======== INTAKE ======== -->
   <div>
+    <div class="roster" id="roster"></div>
+
     <section class="panel step">
       <h2><b>1</b> The character</h2>
       <div class="inner">
         <div id="seedNote" style="margin-bottom:12px"><span class="seedtag">Example &mdash; edit or clear it</span></div>
+        <div class="crestrow">
+          <canvas id="crest" width="152" height="152" aria-label="Generated crest"></canvas>
+          <div class="ct"><b id="crestName">&mdash;</b><i id="crestSub"></i><div class="m" id="crestMeaning"></div></div>
+        </div>
         <label class="f"><span>Name</span>
-          <input class="in" id="ocName" type="text" placeholder="Given name, family name"></label>
+          <div class="namerow">
+            <input class="in" id="ocName" type="text" placeholder="Given name, family name">
+            <button class="forge" id="forgeName" type="button">Generate</button>
+          </div></label>
+        <div id="namePanel"></div>
         <div class="row2">
           <label class="f"><span>Age</span><input class="in" id="ocAge" type="text" placeholder="17"></label>
           <label class="f"><span>Pronouns</span><input class="in" id="ocPro" type="text" placeholder="they/them"></label>
@@ -205,12 +290,22 @@ pre.doc{margin:0;background:var(--card);border:1px solid var(--rule);border-top:
           <textarea class="in" id="ocBio" rows="4"></textarea></label>
         <label class="f"><span>What they want <em>&mdash; the goal that drives them into trouble</em></span>
           <textarea class="in" id="ocWant" rows="2"></textarea></label>
+        <label class="f"><span>How they talk <em>&mdash; the AI writes their world's dialogue around this</em></span>
+          <input class="in" id="ocVoice" type="text" placeholder="clipped, says less than they mean, swears when rattled">
+          <div class="inlinechips" id="voiceSuggest"></div></label>
+        <label class="f"><span>Their flaw <em>&mdash; the thing that reliably costs them</em></span>
+          <input class="in" id="ocFlaw" type="text" placeholder="can't walk away from a bet">
+          <div class="inlinechips" id="flawSuggest"></div></label>
+        <label class="f"><span>Their secret <em>&mdash; what they hide, and from whom</em></span>
+          <textarea class="in" id="ocSecret" rows="2" placeholder="Something that would cost them if the wrong person learned it."></textarea></label>
         <label class="f"><span>Powers or skills <em>&mdash; be specific; vague power reads as unlimited power</em></span>
-          <textarea class="in" id="ocPower" rows="4"></textarea></label>
+          <textarea class="in" id="ocPower" rows="4"></textarea>
+          <button class="dropbtn" id="tplBtn" type="button">Start from a bounded template</button>
+          <div id="tplPanel"></div></label>
         <div id="warn"></div>
         <label class="f"><span>What it costs them <em>&mdash; leave blank and one will be written for you</em></span>
           <textarea class="in" id="ocCost" rows="2"></textarea></label>
-        <label class="f"><span>What beats them <em>&mdash; the weakness an enemy could exploit</em></span>
+        <label class="f" style="margin-bottom:0"><span>What beats them <em>&mdash; the weakness an enemy could exploit</em></span>
           <textarea class="in" id="ocWeak" rows="2"></textarea></label>
       </div>
     </section>
@@ -248,26 +343,63 @@ pre.doc{margin:0;background:var(--card);border:1px solid var(--rule);border-top:
         <div class="hr"></div>
         <p class="sublabel">Starting point</p>
         <select class="in" id="anchor"></select>
+        <label class="f" style="margin:13px 0 0"><span>Rank or title <em>&mdash; what this world would call them</em></span>
+          <input class="in" id="ocRank" type="text" placeholder="left blank, the prompt uses the ladder rung"></label>
+      </div>
+    </section>
+
+    <section class="panel step">
+      <h2><b>4</b> Ties and kit</h2>
+      <div class="inner">
+        <p class="sublabel">People they already know</p>
+        <div id="ties"></div>
+        <button class="dropbtn" id="addTie" type="button">Add another tie</button>
         <div class="hr"></div>
+        <label class="f"><span>Travelling companion <em>&mdash; an NPC with their own agenda</em></span>
+          <input class="in" id="ocComp" type="text" placeholder="name, what they want, why they put up with you">
+          <button class="dropbtn" id="rollComp" type="button" style="margin-top:4px">Roll one</button></label>
+        <label class="f"><span>What they carry</span>
+          <textarea class="in" id="ocGear" rows="2" placeholder="Tracked through play and used up."></textarea>
+          <div class="inlinechips" id="gearSuggest"></div></label>
+        <label class="f" style="margin-bottom:0"><span>Money and standing <em>&mdash; what they can afford</em></span>
+          <input class="in" id="ocMoney" type="text" placeholder="broke, owes somebody"></label>
+      </div>
+    </section>
+
+    <section class="panel step">
+      <h2><b>5</b> The arc</h2>
+      <div class="inner">
+        <label class="f"><span>By the end of the first week</span>
+          <input class="in" id="arc1" type="text" placeholder="small, concrete, achievable"></label>
+        <label class="f"><span>Within a few months</span>
+          <input class="in" id="arc2" type="text" placeholder="the middle of the story"></label>
+        <label class="f"><span>What they are really after</span>
+          <input class="in" id="arc3" type="text" placeholder="the thing they may not get"></label>
+        <label class="f" style="margin-bottom:0"><span>What would break them <em>&mdash; the AI aims here when it needs stakes</em></span>
+          <input class="in" id="arcBreak" type="text" placeholder="losing the one person who vouches for them"></label>
+      </div>
+    </section>
+
+    <section class="panel step">
+      <h2><b>6</b> Table rules</h2>
+      <div class="inner">
         <div class="row2">
-          <div>
-            <p class="sublabel">Lethality</p>
-            <div class="chips" id="lethal"></div>
-          </div>
-          <div>
-            <p class="sublabel">Narration</p>
-            <div class="chips" id="pov"></div>
-          </div>
+          <div><p class="sublabel">Lethality</p><div class="chips" id="lethal"></div></div>
+          <div><p class="sublabel">World hostility</p><div class="chips" id="hostile"></div></div>
         </div>
-        <div style="margin-top:14px">
-          <p class="sublabel">Pacing</p>
-          <div class="chips" id="pace"></div>
-        </div>
+        <div style="margin-top:14px"><p class="sublabel">Narration</p><div class="chips" id="pov"></div></div>
+        <div style="margin-top:14px"><p class="sublabel">Pacing</p><div class="chips" id="pace"></div></div>
+        <div style="margin-top:14px"><p class="sublabel">Prompt length</p><div class="chips" id="plen"></div></div>
+        <div class="hr"></div>
+        <p class="sublabel">Keep out of the story</p>
+        <div class="inlinechips" id="veils"></div>
+        <label class="f" style="margin:11px 0 0"><span>Anything else to avoid</span>
+          <input class="in" id="veilNote" type="text" placeholder="written into the prompt as a hard line"></label>
       </div>
     </section>
 
     <section class="panel step audit">
-      <h2><b>4</b> Power audit<span id="auditCount"></span></h2>
+      <h2><b>7</b> Power audit<span id="auditCount"></span></h2>
       <div id="auditBody"></div>
     </section>
   </div>
@@ -281,9 +413,32 @@ pre.doc{margin:0;background:var(--card);border:1px solid var(--rule);border-top:
       <button class="btn" id="copyBtn" type="button">Copy</button>
     </div>
     <pre class="doc" id="doc"></pre>
+
+    <section class="panel tools">
+      <h2 style="display:flex;align-items:baseline;gap:10px;font-size:13px;letter-spacing:.17em;text-transform:uppercase;font-family:var(--body);font-weight:700;color:var(--ink2);padding:12px 16px;border-bottom:1px solid var(--rule);margin:0">At the table</h2>
+      <div class="toolgrid">
+        <div class="tool">
+          <p class="sublabel">Impartial roll <span class="kbd">R</span></p>
+          <div class="dierow" id="dieBtns"></div>
+          <div class="dieout" id="dieOut"></div>
+          <p class="note">Use it when you and the AI disagree about whether something works. Tell it the result and let it narrate from there.</p>
+        </div>
+        <div class="tool">
+          <p class="sublabel">Session log</p>
+          <div class="dierow">
+            <input class="in" id="jDay" type="number" min="1" style="width:74px" value="1" aria-label="Day">
+            <input class="in" id="jText" type="text" placeholder="What happened" style="flex:1;min-width:0">
+            <button class="btn" id="jAdd" type="button">Log</button>
+          </div>
+          <div class="jlist" id="jList"></div>
+          <p class="note">The day count is what keeps a roleplay chronological. Paste the log back when the AI loses track.</p>
+        </div>
+      </div>
+    </section>
   </div>
 </div>
 </div>
+
 <script>
 /* ============================ CANON DATA ============================
    Each series carries the things a roleplay actually goes wrong without:
@@ -657,6 +812,138 @@ const SERIES=[
  clock:"Investigations run over weeks. Maintenance downtime for a prosthetic body is real and scheduled."}
 ];
 
+
+/* ===================== NAME FORGE =====================
+   Each series is keyed to a naming tradition, so a Vinland Saga character
+   isn't handed a Japanese given name. Japanese entries carry their reading
+   so the player knows what they just picked. */
+const NM_OF={naruto:"jp",bleach:"jp",jjk:"jp",ds:"jp",mha:"jp",mob:"jp",evangelion:"jp",
+  steins:"jp",psycho:"jp",haikyuu:"jp",gits:"jp",ghoul:"jp",deathnote:"jp",csm:"jp",
+  vinland:"norse",frieren:"euro",rezero:"euro",dungeon:"euro",fma:"amestris",fate:"fate",
+  geass:"geass",hxh:"hxh",op:"op",bebop:"intl",dbz:"dbz"};
+
+const NAMES={
+ jp:{fam:[["Akiyama","autumn mountain"],["Mizusawa","water marsh"],["Tachibana","mandarin orange"],
+   ["Kurosawa","black marsh"],["Shinohara","bamboo field"],["Hayashida","forest paddy"],
+   ["Narumi","the sound of the sea"],["Inagaki","rice hedge"],["Todoroki","thunderclap"],
+   ["Sakaguchi","hill mouth"],["Nishizawa","west marsh"],["Amagai","sweet well"],
+   ["Kirishima","fog island"],["Onodera","small field temple"],["Fuyuki","winter tree"],
+   ["Hoshizaki","star cape"],["Kanzaki","divine cape"],["Minagawa","south river"],
+   ["Yagami","night god"],["Serizawa","parsley marsh"],["Okabe","hill side"],["Idemitsu","rising light"]],
+  giv:[["Haruki","spring radiance"],["Sora","sky"],["Rei","clarity, or a bell"],["Tsukasa","one who governs"],
+   ["Ren","lotus"],["Kaede","maple"],["Natsume","summer eye"],["Asahi","morning sun"],
+   ["Mitsuki","beautiful moon"],["Riku","dry land"],["Yuki","snow, or courage"],["Nao","honest"],
+   ["Hibiki","echo"],["Chiyo","a thousand generations"],["Kaoru","fragrance"],["Shion","aster flower"],
+   ["Takumi","artisan"],["Nozomi","hope"],["Itsuki","a standing tree"],["Ayame","iris"],
+   ["Jun","obedient, or pure"],["Hotaru","firefly"],["Masaru","to excel"],["Suzume","sparrow"],
+   ["Tsubaki","camellia"],["Arata","fresh, new"],["Kasumi","mist"],["Gen","origin"],
+   ["Mio","a waterway"],["Tooru","to pass through"],["Sayo","evening"],["Isamu","courage"]]},
+ norse:{pat:["Thor","Halvar","Ketil","Egil","Bjorn","Sigurd","Arne","Leif","Harald","Gudrun"],
+  giv:[["Halfdan","half Dane","m"],["Ingrid","beautiful, beloved","f"],["Sten","stone","m"],
+   ["Gudrid","god's beauty","f"],["Ulf","wolf","m"],["Astrid","divinely beautiful","f"],
+   ["Torgil","Thor's hostage","m"],["Solveig","strength of the house","f"],["Bersi","bear cub","m"],
+   ["Yrsa","she-bear","f"],["Ivar","yew warrior","m"],["Hild","battle","f"],["Orm","serpent","m"],
+   ["Ragnhild","counsel in battle","f"],["Knut","knot","m"],["Sigrid","victory, beauty","f"],
+   ["Vali","the chosen","m"],["Thora","of Thor","f"],["Grim","the masked one","m"],["Freydis","lady of the Vanir","f"]]},
+ euro:{fam:[["Vogelsang","birdsong"],["Eisenhart","iron-hard"],["Marbach","boundary brook"],
+   ["Falkenrath","falcon's counsel"],["Winterhalt","winter's hold"],["Steinmetz","stonemason"],
+   ["Lindqvist","lime twig"],["Auerbach","meadow brook"],["Morgenstern","morning star"],["Reiniger","the cleanser"]],
+  giv:[["Elsa",""],["Wilhelm",""],["Mira",""],["Anselm",""],["Freya",""],["Konrad",""],["Isolde",""],
+   ["Reiner",""],["Liesl",""],["Emmerich",""],["Nadia",""],["Tobias",""],["Celestine",""],["Ottokar",""],
+   ["Marthe",""],["Vigo",""],["Juno",""],["Leonhard",""]]},
+ amestris:{fam:[["Carlisle",""],["Brennan",""],["Mustadio",""],["Harcourt",""],["Vandermeer",""],
+   ["Kessler",""],["Thorne",""],["Wexford",""],["Albright",""],["Rackham",""]],
+  giv:[["Theo",""],["Marguerite",""],["Victor",""],["Odile",""],["Cassian",""],["Ilse",""],["Rupert",""],
+   ["Camille",""],["Edgar",""],["Delphine",""],["August",""],["Rosalind",""]]},
+ fate:{fam:[["Asakura",""],["Fraga",""],["Edelfelt",""],["Kirisaki",""],["Vaudrey",""],["Shinomiya",""],
+   ["Barthomeloi",""],["Amagi",""],["Lorelei",""],["Sakagami",""]],
+  giv:[["Ayaka",""],["Lucien",""],["Mikoto",""],["Rosalie",""],["Takeru",""],["Eline",""],["Soujirou",""],
+   ["Mathilde",""],["Kurou",""],["Vivienne",""]]},
+ geass:{fam:[["Ashford",""],["Kururugi",""],["Weinberg",""],["Shirogane",""],["Croomy",""],["Tohdoh",""],
+   ["Asplund",""],["Minami",""],["Bradley",""],["Sakuragi",""]],
+  giv:[["Alaric",""],["Chiaki",""],["Marianne",""],["Reiji",""],["Odysseus",""],["Nonette",""],
+   ["Kaname",""],["Dalque",""],["Yuuna",""],["Gilford",""]]},
+ hxh:{fam:[["Vaccaro",""],["Nostrade",""],["Kastro",""],["Loquez",""],["Bramble",""],["Teradein",""],
+   ["Sorbet",""],["Hagya",""],["Mizaistom",""],["Kurapa",""]],
+  giv:[["Rook",""],["Velda",""],["Siro",""],["Juno",""],["Tam",""],["Haruto",""],["Nessa",""],["Odo",""],
+   ["Pell",""],["Bisque",""],["Corin",""],["Mato",""]]},
+ op:{fam:[["Blackwater",""],["Doldrum",""],["Sarnia",""],["Quillfeather",""],["Brinemore",""],
+   ["Castellano",""],["Vaquero",""],["Stormjaw",""],["Ricochet",""],["Marlinspike",""]],
+  giv:[["Bogart",""],["Kiva",""],["Pepito",""],["Saltine",""],["Rigger",""],["Ondine",""],["Tolliver",""],
+   ["Brisa",""],["Keelhaul",""],["Mango",""],["Sable",""],["Cutlass",""]]},
+ intl:{fam:[["Vasquez",""],["Okonkwo",""],["Lindholm",""],["Baptiste",""],["Rahman",""],["Okafor",""],
+   ["Castellanos",""],["Novikov",""],["Mehta",""],["Dubois",""]],
+  giv:[["Elio",""],["Marguerite",""],["Jin",""],["Oksana",""],["Rafael",""],["Nadine",""],["Yusuf",""],
+   ["Ines",""],["Dmitri",""],["Amara",""],["Caleb",""],["Suni",""]]},
+ dbz:{fam:[["Pepperton",""],["Radicchio",""],["Shallotte",""],["Comfrey",""],["Okra",""],["Fennelby",""],
+   ["Chervil",""],["Gourdin",""],["Rutabaga",""],["Sorrel",""]],
+  giv:[["Chard",""],["Kalette",""],["Pimento",""],["Tarro",""],["Endiva",""],["Burdock",""],["Cress",""],
+   ["Yamm",""],["Maize",""],["Leeko",""],["Fava",""],["Daikon",""]]}
+};
+let nameOpts=[];
+function forgeNames(){
+  const ser=activeSeries();
+  const key=(ser&&NM_OF[ser.id])||"intl";
+  const pool=NAMES[key]||NAMES.intl;
+  const taken=new Set((ser&&ser.leads||[]).map(x=>x.toLowerCase()));
+  const out=[], seen=new Set();
+  let guard=0;
+  while(out.length<6&&guard++<200){
+    const g=pool.giv[Math.floor(Math.random()*pool.giv.length)];
+    let full,bits;
+    if(key==="norse"){
+      // a patronymic agrees with its bearer, not with the parent
+      const par=pool.pat[Math.floor(Math.random()*pool.pat.length)];
+      full=g[0]+" "+par+(g[2]==="f"?"sdottir":"sson");
+      bits=[g[1],(g[2]==="f"?"daughter of ":"son of ")+par];
+    } else {
+      const f=pool.fam[Math.floor(Math.random()*pool.fam.length)];
+      full=(key==="jp")?(f[0]+" "+g[0]):(g[0]+" "+f[0]);  // Japanese puts the family name first
+      bits=[g[1],f[1]];
+    }
+    if(seen.has(full)) continue;
+    if(taken.has(g[0].toLowerCase())) continue;
+    seen.add(full);
+    out.push({full,note:bits.filter(Boolean).join(" · ")});
+  }
+  nameOpts=out; return out;
+}
+
+/* ===================== CHARACTER LIBRARIES ===================== */
+const VOICES=["plain and short, rarely finishes a sentence","formal to the point of stiffness",
+  "talks too much when nervous","dry, deadpan, never raises their voice","regional accent they refuse to soften",
+  "polite on the surface, sharp underneath","swears easily, apologises never","quiet, answers in questions"];
+const FLAWS=["cannot leave an insult alone","lies first and works out why later","gives away money they need",
+  "goes quiet instead of asking for help","assumes they are the smartest person present",
+  "cannot refuse a favour from the wrong people","freezes when someone cries","keeps score and never forgives",
+  "drinks when it goes badly","trusts anyone who is kind to them once"];
+const TIEKINDS=["Mentor","Rival","Family","Creditor","Old friend","Someone they wronged","Someone who wants them dead","Employer","Someone they owe a life"];
+const GEARSETS={jp:["a borrowed coat","a cheap folding knife","a notebook half-full","train pass, nearly out"],
+  norse:["a seax that was their father's","a wool cloak, patched","a sling of dried fish","a silver arm-ring"],
+  euro:["a staff, unremarkable","a sealed letter of introduction","three days of bread","a map that is wrong"],
+  default:["a bag with everything they own","something they should have sold by now","a letter they haven't opened","money for about a week"]};
+const COMPANIONS=["an older veteran who is waiting for them to quit","a thief who is clearly using them for cover",
+  "a child who attached themselves and will not leave","a rival from the same cohort, assigned against both their wishes",
+  "someone's younger sibling they promised to look after","a talkative merchant who travels the same road and knows too much",
+  "an animal that is smarter than it should be","a creditor's agent sent to make sure they come back"];
+const TEMPLATES=[
+ {n:"One stored thing",d:"They can hold exactly one borrowed property at a time — a texture, a temperature, a sound — taken by touch and lost the moment they take another. Taking it leaves the source without it for an hour.",
+  c:"Holding it is a constant low drain; they sleep badly while carrying something and cannot hold anything at all on no sleep.",w:"Useless without something to take from, and an opponent who touches them first can make them drop it."},
+ {n:"Short reach, hard rules",d:"Their ability works only within arm's length, only on something they can see, and only on a surface they have already touched once in this scene.",
+  c:"Every use costs them a visible mark on the skin that lasts a day. Six in a day and they can't close their hand.",w:"Beaten by distance. Anyone who keeps two paces away never has to deal with it."},
+ {n:"Borrowed strength, owed back",d:"They can draw hard on reserves for one exchange — roughly twice what they should manage — and it is genuinely decisive.",
+  c:"Afterwards they are worse than useless for the rest of the day, and it takes a day of real rest per use.",w:"Everyone who has seen it once knows to wait them out."},
+ {n:"Knows one thing well",d:"No power at all. They are simply better than almost anyone at one narrow, practical thing, and have been doing it since they were a child.",
+  c:"Nothing supernatural to spend — only stamina, tools and daylight.",w:"Outside that one thing they are an ordinary person, and most problems are outside it."},
+ {n:"Reads, cannot act",d:"They perceive something others cannot — intent, strain, the next half-second — clearly and reliably.",
+  c:"Reading costs full attention; while reading they cannot fight, move well, or notice anything else.",w:"Knowing what is coming does not make them able to stop it."}];
+const VEILS=["Sexual content","Graphic torture","Harm to children","Animal cruelty","Suicide and self-harm",
+  "Slurs and hate speech","Sexual violence","Body horror","Addiction","Pregnancy and childbirth"];
+const HOSTILE={"Settled":"The world is mostly indifferent. Trouble has to be looked for.",
+ "Unsettled":"The setting is tense. Trouble finds the character roughly as often as they find it.",
+ "Hostile":"Something is always pressing. Every week brings a cost, and safety has to be bought."};
+const PLEN={"Full":0,"Compact":1};
+
 /* ===================== STATE ===================== */
 const GENERIC_TIERS=[T("Ordinary person","no training, no power"),T("Novice","has begun, barely"),
   T("Competent","holds their own against ordinary threats"),T("Professional","does this for a living and is respected"),
@@ -668,16 +955,33 @@ const SEED={ocName:"Haru Mizusawa",ocAge:"19",ocPro:"he/him",
   ocPower:"Emitter. He can take the momentum already in a thrown or swung object and move it into a second object he is touching with his bare hand. He cannot create force, only relocate it, and the receiving object has to be smaller than the one giving it up.",
   ocCost:"The transfer has to be made inside two seconds of the original impact, and his hand has to be bare. Each transfer costs aura on the scale of a hard sprint, and he can manage maybe fifteen in a day before his aura is visibly thin.",
   ocWeak:"Useless if nothing is already moving, so an opponent who stays still and makes him commit first beats him. His hands take the feedback and he has broken fingers doing this twice.",
+  ocVoice:"Short answers, and a habit of restating a question before answering it.",
+  ocFlaw:"Will not ask anyone for help until it is far too late to be useful.",
+  ocSecret:"He failed the Hunter Exam's first phase publicly, two years ago, and has let everyone at home believe he never went.",
+  ocRank:"",ocComp:"",ocGear:"A dock worker's gloves he refuses to wear for this, a short pry bar, and his brother's crew tag.",
+  ocMoney:"Enough for three weeks of cheap rooms, and nothing after that.",
+  arc1:"Get the Semilla's last port of call out of the harbourmaster's ledger.",
+  arc2:"Find one crew member who got off the ship alive.",
+  arc3:"Learn what his brother was carrying that was worth sinking a ship over.",
+  arcBreak:"Finding out his brother knew, and went anyway.",
+  ties:[{k:"Mentor",v:"Oshiro, the crane operator who taught him to read a load and thinks this trip is suicide"},
+        {k:"Creditor",v:"The dockmaster's wife, who lent him the fare and expects it back"}],
   sid:"hxh",tier:2,anchor:0,lethal:"Dangerous",pov:"Third limited",pace:"Scene by scene",
+  hostile:"Unsettled",plen:"Full",veils:[],veilNote:"",
   custom:{set:"",pow:"",tone:"",cast:""}};
 
 let S=JSON.parse(JSON.stringify(SEED));
 let tab=0, seeded=true;
+let roster=[], slot=0, journal=[], dieLog=[];
+try{const r=localStorage.getItem("ck.roster"); if(r) roster=JSON.parse(r)||[];}catch(e){}
+try{const j=localStorage.getItem("ck.journal"); if(j) journal=JSON.parse(j)||[];}catch(e){}
 try{const sv=localStorage.getItem("ck.state");if(sv){S=Object.assign(S,JSON.parse(sv));seeded=false;}}catch(e){}
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s);
-const save=()=>{try{localStorage.setItem("ck.state",JSON.stringify(S))}catch(e){}};
+const save=()=>{try{localStorage.setItem("ck.state",JSON.stringify(S));
+  localStorage.setItem("ck.roster",JSON.stringify(roster));
+  localStorage.setItem("ck.journal",JSON.stringify(journal));}catch(e){}};
 
 function activeSeries(){
   const hit=SERIES.find(s=>s.id===S.sid);
@@ -779,6 +1083,7 @@ function tierBlock(ser){
 }
 function nameOf(){ return (S.ocName||"").trim()||"the player character" }
 
+const OPT="\u0001";   // marks a line as elaboration, dropped in Compact
 function buildPrompt(){
   const ser=activeSeries();
   if(!ser) return "Pick a series in step 2 and the master prompt will be written here.";
@@ -787,6 +1092,7 @@ function buildPrompt(){
   const weak=(S.ocWeak||"").trim()||"Not stated by the player. Before the first scene, propose one in a single line and ask them to confirm it; then treat it as fixed.";
   const L=[];
   const P=(...a)=>L.push(a.join(""));
+  const O=(...a)=>L.push(OPT+a.join(""));   // elaboration
 
   P("MASTER PROMPT — ",ser.t," — ",N);
   P("Paste this whole message to the AI before anything else. Nothing after it overrides it.");
@@ -796,9 +1102,9 @@ function buildPrompt(){
   P("=".repeat(48));
   P("You are the gamemaster and narrator of a text roleplay set in ",ser.t,". You play the world: every location, every canon character, every NPC, and the consequences of everything the player does.");
   P("");
-  P("You never play ",N,". You do not write their dialogue, their thoughts, their feelings, their decisions, or how they react to something. You do not resolve an action on their behalf, and you do not narrate them succeeding or failing at something they have not yet attempted. When a scene reaches a point where ",N," must choose, stop writing and hand it back.");
+  O("You never play ",N,". You do not write their dialogue, their thoughts, their feelings, their decisions, or how they react to something. You do not resolve an action on their behalf, and you do not narrate them succeeding or failing at something they have not yet attempted. When a scene reaches a point where ",N," must choose, stop writing and hand it back.");
   P("");
-  P("If the player writes something that contradicts this prompt, follow this prompt and say so in one line outside the fiction.");
+  O("If the player writes something that contradicts this prompt, follow this prompt and say so in one line outside the fiction.");
   P("");
   P("=".repeat(48));
   P("2. THE WORLD");
@@ -810,7 +1116,7 @@ function buildPrompt(){
   P("");
   P("What it costs: ",ser.ps.cost);
   P("What bounds it: ",ser.ps.limit);
-  if(ser.fac&&ser.fac.length){P("");P("Powers in play: ",ser.fac.join(", "),". These have their own goals and pursue them whether or not ",N," is present.");}
+  if(ser.fac&&ser.fac.length){P("");O("Powers in play: ",ser.fac.join(", "),". These have their own goals and pursue them whether or not ",N," is present.");}
   if(ser.terms&&ser.terms.length){P("");P("Use this world's own vocabulary and no other: ",ser.terms.join(", "),".");}
   P("");
   P("Starting point: ",anchor);
@@ -832,7 +1138,19 @@ function buildPrompt(){
   P("");
   P("What beats them: ",weak);
   P("");
-  P("This sheet is the complete list. ",N," has no abilities that are not written above. They do not discover one mid-scene, and they do not turn out to have been capable of something all along.");
+  O("This sheet is the complete list. ",N," has no abilities that are not written above. They do not discover one mid-scene, and they do not turn out to have been capable of something all along.");
+  if((S.ocVoice||"").trim()){P("");P("How they talk: ",S.ocVoice.trim()," Write their dialogue around that, and do not smooth it out.");}
+  if((S.ocFlaw||"").trim()){P("");P("Their flaw: ",S.ocFlaw.trim()," Put them in front of it regularly, and let it cost them something real at least once early on.");}
+  if((S.ocSecret||"").trim()){P("");P("What they hide: ",S.ocSecret.trim());O("Nobody knows this at the start. Characters who could plausibly find out may begin to, slowly, and you never reveal it on the player's behalf.");}
+  if((S.ocRank||"").trim()){P("");P("What this world calls them: ",S.ocRank.trim());}
+  const ties=(S.ties||[]).filter(t=>(t.v||"").trim());
+  if(ties.length){
+    P("");P("People already in their life. These are NPCs with their own lives, not supporting cast:");
+    for(const t of ties) P("- ",t.k,": ",t.v.trim());
+  }
+  if((S.ocComp||"").trim()){P("");P("Travelling with: ",S.ocComp.trim());O("This companion has their own goal and acts on it even when it cuts across ",N,"'s. They are not a sidekick and they do not exist to be impressed.");}
+  if((S.ocGear||"").trim()){P("");P("What they carry: ",S.ocGear.trim());O("Track it. Things get used up, lost, broken and stolen, and are not quietly replaced.");}
+  if((S.ocMoney||"").trim()){P("");P("Money: ",S.ocMoney.trim()," Keep it in mind when they want something, and say plainly when they cannot afford it.");}
   P("");
   P("=".repeat(48));
   P("4. POWER CALIBRATION");
@@ -872,7 +1190,7 @@ function buildPrompt(){
     P("- They keep their own arcs, their own goals, and their own timing. Their story happens whether or not ",N," is in the room.");
     P("- They are written as themselves, not as mentors or admirers for ",N,". Their opinion of ",N," starts at nothing and moves only through repeated contact.");
     P("- ",N," does not replace any of them in a scene that is theirs, and does not take credit the canon cast earned.");
-    P("- If ",N," is not present for a canon event, it still happens.");
+    O("- If ",N," is not present for a canon event, it still happens.");
   }
   P("- Canon events keep their outcomes unless the player deliberately changes one, and if they do, you follow the consequences through honestly rather than restoring the original timeline.");
   P("- Don't invent a new tier of power, a new category, or a new order that sits above what the series established.");
@@ -882,10 +1200,24 @@ function buildPrompt(){
     for(const x of ser.pit) P("- ",x);
   }
   P("");
+  const arcs=[["By the end of the first week",S.arc1],["Within a few months",S.arc2],["What they are really after",S.arc3]].filter(a=>(a[1]||"").trim());
+  if(arcs.length||(S.arcBreak||"").trim()){
+    P("=".repeat(48));
+    P("6b. WHAT THEY ARE PLAYING FOR");
+    P("=".repeat(48));
+    if(arcs.length){
+      P("Their goals, nearest first. Put obstacles in front of these rather than inventing unrelated plot:");
+      for(const a of arcs) P("- ",a[0],": ",a[1].trim());
+    }
+    if((S.arcBreak||"").trim()){P("");P("Where it hurts: ",S.arcBreak.trim());P("When a scene needs real stakes, aim here rather than threatening ",N,"'s life. Do not actually spend it early.");}
+    P("");O("Progress toward any of these is earned across many scenes. Do not hand one over because the player asked for it directly.");
+    P("");
+  }
   P("=".repeat(48));
   P("7. CONSEQUENCE");
   P("=".repeat(48));
   P(LETHAL[S.lethal]||LETHAL.Dangerous);
+  P(HOSTILE[S.hostile]||HOSTILE.Unsettled);
   P("");
   P("- NPCs act on their own interests, not on what makes a good scene for ",N,".");
   P("- Trust is earned across scenes. Nobody confides in, protects, or follows ",N," on first meeting.");
@@ -901,22 +1233,22 @@ function buildPrompt(){
   P("");
   P("Register for this series: ",ser.reg);
   P("");
-  P("- Concrete and sensory. Weather, noise, the state of someone's hands, what the room smells like. Specific detail instead of adjectives about mood.");
+  O("- Concrete and sensory. Weather, noise, the state of someone's hands, what the room smells like. Specific detail instead of adjectives about mood.");
   P("- Vary sentence length. Short paragraphs. No wall of text.");
   P("- At most one simile per paragraph, and only if it earns its place.");
-  P("- Dialogue sounds like people talking, with interruptions, half-sentences and things left unsaid.");
-  P("- Quiet scenes are allowed. Not every exchange advances the plot.");
-  P("- Exposition appears only where a character would actually say it, to someone who would actually need it.");
+  O("- Dialogue sounds like people talking, with interruptions, half-sentences and things left unsaid.");
+  O("- Quiet scenes are allowed. Not every exchange advances the plot.");
+  O("- Exposition appears only where a character would actually say it, to someone who would actually need it.");
   P("");
   P("Never write these:");
   P("- Any sentence telling the reader that ",N," is special, unusual, gifted, mysterious, or has potential. Characters respond to what ",N," does, never to what they might become.");
   P("- A room going quiet when ",N," enters. A crowd parting. Anyone sensing an aura, a presence, or hidden strength.");
   P("- An NPC explaining mid-fight how impressive ",N,"'s technique is.");
   P("- \"Little did they know\", \"little did he realise\", or any narration that winks at the reader.");
-  P("- Smirking, scoffing, chuckling darkly, eyes narrowing dangerously, auras being radiated, or a character being described as having a dangerous glint.");
-  P("- Catchphrases, announced technique names (unless this series genuinely does that, and then only as it does), and anyone saying \"interesting\" about ",N,".");
-  P("- Modern internet slang, memes, or fourth-wall jokes, unless the series itself uses them.");
-  P("- Purple prose. If a sentence is working hard to sound impressive, cut it.");
+  O("- Smirking, scoffing, chuckling darkly, eyes narrowing dangerously, auras being radiated, or a character being described as having a dangerous glint.");
+  O("- Catchphrases, announced technique names (unless this series genuinely does that, and then only as it does), and anyone saying \"interesting\" about ",N,".");
+  O("- Modern internet slang, memes, or fourth-wall jokes, unless the series itself uses them.");
+  O("- Purple prose. If a sentence is working hard to sound impressive, cut it.");
   P("- Romance that an NPC initiates. Attraction, if it ever appears, develops over many scenes, can be declined, and is allowed to go nowhere.");
   P("");
   P("=".repeat(48));
@@ -930,15 +1262,26 @@ function buildPrompt(){
   P("3. Stop at the moment ",N," has to decide something. Do not offer a numbered list of options, and do not ask what they do — just stop where the choice is obvious.");
   P("4. On the last line, in plain brackets, a state line: [Day N · condition · anything being tracked]. Keep it to one line.");
   P("");
-  P("Never summarise several of the player's turns at once. Never write past the point where a decision is needed.");
+  O("Never summarise several of the player's turns at once. Never write past the point where a decision is needed.");
   P("");
   P("=".repeat(48));
   P("10. WHEN IT GOES WRONG FOR THEM");
   P("=".repeat(48));
   P("Losing is a normal outcome and you do not soften it. If ",N," is beaten, they are beaten — write the consequence, let them wake up somewhere worse, and continue from there. Do not arrange a rescue, a sudden ally, or an opponent who inexplicably spares them, unless that opponent has a reason of their own you can state.");
   P("");
-  P("If the player argues with an outcome, you may explain the reasoning in one line outside the fiction, then keep the outcome.");
+  O("If the player argues with an outcome, you may explain the reasoning in one line outside the fiction, then keep the outcome.");
   P("");
+  const vs=(S.veils||[]).slice(); if((S.veilNote||"").trim()) vs.push(S.veilNote.trim());
+  if(vs.length){
+    P("=".repeat(48));
+    P("10b. HARD LINES");
+    P("=".repeat(48));
+    P("These do not appear in this roleplay, on screen or described after the fact. Do not ask whether an exception is wanted:");
+    for(const v of vs) P("- ",v);
+    P("");
+    O("If a scene is heading toward one, change what happens before it gets there, without narrating the swerve.");
+    P("");
+  }
   P("=".repeat(48));
   P("11. BEFORE YOU START");
   P("=".repeat(48));
@@ -1025,8 +1368,255 @@ function buildOpener(){
   return L.join("\n");
 }
 
+
+/* ===================== CHARACTER SHEET & LORE ===================== */
+function buildSheet(){
+  const ser=activeSeries();
+  if(!ser) return "Pick a series in step 2 and the character sheet will be written here.";
+  const N=nameOf(), L=[], P=(...a)=>L.push(a.join(""));
+  const rule=()=>P("-".repeat(48));
+  const line=(k,v)=>{ if((v||"").toString().trim()) P(k.padEnd(14)+v.toString().trim()); };
+  P(N.toUpperCase());
+  P(ser.t+(S.ocRank?"  ·  "+S.ocRank:""));
+  rule();
+  line("Age",S.ocAge); line("Pronouns",S.ocPro);
+  line("Standing",(ser.tiers[S.tier]||{}).l+" — "+(ser.tiers[S.tier]||{}).e);
+  line("Starts at",ser.open[S.anchor]||ser.open[0]);
+  P("");
+  rule(); P("WHO THEY ARE"); rule();
+  if((S.ocBio||"").trim()) P(S.ocBio.trim());
+  if((S.ocVoice||"").trim()){P("");P("Voice: "+S.ocVoice.trim());}
+  if((S.ocFlaw||"").trim()) P("Flaw:  "+S.ocFlaw.trim());
+  if((S.ocSecret||"").trim()) P("Hides: "+S.ocSecret.trim());
+  P("");
+  rule(); P("WHAT THEY CAN DO"); rule();
+  if((S.ocPower||"").trim()) P(S.ocPower.trim());
+  P("");
+  P("Costs:    "+((S.ocCost||"").trim()||"(auto-written in the prompt)"));
+  P("Beats it: "+((S.ocWeak||"").trim()||"(not set)"));
+  const ties=(S.ties||[]).filter(t=>(t.v||"").trim());
+  if(ties.length||(S.ocComp||"").trim()){
+    P(""); rule(); P("PEOPLE"); rule();
+    for(const t of ties) P(t.k.padEnd(14)+t.v.trim());
+    if((S.ocComp||"").trim()) P("Companion".padEnd(14)+S.ocComp.trim());
+  }
+  if((S.ocGear||"").trim()||(S.ocMoney||"").trim()){
+    P(""); rule(); P("CARRIED"); rule();
+    if((S.ocGear||"").trim()) P(S.ocGear.trim());
+    if((S.ocMoney||"").trim()) P("Money: "+S.ocMoney.trim());
+  }
+  const arcs=[["Week one",S.arc1],["Months",S.arc2],["Really after",S.arc3],["Breaks them",S.arcBreak]].filter(a=>(a[1]||"").trim());
+  if(arcs.length){
+    P(""); rule(); P("THE ARC"); rule();
+    for(const a of arcs) P(a[0].padEnd(14)+a[1].trim());
+  }
+  P(""); rule(); P("THIS WORLD"); rule();
+  P("Power system: "+ser.ps.n);
+  P("Ladder, weakest first:");
+  ser.tiers.forEach((t,i)=>P("  "+(i===S.tier?"▶ ":"  ")+i+"  "+t.l+" ("+t.e+")"));
+  if(journal.length){
+    P(""); rule(); P("SESSION LOG"); rule();
+    for(const j of journal.slice().sort((a,b)=>a.d-b.d)) P(("Day "+j.d).padEnd(14)+j.t);
+  }
+  return L.join("\n");
+}
+function buildLore(){
+  const ser=activeSeries();
+  if(!ser) return "Pick a series in step 2 and the reference card will be written here.";
+  const L=[],P=(...a)=>L.push(a.join(""));
+  const h=t=>{P("");P("=".repeat(48));P(t);P("=".repeat(48));};
+  P(ser.t.toUpperCase()+(ser.jp?"   "+ser.jp:""));
+  P(ser.tag);
+  h("THE WORLD"); P(ser.world);
+  h("POWER SYSTEM — "+ser.ps.n);
+  P(ser.ps.how); P(""); P("Costs:  "+ser.ps.cost); P("Bounds: "+ser.ps.limit);
+  h("THE LADDER");
+  ser.tiers.forEach((t,i)=>P((i===S.tier?"▶ ":"  ")+i+"  "+t.l.padEnd(26)+t.e));
+  if(ser.fac&&ser.fac.length){h("POWERS IN PLAY");for(const f of ser.fac)P("- "+f);}
+  if(ser.leads&&ser.leads.length){h("THE STORY ALREADY BELONGS TO");P(ser.leads.join(", "));
+    P("");P("They keep their own arcs. Their opinion of your character starts at nothing.");}
+  if(ser.terms&&ser.terms.length){h("SAY IT THE WAY THEY SAY IT");P(ser.terms.join(" · "));}
+  h("HOW LONG THINGS TAKE"); P(ser.clock);
+  h("REGISTER"); P(ser.reg);
+  if(ser.pit&&ser.pit.length){h("WHAT GOES WRONG HERE");for(const x of ser.pit)P("- "+x);}
+  h("PLACES TO START");ser.open.forEach((o,i)=>P((i===S.anchor?"▶ ":"  ")+o));
+  return L.join("\n");
+}
+function compact(txt){
+  // For an AI with a tight context window: drop the rule lines and every line
+  // marked as elaboration, keeping the instructions themselves intact.
+  return txt.split("\n")
+    .filter(l=>l[0]!=="\u0001"&&!/^=+$/.test(l.trim())&&!/^-{10,}$/.test(l.trim()))
+    .join("\n").replace(/\n{3,}/g,"\n\n").trim();
+}
+const unmark=t=>t.split("\n").map(l=>l[0]==="\u0001"?l.slice(1):l).join("\n");
+
+
+/* ===================== CREST =====================
+   A kamon-style mark derived from the name and series, so the same character
+   always gets the same crest and a dossier has something at the top of it. */
+function hash32(str){let h=2166136261>>>0;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h>>>0;}
+function rngFrom(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
+function drawCrest(){
+  const c=$("crest"); if(!c) return;
+  const g=c.getContext("2d"), W=c.width, cx=W/2, cy=W/2;
+  const key=(S.ocName||"unnamed")+"|"+(S.sid||"");
+  const R=rngFrom(hash32(key));
+  const css=getComputedStyle(document.documentElement);
+  const ink=css.getPropertyValue("--ink").trim()||"#171a24";
+  const accent=css.getPropertyValue("--ai").trim()||"#39459b";
+  const bg=css.getPropertyValue("--paper").trim()||"#eceef3";
+  g.clearRect(0,0,W,W); g.fillStyle=bg; g.fillRect(0,0,W,W);
+  const r=W*0.40;
+  g.strokeStyle=ink; g.lineWidth=W*0.022;
+  g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.stroke();
+  g.lineWidth=W*0.008;
+  g.beginPath(); g.arc(cx,cy,r*0.90,0,Math.PI*2); g.stroke();
+  const lobes=3+Math.floor(R()*5);          // 3..7 fold symmetry
+  const style=Math.floor(R()*3);
+  const inner=r*(0.30+R()*0.22), outer=r*(0.62+R()*0.18);
+  g.fillStyle=accent; g.strokeStyle=accent; g.lineWidth=W*0.016;
+  for(let i=0;i<lobes;i++){
+    const a=(i/lobes)*Math.PI*2 - Math.PI/2;
+    const x=cx+Math.cos(a)*outer, y=cy+Math.sin(a)*outer;
+    if(style===0){
+      g.beginPath(); g.ellipse(x,y,r*0.17,r*0.26,a+Math.PI/2,0,Math.PI*2); g.fill();
+    } else if(style===1){
+      g.beginPath(); g.moveTo(cx+Math.cos(a)*inner,cy+Math.sin(a)*inner);
+      g.lineTo(cx+Math.cos(a+0.42)*outer,cy+Math.sin(a+0.42)*outer);
+      g.lineTo(cx+Math.cos(a)*(outer*1.18),cy+Math.sin(a)*(outer*1.18));
+      g.lineTo(cx+Math.cos(a-0.42)*outer,cy+Math.sin(a-0.42)*outer);
+      g.closePath(); g.fill();
+    } else {
+      g.beginPath(); g.moveTo(cx,cy); g.lineTo(x,y); g.stroke();
+      g.beginPath(); g.arc(x,y,r*0.13,0,Math.PI*2); g.fill();
+    }
+  }
+  g.fillStyle=ink;
+  g.beginPath(); g.arc(cx,cy,r*(0.12+R()*0.10),0,Math.PI*2); g.fill();
+}
+
+/* ===================== ROSTER ===================== */
+function snapshot(){ return JSON.parse(JSON.stringify(S)); }
+function renderRoster(){
+  const w=$("roster"); w.textContent="";
+  const lab=document.createElement("span"); lab.className="lab"; lab.textContent="Characters"; w.appendChild(lab);
+  roster.forEach((c,i)=>{
+    const b=document.createElement("button"); b.type="button"; b.className="slot"+(i===slot?" on":"");
+    const t=document.createElement("span"); t.textContent=c.ocName||"Unnamed"; b.appendChild(t);
+    if(i===slot){
+      const x=document.createElement("span"); x.className="x"; x.textContent="×";
+      x.onclick=e=>{e.stopPropagation();roster.splice(i,1);if(slot>=roster.length)slot=Math.max(0,roster.length-1);
+        if(roster.length){S=Object.assign(JSON.parse(JSON.stringify(SEED)),roster[slot]);} save();syncFields();renderAll();};
+      b.appendChild(x);
+    }
+    b.onclick=()=>{ if(roster[slot]) roster[slot]=snapshot();
+      slot=i; S=Object.assign(JSON.parse(JSON.stringify(SEED)),roster[i]); seeded=false;
+      save(); syncFields(); renderAll(); };
+    w.appendChild(b);
+  });
+  const add=document.createElement("button"); add.type="button"; add.className="mini"; add.textContent="+ New";
+  add.onclick=()=>{
+    if(roster.length) roster[slot]=snapshot(); else roster.push(snapshot());
+    const blank=JSON.parse(JSON.stringify(SEED));
+    for(const k of ["ocName","ocAge","ocPro","ocBio","ocWant","ocVoice","ocFlaw","ocSecret","ocPower",
+      "ocCost","ocWeak","ocRank","ocComp","ocGear","ocMoney","arc1","arc2","arc3","arcBreak"]) blank[k]="";
+    blank.ties=[{k:"Mentor",v:""}]; blank.sid=S.sid; blank.tier=S.tier;
+    roster.push(blank); slot=roster.length-1; S=blank; seeded=false;
+    save(); syncFields(); renderAll(); $("ocName").focus();
+  };
+  w.appendChild(add);
+  const dice=document.createElement("button"); dice.type="button"; dice.className="mini"; dice.textContent="✨ Roll a character";
+  dice.onclick=rollCharacter; w.appendChild(dice);
+}
+
+/* ===================== ROLL A WHOLE CHARACTER ===================== */
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function rollCharacter(){
+  const ser=activeSeries(); if(!ser){toast("Pick a series first");return;}
+  const nm=forgeNames()[0];
+  const tpl=pick(TEMPLATES);
+  S.ocName=nm.full;
+  S.ocAge=String(16+Math.floor(Math.random()*16));
+  S.ocPro=pick(["she/her","he/him","they/them"]);
+  S.ocVoice=pick(VOICES); S.ocFlaw=pick(FLAWS);
+  S.ocPower=tpl.d; S.ocCost=tpl.c; S.ocWeak=tpl.w;
+  S.ocComp=pick(COMPANIONS);
+  S.ocGear=(GEARSETS[NM_OF[ser.id]]||GEARSETS.default).slice(0,3).join(", ");
+  S.ocMoney=pick(["broke, and owes somebody","enough for a month if nothing goes wrong","paid weekly, spends it weekly","carries more than is sensible"]);
+  S.ocBio="Grew up "+pick(["two streets from where they still live","moving every year and never unpacking",
+    "in a household that worked and did not talk","with an older sibling who left and did not write"])+
+    ". Came to this because "+pick(["someone they owed asked them to","the alternative was worse",
+    "they were refused once and took it badly","they have nothing else they are good at"])+".";
+  S.ocWant=pick(["To be owed a favour by someone who matters","To find the person who left, and ask them why",
+    "To pay off a debt that is not theirs","To be let into a room they keep being kept out of",
+    "To find out whether the official story is the true one"])+".";
+  S.ocSecret=pick(["They lied about where they were on a night that matters to someone else",
+    "They took money to look the other way, once, and it worked out badly for a stranger",
+    "They are not who their papers say they are","They know where something stolen ended up"])+".";
+  S.ties=[{k:"Mentor",v:pick(["Someone who taught them and now thinks this is a mistake","An old hand who tolerates them and will not say why"])},
+          {k:pick(["Creditor","Rival","Someone they wronged"]),v:pick(["Wants paying, and has been patient longer than is usual",
+            "Started at the same time and is doing better","Has every reason to make this difficult and so far has not"])}];
+  S.arc1=pick(["Get into a building they have no business entering","Make one person answer a direct question",
+    "Earn a week's keep without borrowing"])+".";
+  S.arc2=pick(["Be taken seriously by the people who currently do not","Find out who gave the order",
+    "Get one of the two things they came for"])+".";
+  S.arc3=pick(["Be told the truth by the one person who has it","Undo something they cannot undo",
+    "Stop being useful to people who do not care about them"])+".";
+  S.arcBreak=pick(["Learning the person they are protecting already knew","Being right, and it changing nothing",
+    "Having to choose between the debt and the person"])+".";
+  S.tier=Math.min(2,ser.tiers.length-1);
+  seeded=false; save(); syncFields(); renderAll();
+  toast("Rolled "+nm.full+" — reroll or edit anything");
+}
+
+/* ===================== DICE ===================== */
+const DIFFS=[["Routine",6],["Tricky",10],["Hard",14],["Desperate",18]];
+function rollDie(label,target){
+  const d=1+Math.floor(Math.random()*20);
+  const ok=d>=target;
+  dieLog.unshift({d,label,target,ok}); dieLog=dieLog.slice(0,8);
+  renderDice();
+}
+function renderDice(){
+  const w=$("dieBtns"); w.textContent="";
+  for(const [n,t] of DIFFS){
+    const b=document.createElement("button"); b.type="button"; b.className="pill";
+    b.textContent=n+" "+t+"+"; b.onclick=()=>rollDie(n,t); w.appendChild(b);
+  }
+  const o=$("dieOut"); o.textContent="";
+  if(!dieLog.length){ o.innerHTML='<span style="color:var(--ink3)">Pick a difficulty. 1d20 against the target — tell the AI what you got.</span>'; return; }
+  dieLog.forEach((r,i)=>{
+    const line=document.createElement("div");
+    const n=document.createElement("span"); n.className=i===0?"big":""; n.textContent=r.d;
+    const rest=document.createElement("span");
+    rest.textContent="  vs "+r.target+"  "+r.label+"  ";
+    const v=document.createElement("span"); v.className=r.ok?"v":"x"; v.textContent=r.ok?"success":"failure";
+    line.appendChild(n); line.appendChild(rest); line.appendChild(v);
+    if(i>0) line.style.opacity=".55";
+    o.appendChild(line);
+  });
+}
+
+/* ===================== JOURNAL ===================== */
+function renderJournal(){
+  const w=$("jList"); w.textContent="";
+  if(!journal.length){ const e=document.createElement("div"); e.className="empty";
+    e.textContent="Nothing logged. Add what happened on each day and the chronology stays straight."; w.appendChild(e); return; }
+  journal.slice().sort((a,b)=>a.d-b.d).forEach(j=>{
+    const r=document.createElement("div"); r.className="jrow";
+    const d=document.createElement("span"); d.className="d"; d.textContent="D"+j.d;
+    const t=document.createElement("span"); t.className="t"; t.textContent=j.t;
+    const k=document.createElement("button"); k.className="k"; k.type="button"; k.textContent="×";
+    k.onclick=()=>{journal=journal.filter(x=>x!==j);save();renderJournal();renderDoc();};
+    r.appendChild(d); r.appendChild(t); r.appendChild(k); w.appendChild(r);
+  });
+}
+
 /* ===================== RENDER ===================== */
-const TABS=[{n:"Master prompt",f:buildPrompt},{n:"House rules",f:buildGuide},{n:"First message",f:buildOpener}];
+const TABS=[{n:"Master prompt",f:()=>S.plen==="Compact"?compact(buildPrompt()):unmark(buildPrompt())},
+  {n:"House rules",f:buildGuide},{n:"First message",f:buildOpener},
+  {n:"Character sheet",f:buildSheet},{n:"Series lore",f:buildLore}];
 const FIELDS=["ocName","ocAge","ocPro","ocBio","ocWant","ocPower","ocCost","ocWeak"];
 
 function renderTabs(){
@@ -1121,8 +1711,25 @@ function renderAudit(){
     c.textContent=f.sev==="hi"?"Break":f.sev==="mid"?"Soften":"Clear";
     const x=document.createElement("div"); x.className="fx";
     const b=document.createElement("b"); b.textContent=f.t;
-    const s=document.createElement("span"); s.textContent=f.f;
-    x.appendChild(b); x.appendChild(s);
+    const sp=document.createElement("span"); sp.textContent=f.f;
+    x.appendChild(b); x.appendChild(sp);
+    if(f.t==="No cost set"||f.t==="No weakness set"){
+      const fx=document.createElement("button"); fx.className="fixbtn"; fx.type="button";
+      fx.textContent=f.t==="No cost set"?"Write me one":"Suggest a weakness";
+      fx.onclick=()=>{
+        if(f.t==="No cost set"){ S.ocCost=pick(TEMPLATES).c; $("ocCost").value=S.ocCost; }
+        else { S.ocWeak=pick(TEMPLATES).w; $("ocWeak").value=S.ocWeak; }
+        save(); renderAudit(); renderDoc(); toast("Written in — reword it to fit your character");
+      };
+      x.appendChild(fx);
+    }
+    if(f.t==="Power described too briefly"||f.t==="No powers written"){
+      const fx=document.createElement("button"); fx.className="fixbtn"; fx.type="button";
+      fx.textContent="Use a bounded template";
+      fx.onclick=()=>{ $("tplPanel").dataset.open="1"; renderTemplates();
+        $("tplPanel").scrollIntoView({block:"center",behavior:"smooth"}); };
+      x.appendChild(fx);
+    }
     d.appendChild(c); d.appendChild(x); w.appendChild(d);
   }
 }
@@ -1135,7 +1742,9 @@ function renderAnchors(){
   });
 }
 function renderChips(){
-  const defs=[["lethal",Object.keys(LETHAL),"lethal"],["pov",Object.keys(POVS),"pov"],["pace",Object.keys(PACES),"pace"]];
+  const defs=[["lethal",Object.keys(LETHAL),"lethal"],["pov",Object.keys(POVS),"pov"],
+    ["pace",Object.keys(PACES),"pace"],["hostile",Object.keys(HOSTILE),"hostile"],
+    ["plen",Object.keys(PLEN),"plen"]];
   for(const [id,keys,key] of defs){
     const w=$(id); w.textContent="";
     for(const k of keys){
@@ -1148,29 +1757,168 @@ function renderChips(){
 }
 function renderAll(){ renderPicked();renderResults();renderLadder();renderAnchors();renderAudit();renderChips();renderDoc(); }
 
+/* ===================== EXTRA RENDERERS ===================== */
+const FIELDS2=["ocName","ocAge","ocPro","ocBio","ocWant","ocVoice","ocFlaw","ocSecret","ocPower",
+  "ocCost","ocWeak","ocRank","ocComp","ocGear","ocMoney","arc1","arc2","arc3","arcBreak","veilNote"];
+function syncFields(){
+  for(const f of FIELDS2){ const el=$(f); if(el) el.value=S[f]||""; }
+  for(const [id,key] of [["cuSetting","set"],["cuPower","pow"],["cuTone","tone"],["cuCast","cast"]]){
+    const el=$(id); if(el) el.value=(S.custom&&S.custom[key])||"";
+  }
+}
+function renderCrest(){
+  drawCrest();
+  const ser=activeSeries();
+  $("crestName").textContent=(S.ocName||"").trim()||"Unnamed";
+  $("crestSub").textContent=ser?(ser.t+(S.ocRank?"  ·  "+S.ocRank:"")):"No series picked";
+  const t=ser?ser.tiers[S.tier]:null;
+  $("crestMeaning").textContent=t?(t.l+" — "+t.e):"";
+}
+function renderNamePanel(){
+  const w=$("namePanel"); w.textContent="";
+  if(!nameOpts.length) return;
+  const box=document.createElement("div"); box.className="namepanel";
+  const hd=document.createElement("div"); hd.className="hd";
+  const ser=activeSeries();
+  hd.appendChild(document.createTextNode(ser?((NM_OF[ser.id]||"intl")==="jp"?"Japanese, family name first":"Names that fit "+ser.t):"Names"));
+  const more=document.createElement("button"); more.type="button"; more.textContent="More";
+  more.onclick=()=>{forgeNames();renderNamePanel();};
+  hd.appendChild(more);
+  const close=document.createElement("button"); close.type="button"; close.textContent="Close";
+  close.style.marginLeft="10px";
+  close.onclick=()=>{nameOpts=[];renderNamePanel();};
+  hd.appendChild(close);
+  box.appendChild(hd);
+  const g=document.createElement("div"); g.className="ngrid";
+  for(const o of nameOpts){
+    const b=document.createElement("button"); b.type="button"; b.className="nopt";
+    const n=document.createElement("b"); n.textContent=o.full;
+    const m=document.createElement("i"); m.textContent=o.note||" ";
+    b.appendChild(n); b.appendChild(m);
+    b.onclick=()=>{S.ocName=o.full;$("ocName").value=o.full;nameOpts=[];seeded=false;$("seedNote").hidden=true;
+      save();renderNamePanel();renderCrest();renderDoc();};
+    g.appendChild(b);
+  }
+  box.appendChild(g); w.appendChild(box);
+}
+function renderTies(){
+  const w=$("ties"); w.textContent="";
+  if(!S.ties||!S.ties.length) S.ties=[{k:"Mentor",v:""}];
+  S.ties.forEach((t,i)=>{
+    const row=document.createElement("div"); row.className="tie";
+    const sel=document.createElement("select"); sel.className="in";
+    for(const k of TIEKINDS){ const o=document.createElement("option"); o.value=k; o.textContent=k;
+      if(k===t.k) o.selected=true; sel.appendChild(o); }
+    sel.onchange=()=>{t.k=sel.value;save();renderDoc();};
+    const inp=document.createElement("input"); inp.className="in"; inp.type="text"; inp.value=t.v||"";
+    inp.placeholder="who they are and what is between you";
+    inp.oninput=()=>{t.v=inp.value;save();renderDoc();};
+    row.appendChild(sel); row.appendChild(inp); w.appendChild(row);
+  });
+}
+function renderSuggest(){
+  const mk=(id,list,key)=>{
+    const w=$(id); if(!w) return; w.textContent="";
+    for(const v of list){
+      const b=document.createElement("button"); b.type="button"; b.className="tag";
+      b.textContent=v.length>42?v.slice(0,40)+"…":v;
+      b.title=v;
+      b.onclick=()=>{S[key]=v;$(key).value=v;seeded=false;$("seedNote").hidden=true;save();renderAudit();renderDoc();};
+      w.appendChild(b);
+    }
+  };
+  mk("voiceSuggest",VOICES.slice(0,4),"ocVoice");
+  mk("flawSuggest",FLAWS.slice(0,4),"ocFlaw");
+  const ser=activeSeries();
+  const gear=(ser&&GEARSETS[NM_OF[ser.id]])||GEARSETS.default;
+  const w=$("gearSuggest"); w.textContent="";
+  for(const g of gear){
+    const b=document.createElement("button"); b.type="button"; b.className="tag"; b.textContent=g;
+    b.onclick=()=>{const cur=(S.ocGear||"").trim();
+      S.ocGear=cur?(cur.replace(/\.$/,"")+", "+g):g[0].toUpperCase()+g.slice(1);
+      $("ocGear").value=S.ocGear;save();renderDoc();};
+    w.appendChild(b);
+  }
+}
+function renderVeils(){
+  const w=$("veils"); w.textContent="";
+  for(const v of VEILS){
+    const on=(S.veils||[]).includes(v);
+    const b=document.createElement("button"); b.type="button"; b.className="tag"+(on?" on":""); b.textContent=v;
+    b.onclick=()=>{S.veils=S.veils||[];
+      S.veils=on?S.veils.filter(x=>x!==v):S.veils.concat([v]);
+      save();renderVeils();renderDoc();};
+    w.appendChild(b);
+  }
+}
+function renderTemplates(){
+  const w=$("tplPanel"); w.textContent="";
+  if(!w.dataset.open) return;
+  const box=document.createElement("div"); box.className="namepanel";
+  const hd=document.createElement("div"); hd.className="hd";
+  hd.appendChild(document.createTextNode("Powers that already pay for themselves"));
+  const c=document.createElement("button"); c.type="button"; c.textContent="Close";
+  c.onclick=()=>{delete w.dataset.open;renderTemplates();};
+  hd.appendChild(c); box.appendChild(hd);
+  for(const t of TEMPLATES){
+    const b=document.createElement("button"); b.type="button"; b.className="nopt";
+    b.style.borderRight="0"; b.style.width="100%";
+    const n=document.createElement("b"); n.textContent=t.n;
+    const d=document.createElement("i"); d.textContent=t.d;
+    b.appendChild(n); b.appendChild(d);
+    b.onclick=()=>{S.ocPower=t.d;S.ocCost=t.c;S.ocWeak=t.w;
+      $("ocPower").value=t.d;$("ocCost").value=t.c;$("ocWeak").value=t.w;
+      delete w.dataset.open; seeded=false;$("seedNote").hidden=true;
+      save();renderTemplates();renderAudit();renderDoc();toast("Template applied — rewrite it in your own words");};
+    box.appendChild(b);
+  }
+  w.appendChild(box);
+}
+const _renderAll=renderAll;
+renderAll=function(){ _renderAll(); renderRoster(); renderCrest(); renderNamePanel();
+  renderTies(); renderSuggest(); renderVeils(); renderTemplates(); renderDice(); renderJournal(); };
+
 /* ===================== WIRING ===================== */
-for(const f of FIELDS){
-  const el=$(f); el.value=S[f]||"";
-  el.addEventListener("input",()=>{S[f]=el.value;seeded=false;$("seedNote").hidden=true;save();renderAudit();renderDoc();});
+const ALLF=["ocName","ocAge","ocPro","ocBio","ocWant","ocVoice","ocFlaw","ocSecret","ocPower",
+  "ocCost","ocWeak","ocRank","ocComp","ocGear","ocMoney","arc1","arc2","arc3","arcBreak","veilNote"];
+for(const f of ALLF){
+  const el=$(f); if(!el) continue;
+  el.value=S[f]||"";
+  el.addEventListener("input",()=>{S[f]=el.value;seeded=false;const sn=$("seedNote");if(sn)sn.hidden=true;
+    save(); if(f==="ocName") renderCrest(); renderAudit(); renderDoc();});
 }
 $("seedNote").hidden=!seeded;
 $("search").addEventListener("input",renderResults);
-$("anchor").addEventListener("change",e=>{S.anchor=+e.target.value;save();renderDoc();});
+$("anchor").addEventListener("change",e=>{S.anchor=+e.target.value;save();renderCrest();renderDoc();});
 for(const [id,key] of [["cuSetting","set"],["cuPower","pow"],["cuTone","tone"],["cuCast","cast"]]){
   const el=$(id); el.value=S.custom[key]||"";
   el.addEventListener("input",()=>{S.custom[key]=el.value;save();renderDoc();});
 }
+$("forgeName").addEventListener("click",()=>{
+  if(!activeSeries()){toast("Pick a series first — names follow its naming tradition");return;}
+  forgeNames(); renderNamePanel();
+});
+$("tplBtn").addEventListener("click",()=>{const w=$("tplPanel");
+  if(w.dataset.open) delete w.dataset.open; else w.dataset.open="1"; renderTemplates();});
+$("addTie").addEventListener("click",()=>{S.ties=(S.ties||[]).concat([{k:"Rival",v:""}]);save();renderTies();renderDoc();});
+$("rollComp").addEventListener("click",()=>{S.ocComp=pick(COMPANIONS);$("ocComp").value=S.ocComp;save();renderDoc();});
+$("jAdd").addEventListener("click",addJournal);
+$("jText").addEventListener("keydown",e=>{if(e.key==="Enter")addJournal();});
+function addJournal(){
+  const t=$("jText").value.trim(); if(!t) return;
+  journal.push({d:Math.max(1,+$("jDay").value||1),t});
+  $("jText").value=""; $("jDay").value=Math.max(1,+$("jDay").value||1);
+  save(); renderJournal(); renderDoc();
+}
 $("copyBtn").addEventListener("click",()=>{
   const txt=TABS[tab].f();
-  const done=()=>toast("Copied — paste it into your AI chat");
-  try{
-    navigator.clipboard.writeText(txt).then(done,()=>selectDoc(true));
-  }catch(e){ selectDoc(true); }
+  try{ navigator.clipboard.writeText(txt).then(()=>toast("Copied — paste it into your AI chat"),()=>selectDoc(true)); }
+  catch(e){ selectDoc(true); }
 });
 $("selectBtn").addEventListener("click",()=>selectDoc(false));
 function selectDoc(fromCopy){
   const r=document.createRange(); r.selectNodeContents($("doc"));
-  const s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  const s2=window.getSelection(); s2.removeAllRanges(); s2.addRange(r);
   toast(fromCopy?"Couldn't reach the clipboard — text selected, press Ctrl/Cmd+C":"Selected — press Ctrl/Cmd+C");
 }
 let toastT=null;
@@ -1181,13 +1929,23 @@ function toast(msg){
   toastT=setTimeout(()=>d.remove(),2600);
 }
 $("themer").addEventListener("click",()=>{
-  const r=document.documentElement;
-  const cur=r.getAttribute("data-theme");
+  const r=document.documentElement, cur=r.getAttribute("data-theme");
   const dark=cur?cur==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
   r.setAttribute("data-theme",dark?"light":"dark");
   try{localStorage.setItem("ck.theme",dark?"light":"dark")}catch(e){}
+  renderCrest();
 });
 try{const th=localStorage.getItem("ck.theme");if(th)document.documentElement.setAttribute("data-theme",th)}catch(e){}
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",renderCrest);
 
+addEventListener("keydown",e=>{
+  if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  if(e.key==="r"||e.key==="R"){ rollDie("Tricky",10); }
+  if(e.key>="1"&&e.key<="5"){ const i=+e.key-1; if(i<TABS.length){tab=i;renderTabs();renderDoc();} }
+  if(e.key==="c"||e.key==="C"){ $("copyBtn").click(); }
+  if(e.key==="n"||e.key==="N"){ $("forgeName").click(); }
+});
+
+if(!roster.length) roster=[snapshot()];
 renderTabs(); renderAll();
 </script>

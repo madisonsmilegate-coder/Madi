@@ -1,0 +1,391 @@
+<title>Hagiwara Tsunemori</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: a single-column case file. Ledger rules, a blank seal for a name that
+   was struck off, and one cinnabar accent used only where a document would use it. */
+:root{
+  --paper:#f2f1ee; --card:#fbfaf8; --sunk:#e7e5e0;
+  --ink:#14161c; --ink2:#464a55; --ink3:#7e8390;
+  --rule:#d3d1cb; --rule2:#e3e1db;
+  --sumi:#1d2440;            /* the blue cast in real sumi ink */
+  --sumi-soft:#e5e6ef;
+  --shu:#9e2b20;             /* cinnabar, as on a seal */
+  --shu-soft:#f6e6e3;
+  --disp:"Shippori Mincho",Georgia,"Times New Roman",serif;
+  --body:"Zen Kaku Gothic New",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0e1016; --card:#161920; --sunk:#090b10;
+  --ink:#e8e7e3; --ink2:#a4a8b4; --ink3:#747984;
+  --rule:#2a2e38; --rule2:#1f232b;
+  --sumi:#9aa6e0; --sumi-soft:#1a1f38;
+  --shu:#d9736a; --shu-soft:#2e1a18;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#0e1016; --card:#161920; --sunk:#090b10;
+  --ink:#e8e7e3; --ink2:#a4a8b4; --ink3:#747984;
+  --rule:#2a2e38; --rule2:#1f232b;
+  --sumi:#9aa6e0; --sumi-soft:#1a1f38;
+  --shu:#d9736a; --shu-soft:#2e1a18;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);
+  font-size:15.5px;line-height:1.68;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--disp);font-weight:800;text-wrap:balance;margin:0;line-height:1.22}
+p{margin:0 0 1em}
+:focus-visible{outline:2px solid var(--sumi);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.wrap{max-width:780px;margin:0 auto;padding-inline:22px;padding-block:0 80px}
+
+/* ---- masthead ---- */
+header.top{position:relative;padding-block:44px 24px;border-bottom:2px solid var(--ink);margin-bottom:34px}
+header.top::before{content:"";position:absolute;inset:-40px 0 auto 0;height:230px;z-index:-1;
+  background:radial-gradient(60% 90% at 22% 0%,var(--sumi-soft),transparent 72%)}
+.eyebrow{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink3);
+  font-weight:700;margin:0 0 14px}
+.namerow{display:flex;align-items:flex-start;gap:22px;flex-wrap:wrap}
+.namerow .nm{flex:1 1 300px;min-width:0}
+h1{font-size:clamp(36px,8vw,62px);letter-spacing:-.02em;line-height:1.02}
+.kanji{font-size:clamp(17px,3vw,23px);color:var(--sumi);letter-spacing:.3em;font-family:var(--disp);
+  font-weight:400;margin-top:10px;display:block}
+.titles{margin-top:16px;font-size:14.5px;color:var(--ink2);line-height:1.6}
+.titles b{color:var(--ink);font-weight:700}
+/* the blank hanko — a name-seal with no name cut into it */
+.seal{flex:none;width:78px;height:78px;border:3px solid var(--shu);border-radius:5px;
+  position:relative;opacity:.9}
+.seal::after{content:"";position:absolute;inset:9px;border:1px solid var(--shu);border-radius:2px;opacity:.5}
+.sealcap{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--shu);
+  text-align:center;margin-top:7px;font-weight:700;width:78px}
+
+/* ---- sections ---- */
+section{margin-bottom:40px}
+h2{font-size:25px;margin-bottom:4px;display:flex;align-items:baseline;gap:12px}
+h2 .no{font-family:var(--mono);font-size:12px;color:var(--shu);font-weight:700;flex:none;
+  letter-spacing:.06em;transform:translateY(-3px)}
+.subhead{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);
+  font-weight:700;margin:0 0 20px;padding-bottom:12px;border-bottom:1px solid var(--rule)}
+h3{font-size:17px;margin:26px 0 8px;color:var(--ink)}
+h3 .jp{font-weight:400;color:var(--sumi);font-size:.82em;letter-spacing:.14em;margin-left:.5em}
+
+/* ---- stat strip ---- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1px;
+  background:var(--rule);border:1px solid var(--rule);margin-bottom:34px}
+.stat{background:var(--card);padding:13px 15px}
+.stat .k{font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink3);
+  font-weight:700;display:block;margin-bottom:3px}
+.stat .v{font-size:14.5px;line-height:1.4;font-weight:500}
+.stat .v em{font-style:normal;color:var(--ink3);font-size:12.5px;display:block;margin-top:2px}
+
+/* ---- timeline ---- */
+.tl{border-left:2px solid var(--rule);padding-left:22px;margin:0}
+.ev{position:relative;padding-bottom:22px}
+.ev:last-child{padding-bottom:0}
+.ev::before{content:"";position:absolute;left:-28px;top:7px;width:9px;height:9px;border-radius:50%;
+  background:var(--paper);border:2px solid var(--sumi)}
+.ev.red::before{border-color:var(--shu);background:var(--shu)}
+.ev .when{font-family:var(--mono);font-size:11.5px;color:var(--shu);letter-spacing:.04em;
+  font-weight:700;display:block;margin-bottom:2px}
+.ev .what{font-size:14.5px;line-height:1.6}
+.ev .what b{font-weight:700}
+
+/* ---- tables ---- */
+.tw{overflow-x:auto;margin:18px 0;border:1px solid var(--rule)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:460px}
+th{text-align:left;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);
+  font-weight:700;padding:10px 13px;background:var(--sunk);border-bottom:1px solid var(--rule)}
+td{padding:11px 13px;border-bottom:1px solid var(--rule2);vertical-align:top;line-height:1.5}
+tr:last-child td{border-bottom:0}
+td.nm{font-family:var(--disp);font-weight:600;white-space:nowrap}
+td.nm span{display:block;font-family:var(--body);font-weight:400;font-size:11.5px;color:var(--ink3);
+  font-style:italic;white-space:normal}
+
+/* ---- callouts ---- */
+.pull{border-left:3px solid var(--sumi);padding:4px 0 4px 20px;margin:24px 0;
+  font-family:var(--disp);font-size:19px;line-height:1.5;color:var(--ink)}
+.note{background:var(--card);border:1px solid var(--rule);border-radius:3px;padding:15px 17px;margin:22px 0;
+  font-size:14px;line-height:1.6}
+.note .lbl{font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--shu);
+  font-weight:700;display:block;margin-bottom:6px}
+.warn{background:var(--shu-soft);border:1px solid var(--shu)}
+.warn .lbl{color:var(--shu)}
+
+/* ---- the death block ---- */
+.death{background:var(--ink);color:var(--paper);padding:30px 28px;margin:30px 0;position:relative;overflow:hidden}
+.death .big{position:absolute;right:6px;top:-30px;font-family:var(--disp);font-size:200px;font-weight:800;
+  color:var(--paper);opacity:.07;line-height:1;pointer-events:none}
+.death h3{color:var(--paper);margin:0 0 4px;font-size:27px;position:relative}
+.death .sub{font-size:11.5px;letter-spacing:.17em;text-transform:uppercase;opacity:.6;
+  font-weight:700;margin-bottom:18px;position:relative}
+.death p{position:relative;opacity:.93;font-size:14.5px}
+.death p:last-child{margin-bottom:0}
+.death strong{color:#fff}
+.death .cmd{font-family:var(--disp);font-size:21px;margin:16px 0;padding:14px 18px;
+  background:rgba(255,255,255,.07);border-left:3px solid var(--shu);position:relative}
+.death .cmd em{display:block;font-style:normal;font-size:12.5px;opacity:.65;margin-top:5px;
+  letter-spacing:.1em;text-transform:uppercase;font-family:var(--body);font-weight:700}
+
+/* ---- strokes ---- */
+.strokes{counter-reset:s;margin:18px 0;padding:0;list-style:none}
+.strokes li{counter-increment:s;position:relative;padding:9px 0 9px 44px;border-bottom:1px solid var(--rule2);
+  font-size:14.5px;line-height:1.55}
+.strokes li:last-child{border-bottom:0}
+.strokes li::before{content:counter(s);position:absolute;left:0;top:9px;width:27px;height:27px;
+  border:1px solid var(--sumi);color:var(--sumi);border-radius:50%;display:grid;place-items:center;
+  font-family:var(--mono);font-size:12px;font-weight:700}
+
+/* the death block is dark in both themes, so its contents can't use the page tokens */
+.death .strokes li{border-bottom-color:rgba(255,255,255,.13)}
+.death .strokes li::before{border-color:rgba(255,255,255,.45);color:rgba(255,255,255,.8)}
+ul.plain{margin:0 0 1em;padding-left:21px}
+ul.plain li{margin-bottom:7px;line-height:1.6}
+.themer{position:absolute;top:44px;right:0;background:none;border:1px solid var(--rule);
+  color:var(--ink3);border-radius:999px;padding:5px 13px;font-size:11.5px;cursor:pointer;font-family:var(--body)}
+.themer:hover{border-color:var(--sumi);color:var(--sumi)}
+footer{border-top:1px solid var(--rule);padding-top:20px;margin-top:50px;font-size:12.5px;color:var(--ink3)}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <button class="themer" id="themer" type="button">Theme</button>
+  <p class="eyebrow">Bleach &middot; original character &middot; case file</p>
+  <div class="namerow">
+    <div class="nm">
+      <h1>Hagiwara Tsunemori</h1>
+      <span class="kanji">萩原 常盛</span>
+      <p class="titles">
+        Former <b>Captain, Third Division</b> &middot; Former <b>Lieutenant, First Division</b><br>
+        Veteran of the first Quincy war &middot; Exiled, 130 years ago<br>
+        Currently <b>Ogata Shin&rsquo;ichi</b>, kettle and small-appliance repair, Karakura Town
+      </p>
+    </div>
+    <div>
+      <div class="seal" aria-hidden="true"></div>
+      <div class="sealcap">Name struck</div>
+    </div>
+  </div>
+</header>
+
+<div class="stats">
+  <div class="stat"><span class="k">Age</span><span class="v">~1,190<em>appears mid-fifties</em></span></div>
+  <div class="stat"><span class="k">Standing</span><span class="v">Lieutenant-class<em>captain-class knowledge</em></span></div>
+  <div class="stat"><span class="k">Status</span><span class="v">Standing kill-order<em>Central 46, filed 130 yrs ago</em></span></div>
+  <div class="stat"><span class="k">Zanpakut&#333;</span><span class="v">Bokkon &mdash; 墨痕<em>in his possession, disguised</em></span></div>
+  <div class="stat"><span class="k">Bankai</span><span class="v">Lost<em>atrophied in exile</em></span></div>
+  <div class="stat"><span class="k">Kid&#333;</span><span class="v">High sixties, silent<em>authored three bakud&#333;</em></span></div>
+</div>
+
+<section>
+  <h2><span class="no">01</span> Appearance</h2>
+  <p class="subhead">What people see</p>
+  <p>Shinigami age slowly and he has aged anyway. The gigai shows a narrow man in his fifties, grey coming in at the temples, reading glasses he does not technically need. Ink under the fingernails, permanently. A canvas repair apron with two screwdrivers and a steel rule in the chest pocket.</p>
+  <p>Out of the gigai, the shihakush&#333; he still owns has had its captain&rsquo;s haori cut away at the shoulders rather than removed, because he did it himself, badly, with a kitchen knife, on the night he arrived.</p>
+</section>
+
+<section>
+  <h2><span class="no">02</span> History</h2>
+  <p class="subhead">Eleven centuries, three of them as somebody</p>
+  <div class="tl">
+    <div class="ev"><span class="when">~1,190 years ago</span><div class="what">Arrives in Rukongai. Nothing about the early years is recorded and he does not fill the gap.</div></div>
+    <div class="ev red"><span class="when">1,000 years ago &mdash; THE FIRST QUINCY WAR</span><div class="what">A young shinigami in the First. <b>Holds a breach at the Fourth Wall for nine days.</b> The method was ink across the front rank and one stroke through the pool, forty or fifty at a time, repeated. They pulled him out on the tenth day and he did not walk for a month. He has never once called it a victory &mdash; when it comes up he says the number and stops talking.</div></div>
+    <div class="ev"><span class="when">~900 years ago</span><div class="what">Lieutenant of the First, under Yamamoto Genry&#363;sai. Drafts the Captain-Commander&rsquo;s standing orders into language Central 46 cannot misread, which is where he learns that the exact wording of a thing is the thing.</div></div>
+    <div class="ev"><span class="when">~700 years ago</span><div class="what">Given the <b>Third Division</b>. Sasakibe Ch&#333;jir&#333; takes the seat behind the Captain-Commander after him.</div></div>
+    <div class="ev"><span class="when">700&ndash;130 years ago</span><div class="what">Six centuries as captain of the Third. Writes three binding kid&#333; the Academy still teaches, and files all three under the Division rather than his own name.</div></div>
+    <div class="ev red"><span class="when">130 years ago &mdash; THE LEDGER</span><div class="what">A routine audit opens a sealed research ledger in the Third&rsquo;s archive. Inside, <b>in his own hand</b>, is a forbidden incantation he never wrote, beside a requisition bearing a signature he never made. Central 46 hears it in closed session; he is not permitted to speak. <b>The man who made him lieutenant signs the order himself</b>, because the evidence is airtight and Yamamoto does not bend for friendship. &#332;toribashi R&#333;j&#363;r&#333; takes the Third.</div></div>
+    <div class="ev"><span class="when">110 years ago</span><div class="what">Tsukabishi Tessai is broken on the same charge. Urahara Kisuke is exiled beside him. Urahara had read Hagiwara&rsquo;s file &mdash; it was the only record of a captain who went over the wall and was never recovered.</div></div>
+    <div class="ev"><span class="when">Now</span><div class="what">Karakura Town, the week Rukia Kuchiki loses her powers. The spiritual pressure has been climbing for six days. He has a bag packed. It has been packed for a hundred and thirty years.</div></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="no">03</span> The man</h2>
+  <p class="subhead">Voice, flaw, secret</p>
+  <p>Precise, formal, very quiet. He speaks in complete sentences and finishes them. A hundred and thirty years of hiding has made him cautious past the point of usefulness &mdash; he will think through four moves and then make none of them.</p>
+  <p>He treats kid&#333; the way a grammarian treats a language, and is physically incapable of letting a misquoted incantation pass without correcting it. It is the single most dangerous habit he has.</p>
+  <p>He is kind to his customers and lets none of them close.</p>
+  <h3>His flaw</h3>
+  <p>He will not ask anyone for help. He was the authority for six hundred years and the shape of that has not left him, now that it is only pride.</p>
+  <h3>What he hides</h3>
+  <p>He knows the handwriting in the ledger was not a clerk&rsquo;s forgery. It was too good. Someone studied him for years to write like that &mdash; and he has never said so aloud, because saying it means admitting he was worth that much effort.</p>
+</section>
+
+<section>
+  <h2><span class="no">04</span> Kid&#333;</h2>
+  <p class="subhead">What he was actually famous for</p>
+  <p>Silent incantation to the high sixties. A captain&rsquo;s command of binding and barrier work &mdash; he can lay a kekkai that holds a Menos in a residential street without a civilian noticing, in under four seconds.</p>
+  <h3>Rentan <span class="jp">連断 &middot; linked severance</span></h3>
+  <p>The offence on his charge sheet. A forbidden method of completing a kid&#333; whose incantation he has not finished, by paying the missing portion out of his own <b>permanent</b> reserve. It reaches the high eighties. It works perfectly, which is exactly why Central 46 banned it.</p>
+  <div class="note warn">
+    <span class="lbl">The cost never returns</span>
+    He has spent it eleven times in a hundred and thirty years and can feel every one. <strong>Three or four remain</strong> before he is a civilian spirit permanently.
+  </div>
+  <h3>The three he wrote</h3>
+  <p>All three are still taught in the Academy&rsquo;s binding curriculum, under no author&rsquo;s name at all.</p>
+  <div class="tw"><table>
+    <tr><th>Kid&#333;</th><th>Effect</th></tr>
+    <tr><td class="nm">Bakud&#333; #33<br>Kotonoha<span>言の葉 &middot; leaves of speech</span></td><td>Binds a spoken oath to the one who swore it. <b>The Gotei 13 still uses it to swear in every new seated officer.</b> They used it on the men who arrested him.</td></tr>
+    <tr><td class="nm">Bakud&#333; #51<br>Sumizome<span>墨染 &middot; ink-dyed</span></td><td>Marks whatever it touches, indelibly, for a day.</td></tr>
+    <tr><td class="nm">Bakud&#333; #67<br>Kagiribumi<span>限り文 &middot; the limiting text</span></td><td>A written barrier that bars only what its text names, and lets everything else through.</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2><span class="no">05</span> Bokkon</h2>
+  <p class="subhead">墨痕 &mdash; the ink-trace</p>
+
+  <h3>True sealed form</h3>
+  <p>A katana of a very old pattern. Seventy-one centimetres and almost straight &mdash; barely any sori, the way blades were made before the curve came into fashion. The steel is dark; not blued, not blackened, but a flat grey-black that does not take light the way steel should.</p>
+  <p>The <b>hamon</b> is the part that stops people. The temper line does not run in waves &mdash; it runs in short irregular strokes, each tapering off like a brush lifting from paper, so the whole edge reads as a line of handwriting in a script nobody can identify. He does not know how it was done either. It was like that when it came to him.</p>
+  <p>A hairline <b>split</b> runs the length of the shinogi. Eleven smiths across a thousand years have told him the sword is about to fail. It has been about to fail since the Quincy war.</p>
+  <p>The <b>tang is unsigned</b> &mdash; no smith&rsquo;s mark, no date, no province. The one appraiser who saw it bare called it <em>a sword that was never admitted to</em>.</p>
+  <p>The fittings are the same joke told four times: a <b>tsuba</b> cast as a calligrapher&rsquo;s inkstone with the well worn into a real dish; <b>menuki</b> shaped as brush-rests; a <b>kashira</b> that is a blank hanko, a name-seal with no name cut into it &mdash; which it already was, three hundred years before anyone struck his name off anything.</p>
+
+  <h3>The disguise</h3>
+  <p>It can become any object that can be held and swung the way a katana is held and swung: a grip at one end, length in the other. Umbrella, cane, pen, ruler, pipe, rolled scroll, crowbar. Not a coin, a book, or anything round.</p>
+  <p><b>The object is the sword.</b> He is not drawing a blade out of an umbrella &mdash; he is swinging the umbrella, and it cuts what Bokkon cuts.</p>
+  <div class="tw"><table>
+    <tr><th>Tell</th><th></th></tr>
+    <tr><td class="nm">Mass<span>absolute</span></td><td>It always weighs what a katana weighs. A fountain pen at a pound and a half. <b>He never lets anyone hold it</b> &mdash; he sets things down rather than handing them over, and has done it so long it no longer looks like a habit.</td></tr>
+    <tr><td class="nm">Changing<span>3&ndash;4 seconds</span></td><td>The object softens and runs at the edges before it resolves. Back rooms only.</td></tr>
+    <tr><td class="nm">Sensors<span>not fooled</span></td><td>It fools eyes, not reiatsu. He keeps his own pressure crushed to nothing every waking hour &mdash; <b>and a century of that suppression is much of why his reserve is so thin now.</b></td></tr>
+    <tr><td class="nm">Release<span>ends it</span></td><td>The instant he says <em>Run</em>, whatever it looks like goes black and comes apart. There is no concealed release.</td></tr>
+  </table></div>
+  <div class="pull">He is carrying a loaded weapon he cannot fire without announcing himself. That is the whole of his situation, in one object.</div>
+  <p><b>What he carries:</b> daily, a scuffed twelve-inch <b>steel rule</b> in his apron. Outdoors, a black <b>umbrella</b>, taken in dry weather too &mdash; which in Karakura reads as an old man&rsquo;s superstition. Historically, a <b>writing brush</b>: it was a brush when they arrested him, a brush through the hearing, and a brush when Yamamoto signed the order without looking up. He walked out of the Seireitei carrying his zanpakut&#333; in front of the entire Gotei 13, because nobody looks at the clerk&rsquo;s hands. He has not taken that form since.</p>
+  <div class="note">
+    <span class="lbl">They sealed the wrong sword</span>
+    Central 46&rsquo;s vault holds an ordinary katana he had owned for four hundred years and never used. <strong>If anyone ever opens it, they find a blade with no spirit in it</strong> &mdash; and they will know immediately that he has had Bokkon the whole time.
+  </div>
+
+  <h3>Released</h3>
+  <p>The split opens with a sound like paper tearing wet. The steel goes black from the tip down &mdash; not darkening, <em>inking</em>, the colour running backwards along the blade &mdash; and then it comes apart in sheets that hang in the air as though the air were still water.</p>
+  <p>Within four seconds he is standing in a spreading pool. Within twenty it is over his ankles. It runs continuously and <b>does not stop while the release holds</b>. The colour is the deep blue-black of real sumi and it carries the smell: pine soot and animal glue, a writing room in winter. People who have fought him remember the smell more clearly than anything else that happened.</p>
+</section>
+
+<section>
+  <h2><span class="no">06</span> Shikai</h2>
+  <p class="subhead">Release command &mdash; &ldquo;Run.&rdquo;</p>
+  <p>Two steps that are useless apart.</p>
+  <h3>One &mdash; the mark</h3>
+  <p>Ink that touches a thing <b>marks</b> it. Marking does no damage; nothing happens. It soaks in over two seconds to a faint grey stain, cannot be washed, burned or cut out while he lives, and <b>fades after about a minute</b> unless refreshed. He knows where every live mark is without looking.</p>
+  <h3>Two &mdash; the cut</h3>
+  <p>He plants in his own pool and draws the blade tip through it. Whatever stroke he draws is <b>reproduced on every live mark at once</b> &mdash; same shape, length, depth and direction, positioned relative to each mark.</p>
+  <ul class="plain">
+    <li><b>He cannot aim individually.</b> One stroke, everywhere, identically.</li>
+    <li><b>He cannot spare anyone.</b> An ally who caught a splash is cut with everyone else.</li>
+    <li><b>Depth is bought.</b> A light draw gives shallow cuts; a hard one costs proportionally more ink.</li>
+  </ul>
+  <div class="tw"><table>
+    <tr><th>Form</th><th>What it does</th><th>Cost</th></tr>
+    <tr><td class="nm">Hitsuatsu<span>筆圧 &middot; brush pressure</span></td><td>A hard snapping flick throws an arc of ink 3&ndash;5 m. Marks what it lands on. Beaten by dodging, a disposable guard, or wind.</td><td>Low</td></tr>
+    <tr><td class="nm">Sumibarai<span>墨払い &middot; ink-sweep</span></td><td>A low sweep laying ink across everything in an 8 m fan. He is not aiming at anyone. The war technique &mdash; and it marks his own side too.</td><td>Moderate</td></tr>
+    <tr><td class="nm">Hitofude<span>一筆 &middot; one stroke</span></td><td>The draw through the pool. Every mark opens at once. <b>One second stationary and committed</b> &mdash; any interruption kills it, and the ink is spent anyway.</td><td>High</td></tr>
+    <tr><td class="nm">Kasanegaki<span>重ね書き &middot; overwriting</span></td><td>Three draws along the same line. Deepens one cut instead of widening the pattern; the third pass goes through bone. For regenerators and heavy armour.</td><td>Very high</td></tr>
+    <tr><td class="nm">Shomei<span>署名 &middot; signature</span></td><td>Every drop left, in one stroke. The release ends, the katana reforms, and he usually does not stay standing. Used twice.</td><td>All of it</td></tr>
+  </table></div>
+</section>
+
+<div class="death">
+  <span class="big" aria-hidden="true">死</span>
+  <h3>Shiji</h3>
+  <p class="sub">死字 &mdash; the death character &middot; his hardest move</p>
+  <p>Hitofude draws <strong>one slash</strong> in the pool. Shiji draws <strong>死</strong> &mdash; six strokes, in order, unbroken &mdash; and it lands on the mark as a completed character. A thing wearing the finished character is a thing that has been <strong>written dead</strong>. Not wounded. Written.</p>
+  <div class="cmd">「死を解放せよ」<em>Shi o kaih&#333; seyo &mdash; Release death</em></div>
+  <p><strong>One mark. Exactly one.</strong> The character divides across every live mark, so two marks means two half-characters, which is a failure. Before he can begin, every other mark must fade &mdash; <strong>a full minute of landing nothing on anyone</strong>, in the middle of a fight he is losing.</p>
+  <p><strong>Six strokes. Eight to twelve seconds.</strong> He plants and does not move again until it is finished.</p>
+  <ol class="strokes">
+    <li>The bar across the top. The marked thing feels a weight settle, like a hand on the sternum.</li>
+    <li>The long sweep down and left. Breathing becomes work.</li>
+    <li>The first short mark beneath. &nbsp;</li>
+    <li>The second. This is where they understand what is being written on them.</li>
+    <li>The first half of the 匕. People run here. Running does not help; the mark does not care where they are.</li>
+    <li>The hook that closes it. He says the line as it lands.</li>
+  </ol>
+  <p><strong>A failed character rebounds.</strong> An incomplete 死 is a miswritten character, and a miswritten character does not simply fail &mdash; it lands on the one who wrote it. Interrupted at stroke four, he takes four strokes of it himself. The man destroyed by a forged document has an ultimate technique that kills him if he writes it badly.</p>
+  <p><strong>It cannot do everything.</strong> It lands where the mark is &mdash; ink on a breastplate writes the character on the breastplate, which goes to powder while the man inside walks away annoyed. And it is a binding; anything that shrugs off a captain-grade binding by pressure alone takes catastrophic harm and lives. Against Yamamoto it would be an insult.</p>
+  <p><strong>He has drawn it once.</strong> Eleven centuries, one use: the Fourth Wall, ninth day, on the thing that came through the breach after everything else had failed. There have been three occasions since where it was clearly the correct decision and he did not do it.</p>
+  <p><strong>He almost certainly cannot survive it now.</strong> Ninety seconds of release and a lieutenant&rsquo;s reserve. The arithmetic says the character completes and he dies with it. That is what makes it worth having &mdash; it is not a move he can pull when a scene goes badly. It is a standing decision about whether to end.</p>
+</div>
+
+<section>
+  <h2><span class="no">07</span> Bankai</h2>
+  <p class="subhead">Bokkon Zekkai &mdash; 墨痕絶界 &mdash; lost</p>
+  <p>The pool stopped being a pool and <b>became the ground</b>. Out to roughly two hundred metres, the surface of the world was his ink &mdash; so nothing needed marking and he needed no puddle. He stood still and wrote, and the field opened.</p>
+  <p>It did not distinguish, and could not be made to. He used it once, at the Fourth Wall on the eighth day, when the line had folded and there was no front any more. When the number comes up he says it and stops talking, and has let people assume the number is Quincy.</p>
+  <div class="note warn"><span class="lbl">It is not only Quincy</span>That is why he stops talking.</div>
+  <p>A bankai is a relationship, maintained. A hundred and thirty years sealed away from his hand, with no contact in either direction, and it did not survive. He will get the ink back; he will reach for the second word and find an absence, like a missing step on a stair.</p>
+  <p><b>And he will be relieved.</b></p>
+</section>
+
+<section>
+  <h2><span class="no">08</span> How he loses</h2>
+  <p class="subhead">All of it, in one place</p>
+  <ul class="plain">
+    <li><b>Ninety seconds.</b> The bleed does not stop while released. At his peak it was twenty minutes.</li>
+    <li><b>Sixty seconds.</b> Marks fade. Anyone who breaks away and survives a minute is clean.</li>
+    <li><b>He needs a pool.</b> Porous ground drinks it, slopes run it off, rain disperses it, standing water ruins it. He fights in rooms, on stone, and badly anywhere else.</li>
+    <li><b>He must land ink at close range at least once</b>, and that first exchange is the one that can kill him.</li>
+    <li><b>He is a mediocre swordsman.</b> Six centuries a captain and his kenjutsu is a good third seat&rsquo;s. Keep him sealed, close, and he is a clerk.</li>
+    <li><b>Interrupting a draw still costs him.</b> Kicking through the ink is enough, and the spent ink does not come back.</li>
+    <li><b>Someone getting dirty on purpose beats his ultimate.</b> One soldier stepping into a thrown arc makes a second mark, and 死 splits and fails.</li>
+    <li><b>His face is in the standing order.</b> Any seated officer who recognises him is obliged to report it &mdash; and several of the likeliest to recognise him are people he trained.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="no">09</span> The spirit</h2>
+  <p class="subhead">What is at the other end</p>
+  <p>A thin figure kneeling in the pool, sleeves black to the shoulder, writing on the surface of the water with the handle of a brush. It has never looked up at him. It does not speak &mdash; it writes, and it only ever writes names, in order, of everyone he has killed.</p>
+  <p>He read the list once. He stopped at the Fourth Wall, because the Fourth Wall is nine days long and he had already recognised two of them. That was six hundred years ago, and it has not stopped writing since.</p>
+</section>
+
+<section>
+  <h2><span class="no">10</span> Where he is now</h2>
+  <p class="subhead">Karakura Town &middot; the week Rukia Kuchiki loses her powers</p>
+  <p>The spiritual pressure has been climbing for six days and he knows exactly what it means. A human has been given a shinigami&rsquo;s power, which means Soul Society will send someone, which means the one town a fugitive cannot afford shinigami traffic in is about to get a great deal of it.</p>
+  <div class="tw"><table>
+    <tr><th>Horizon</th><th>What he wants</th></tr>
+    <tr><td class="nm">Soon</td><td>Get out of Karakura before the first seated officer arrives &mdash; or decide, finally, not to.</td></tr>
+    <tr><td class="nm">Eventually</td><td>Reach the original ledger in the Central 46 archive and find out whose hand actually wrote in it.</td></tr>
+    <tr><td class="nm">Truly</td><td>Put that ledger in front of Yamamoto personally. The only signature that can undo the order is the one that made it.</td></tr>
+    <tr><td class="nm">Breaks him</td><td>Learning Yamamoto knew it was forged and signed anyway, because the Gotei needed the matter closed.</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2><span class="no">11</span> Open threads</h2>
+  <p class="subhead">Ways in</p>
+  <h3>Urahara has read his file</h3>
+  <p>Urahara Kisuke was Captain of the Twelfth and head of the Research Institute; exiled-captain files crossed his desk routinely. Hagiwara&rsquo;s was twenty years old and in the archive when Urahara was arrested on the same charge by the same man. He read it &mdash; it was the only record of a captain who went over the wall and was never recovered, written by the people who failed to recover him.</p>
+  <p>So when Urahara fled into the living world, he went with a concealed blade, a shop, and a flat refusal to be looked at twice. <b>He had the manual.</b></p>
+  <p>Which leaves three facts in one town: Urahara knows the name. Urahara is the one man alive capable of reading that inventory and understanding what a spiritless sword in a vault means. And they have both been in Karakura for over a century, four kilometres apart.</p>
+  <p>Hagiwara has never gone to the shop. He has walked past it. He goes a different way now.</p>
+  <h3>The vault</h3>
+  <p>Anyone who opens Central 46&rsquo;s seal finds an ordinary sword and knows instantly. An inventory check is a perfectly good way to start the plot whenever you want it started.</p>
+  <h3>The handwriting</h3>
+  <p>Somebody spent years learning to write like him. That person had access to six centuries of his private papers, and almost certainly still does.</p>
+</section>
+
+<footer>
+  Original character for Bleach, set at the opening of the series. Canon positions held by Yamamoto, Sasakibe, &#332;toribashi, Tessai and Urahara are left intact; this character occupies the gap before &#332;toribashi in the Third.
+</footer>
+
+</div>
+<script>
+const r=document.documentElement;
+try{const t=localStorage.getItem("hg.theme"); if(t) r.setAttribute("data-theme",t);}catch(e){}
+document.getElementById("themer").addEventListener("click",()=>{
+  const cur=r.getAttribute("data-theme");
+  const dark=cur?cur==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+  const next=dark?"light":"dark";
+  r.setAttribute("data-theme",next);
+  try{localStorage.setItem("hg.theme",next);}catch(e){}
+});
+</script>
